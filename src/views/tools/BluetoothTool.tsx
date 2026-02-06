@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
-// 👇 1. Імпортуємо MaterialCommunityIcons
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Animated, Easing } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useTrainingBle } from '../../hooks/useTrainingBle';
@@ -10,6 +9,48 @@ import { formatTime } from '../../utils/time';
 interface BluetoothToolProps {
     onBack: () => void;
 }
+
+// --- НОВИЙ КОМПОНЕНТ АНІМАЦІЇ ---
+const PulseRing = ({ delay }: { delay: number }) => {
+    const animValue = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const startAnimation = () => {
+            animValue.setValue(0);
+            Animated.loop(
+                Animated.timing(animValue, {
+                    toValue: 1,
+                    duration: 2000, // Тривалість однієї хвилі
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                    delay: delay,
+                })
+            ).start();
+        };
+
+        startAnimation();
+    }, [delay]);
+
+    const scale = animValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 2.5], // Збільшується від 100% до 250%
+    });
+
+    const opacity = animValue.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0.6, 0.3, 0], // Зникає під кінець
+    });
+
+    return (
+        <Animated.View
+            style={{
+                transform: [{ scale }],
+                opacity,
+            }}
+            className="absolute w-full h-full rounded-full border-2 border-yellow-400 bg-yellow-400/20"
+        />
+    );
+};
 
 export default function BluetoothTool({ onBack }: BluetoothToolProps) {
     const {
@@ -36,19 +77,30 @@ export default function BluetoothTool({ onBack }: BluetoothToolProps) {
             {/* 2. MAIN STATUS CARD */}
             <View className={`p-6 rounded-3xl border items-center shadow-lg mb-4 ${connected ? 'bg-slate-800 border-green-500/30' : 'bg-slate-800 border-slate-700'}`}>
 
-                <View className={`w-20 h-20 rounded-full items-center justify-center mb-4 border-2 ${connected ? 'bg-green-500/20 border-green-500' : 'bg-slate-700 border-slate-600'}`}>
-                    {/* 👇 2. ТУТ ЗМІНИЛИ НА MaterialCommunityIcons */}
-                    <MaterialCommunityIcons
-                        name={connected ? "bluetooth" : "bluetooth-off"}
-                        size={32}
-                        color={connected ? "#4ade80" : "#94a3b8"}
-                    />
+                {/* 👇 КОНТЕЙНЕР ІКОНКИ З АНІМАЦІЄЮ */}
+                <View className="mb-4 items-center justify-center">
+                    {/* Анімовані кільця (показуємо тільки при пошуку) */}
+                    {state === 'discovering' && (
+                        <View className="absolute w-20 h-20 items-center justify-center">
+                            <PulseRing delay={0} />
+                            <PulseRing delay={1000} />
+                        </View>
+                    )}
+
+                    {/* Сама іконка (поверх кілець) */}
+                    <View className={`w-20 h-20 rounded-full items-center justify-center border-2 z-10 ${connected ? 'bg-green-500/20 border-green-500' : 'bg-slate-700 border-slate-600'}`}>
+                        <MaterialCommunityIcons
+                            name={connected ? "bluetooth" : "bluetooth-off"}
+                            size={32}
+                            color={connected ? "#4ade80" : "#94a3b8"}
+                        />
+                    </View>
                 </View>
 
                 {state === 'discovering' ? (
                     <>
                         <Text className="text-white text-xl font-bold mb-2">Пошук / Пінг...</Text>
-                        <ActivityIndicator size="large" color="#facc15" className="my-2" />
+                        <ActivityIndicator size="small" color="#facc15" className="my-2" />
                         <Text className="text-slate-400 text-center text-xs">{pingProgress || 'Скануємо ефір...'}</Text>
 
                         {connected && (
@@ -75,8 +127,6 @@ export default function BluetoothTool({ onBack }: BluetoothToolProps) {
                     </>
                 )}
             </View>
-
-            {/* ... решта коду без змін ... */}
 
             {/* 3. TIMER DISPLAY */}
             {(state === 'active' || state === 'armed' || state === 'finished') && (

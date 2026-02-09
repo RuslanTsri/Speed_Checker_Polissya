@@ -1,29 +1,61 @@
 import { useState, useEffect, useRef } from 'react';
-import { Alert, Platform, PermissionsAndroid, Linking } from 'react-native';
-
-import { BleManager, Device, Characteristic, BleError, ScanMode, State } from 'react-native-ble-plx';
+import { Alert, Platform, PermissionsAndroid } from 'react-native';
 import { Buffer } from 'buffer';
 
 import { SensorInfo, TrainingSession, TrainingState, CommandType } from '../types/telemetry';
 import { BLE_CONFIG } from '../constants/bleConfig';
 
-const bleManagerInstance = new BleManager();
+let bleManagerInstance: any = null;
+const TAG = '[BLE-DEBUG]';
 
 export const useTrainingBle = () => {
-    const bleManager = bleManagerInstance;
+    // =========================================================================
+    // 🌍WEB MODE (Заглушка для браузера)
+    // =========================================================================
+    if (Platform.OS === 'web') {
+        const [connected, setConnected] = useState(false);
+        const [state, setState] = useState<TrainingState>('idle');
+        const [elapsedTime, setElapsedTime] = useState(0);
+        const [pingProgress, setPingProgress] = useState('');
+        const [sensors, setSensors] = useState<SensorInfo[]>([
+            { id: 0, status: 'unknown' }, { id: 1, status: 'unknown' },
+            { id: 2, status: 'unknown' }, { id: 3, status: 'unknown' },
+            { id: 4, status: 'unknown' }, { id: 5, status: 'unknown' },
+        ]);
 
-    const [device, setDevice] = useState<Device | null>(null);
+        return {
+            connected, state, sensors, session: null, elapsedTime, pingProgress,
+            startDiscovery: () => {
+                setState('discovering');
+                setTimeout(() => {
+                    setConnected(true);
+                    setState('idle');
+                    setSensors(s => s.map(x => ({...x, status: 'active'})));
+                }, 1000);
+            },
+            stopPing: () => setState('ready'),
+            startTraining: () => setState('active'),
+            stopTraining: () => setState('finished'),
+            resetSession: () => setState('idle'),
+            disconnect: () => setConnected(false)
+        };
+    }
+
+    // =========================================================================
+    // NATIVE MODE (Робоча логіка)
+    // =========================================================================
+
+    const BLE = require('react-native-ble-plx');
+    if (!bleManagerInstance) bleManagerInstance = new BLE.BleManager();
+    const bleManager = bleManagerInstance;
+    const { ScanMode } = BLE;
+
+    // --- STATE ---
+    const [device, setDevice] = useState<any>(null);
     const [connected, setConnected] = useState(false);
     const [state, setState] = useState<TrainingState>('idle');
     const [elapsedTime, setElapsedTime] = useState(0);
     const [pingProgress, setPingProgress] = useState<string>('');
-
-    const isConnecting = useRef(false);
-    const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const reconnectAttemptsRef = useRef(0);
-    const pingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const isPinging = useRef(false);
-    const MAX_RECONNECT_ATTEMPTS = 3;
 
     const [sensors, setSensors] = useState<SensorInfo[]>([
         { id: 0, status: 'active' },
@@ -36,239 +68,223 @@ export const useTrainingBle = () => {
 
     const [session, setSession] = useState<TrainingSession | null>(null);
 
-    // --- 1. ОНОВЛЕНА ФУНКЦІЯ ПРАВ ДОСТУПУ (Android 12+ Support) ---
+    // --- REFS ---
+    const isConnecting = useRef(false);
+    const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const pingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isPinging = useRef(false);
+    const subscriptionRef = useRef<any>(null);
+    const deviceRef = useRef<any>(null);
+
+    // --- CLEANUP ---
+    useEffect(() => {
+        return () => {
+            console.log(`${TAG} Unmounting - Cleaning up`);
+            stopScanning();
+            if (subscriptionRef.current) {
+                subscriptionRef.current.remove();
+            }
+            if (deviceRef.current) {
+                deviceRef.current.cancelConnection().catch(() => {});
+            }
+        };
+    }, []);
+
+    // --- PERMISSIONS ---
     const requestPermissions = async (): Promise<boolean> => {
         if (Platform.OS === 'android') {
             try {
-                // Для Android 12+ (API 31+)
                 if (Platform.Version >= 31) {
                     const result = await PermissionsAndroid.requestMultiple([
                         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
                         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
                         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
                     ]);
-
-                    const isGranted =
-                        result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
+                    return result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
                         result['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED &&
                         result['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.GRANTED;
-
-                    if (!isGranted) {
-                        Alert.alert(
-                            "Потрібні дозволи",
-                            "Для роботи з Bluetooth нам потрібен доступ. Будь ласка, надайте дозволи в налаштуваннях.",
-                            [
-                                { text: "Відмінити", style: "cancel" },
-                                { text: "Відкрити налаштування", onPress: () => Linking.openSettings() }
-                            ]
-                        );
-                    }
-                    return isGranted;
-                }
-                else {
-                    const granted = await PermissionsAndroid.request(
-                        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-                    );
+                } else {
+                    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
                     return granted === PermissionsAndroid.RESULTS.GRANTED;
                 }
-            } catch (err) {
-                console.error('[PERMISSIONS] Error:', err);
-                return false;
-            }
+            } catch (err) { return false; }
         }
         return true;
     };
 
-    // --- 2. НОВА ФУНКЦІЯ: Перевірка та увімкнення Bluetooth ---
-    const checkBluetoothState = async (): Promise<boolean> => {
-        const state = await bleManager.state();
-
-        console.log('[BLE STATE CHECK]', state);
-
-        if (state === State.PoweredOn) {
-            return true;
-        }
-
-        if (state === State.PoweredOff) {
-            if (Platform.OS === 'android') {
-                try {
-                    // Спроба 1: Програмне включення (працює на < Android 12)
-                    await bleManager.enable();
-                    return true;
-                } catch (error) {
-                    // Спроба 2: Якщо система заборонила, просимо юзера відкрити налаштування
-                    Alert.alert(
-                        "Bluetooth вимкнено",
-                        "Система не дозволяє автоматично увімкнути Bluetooth. Відкрити налаштування?",
-                        [
-                            { text: "Ні", style: "cancel", onPress: () => false },
-                            {
-                                text: "Відкрити",
-                                onPress: () => {
-                                    // Відкриває саме меню Bluetooth на Android
-                                    Linking.sendIntent("android.settings.BLUETOOTH_SETTINGS");
-                                }
-                            }
-                        ]
-                    );
-                    return false;
-                }
-            } else {
-                // iOS не дозволяє програмно вмикати, тільки налаштування
-                Alert.alert(
-                    "Bluetooth вимкнено",
-                    "Увімкніть Bluetooth у налаштуваннях iOS",
-                    [
-                        { text: "OK", onPress: () => Linking.openSettings() }
-                    ]
-                );
-                return false;
-            }
-        }
-
-        if (state === State.Unauthorized) {
-            Alert.alert("Помилка", "Додаток не має прав на використання Bluetooth. Перевірте налаштування.");
-            return false;
-        }
-
-        return false;
-    };
-    // --- BLE LIFECYCLE ---
-    useEffect(() => {
-        const subscription = bleManager.onStateChange((bleState) => {
-            console.log('[BLE STATE CHANGED]', bleState);
-        }, true);
-        return () => subscription.remove();
-    }, []);
-
-    useEffect(() => {
-        if (!device) return;
-
-        const subscription = device.onDisconnected((error, disconnectedDevice) => {
-            console.log('[BLE] Disconnected');
-            setConnected(false);
-            setDevice(null);
-            setState('idle');
-            setSession(null);
-            setPingProgress('');
-
-            if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-                reconnectAttemptsRef.current++;
-                setTimeout(() => scanForDevices(), 2000);
-            }
-        });
-
-        return () => subscription.remove();
-    }, [device]);
-
     // --- SCANNING ---
     const stopScanning = () => {
         bleManager.stopDeviceScan();
-        if (scanTimeoutRef.current) {
-            clearTimeout(scanTimeoutRef.current);
-            scanTimeoutRef.current = null;
-        }
+        if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
     };
 
-    // --- 3. ОНОВЛЕНА ЛОГІКА СТАРТУ СКАНУВАННЯ ---
     const scanForDevices = async () => {
-        // Крок 1: Перевіряємо права
-        const hasPerms = await requestPermissions();
-        if (!hasPerms) return;
+        const hasPermissions = await requestPermissions();
+        if (!hasPermissions) {
+            Alert.alert('Помилка', 'Немає дозволів на Bluetooth');
+            return;
+        }
 
-        // Крок 2: Перевіряємо, чи увімкнений адаптер (і вмикаємо якщо ні)
-        const isEnabled = await checkBluetoothState();
-        if (!isEnabled) return;
-
-        if (connected || isConnecting.current) return;
+        if (connected && device) {
+            console.log(`${TAG} Already connected`);
+            return;
+        }
 
         stopScanning();
         setState('discovering');
-        console.log('[SCAN] Starting...');
+        let deviceFound = false;
 
-        bleManager.startDeviceScan(null, { scanMode: ScanMode.LowLatency }, (error, scannedDevice) => {
+        console.log(`${TAG} Scanning...`);
+
+        bleManager.startDeviceScan(null, { scanMode: ScanMode.LowLatency, allowDuplicates: false }, (error: any, scannedDevice: any) => {
             if (error) {
-                if (error.errorCode !== 201) { // 201 = Scan stopped (це нормально)
+                if (error.errorCode !== 201) {
+                    console.error(`${TAG} Scan Error:`, error);
                     stopScanning();
                     setState('idle');
-                    Alert.alert('Помилка сканування', error.message);
                 }
                 return;
             }
 
-            if (scannedDevice?.name) {
-                const isMatch = BLE_CONFIG.DEVICE_NAME_PREFIX.some(prefix =>
-                    scannedDevice.name!.toUpperCase().includes(prefix.toUpperCase())
+            if (scannedDevice?.name && !deviceFound) {
+                const nameMatch = BLE_CONFIG.DEVICE_NAME_PREFIX.some(prefix =>
+                    scannedDevice.name.toUpperCase().includes(prefix.toUpperCase())
                 );
 
-                if (isMatch) {
-                    console.log(`[SCAN] Found ${scannedDevice.name}`);
+                if (nameMatch) {
+                    deviceFound = true;
+                    console.log(`${TAG} Found: ${scannedDevice.name}`);
                     stopScanning();
-                    connectToDevice(scannedDevice);
+                    setTimeout(() => connectToDevice(scannedDevice), 300);
                 }
             }
         });
 
         scanTimeoutRef.current = setTimeout(() => {
-            if (!connected && !isConnecting.current) {
+            if (!deviceFound && !connected && !isConnecting.current) {
+                console.log(`${TAG} Scan Timeout`);
                 stopScanning();
                 setState('idle');
-                Alert.alert(
-                    'Пристрій не знайдено',
-                    'Перевірте живлення Master Node та спробуйте ще раз.',
-                    [{ text: "OK" }]
-                );
+                Alert.alert('Не знайдено', 'Перевірте STM32');
             }
         }, 15000);
     };
 
     // --- CONNECTION ---
-    const connectToDevice = async (scannedDevice: Device) => {
+    const connectToDevice = async (scannedDevice: any) => {
         if (isConnecting.current) return;
-        isConnecting.current = true;
         try {
+            isConnecting.current = true;
+            console.log(`${TAG} Connecting to ${scannedDevice.name}...`);
+
             const connectedDevice = await scannedDevice.connect({ autoConnect: false, timeout: 10000 });
+            console.log(`${TAG} Connected. Discovering...`);
+
+            // 🔥 ВАЖЛИВО: Запит MTU для Android (допомагає з довгими Rx пакетами)
+            if (Platform.OS === 'android') {
+                try {
+                    await connectedDevice.requestMTU(512);
+                    console.log(`${TAG} MTU 512 requested`);
+                } catch(e) { console.log(`${TAG} MTU request fail`, e); }
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 500));
             await connectedDevice.discoverAllServicesAndCharacteristics();
-            connectedDevice.monitorCharacteristicForService(
+
+            // Очищення старої підписки
+            if (subscriptionRef.current) subscriptionRef.current.remove();
+
+            console.log(`${TAG} Subscribing to RX...`);
+            subscriptionRef.current = connectedDevice.monitorCharacteristicForService(
                 BLE_CONFIG.SERVICE_UUID,
                 BLE_CONFIG.RX_CHARACTERISTIC_UUID,
                 onDataReceived
             );
+
+            deviceRef.current = connectedDevice;
             setDevice(connectedDevice);
             setConnected(true);
             setState('idle');
             isConnecting.current = false;
-            reconnectAttemptsRef.current = 0;
+
             Alert.alert('Підключено', `${scannedDevice.name} готовий`);
         } catch (error: any) {
-            console.error('[CONNECT]', error);
+            console.error(`${TAG} Connection Error:`, error);
             isConnecting.current = false;
             setConnected(false);
             setState('idle');
-            Alert.alert('Помилка підключення', error.message);
+            Alert.alert('Помилка', error.message);
         }
     };
 
-    // --- DATA HANDLING ---
-    const onDataReceived = (error: BleError | null, characteristic: Characteristic | null) => {
-        if (error || !characteristic?.value) return;
+    // --- DATA HANDLING (RX) ---
+    const onDataReceived = (error: any, characteristic: any) => {
+        if (error) {
+            console.error(`${TAG} Monitor Error:`, error.message);
+            return;
+        }
+        if (!characteristic?.value) return;
+
         try {
-            const rawData = Buffer.from(characteristic.value, 'base64').toString('utf-8');
-            const trimmed = rawData.trim();
-            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-                const data = JSON.parse(trimmed);
+            const raw = Buffer.from(characteristic.value, 'base64').toString('utf-8').trim();
+            console.log(`${TAG} 📩 RAW RX: "${raw}"`); // <--- ДИВИСЬ СЮДИ В ЛОГАХ
+
+            const jsonStart = raw.indexOf('{');
+            const jsonEnd = raw.lastIndexOf('}');
+
+            if (jsonStart !== -1 && jsonEnd !== -1) {
+                const jsonStr = raw.substring(jsonStart, jsonEnd + 1);
+                const data = JSON.parse(jsonStr);
                 handleMasterResponse(data);
             }
-        } catch (e) { console.error('[DATA] Parse error'); }
+        } catch (e) {
+            console.error(`${TAG} Parse Error:`, e);
+        }
     };
 
     const handleMasterResponse = (data: any) => {
+        console.log(`${TAG} 🧠 Processing Packet: Type=${data.type}`);
+
         switch (data.type) {
-            case 20: setState('armed'); setPingProgress('Озброєно'); break;
-            case 21: if (data.status === 'FINISHED') { setState('finished'); setSession(prev => prev ? { ...prev, totalTime: data.total_time } : null); } break;
-            case 22: if (data.status === 'COMPLETE') { setState('ready'); setPingProgress(''); isPinging.current = false; } else if (data.sensor !== undefined) { updateSensorStatus(data.sensor, data.status === 'OK' ? 'active' : 'timeout', data.rssi); setPingProgress(`Сенсор ${data.sensor}...`); } break;
-            case 30: if (data.sensor === 0 && !session) { setState('active'); setSession({ startTime: Date.now(), triggers: [] }); } else { handleTrigger(data); } break;
-            case 31: setElapsedTime(data.elapsed); break;
+            case 20:
+                setState('armed');
+                setPingProgress('Озброєно');
+                break;
+            case 21:
+                if (data.status === 'FINISHED') {
+                    setState('finished');
+                    setSession((prev) => prev ? { ...prev, totalTime: data.total_time } : null);
+                    setPingProgress('');
+                }
+                break;
+            case 22: // PING
+                if (data.status === 'COMPLETE') {
+                    console.log(`${TAG} Ping COMPLETE`);
+                    forceStopPing();
+                } else {
+                    // ПЕРЕВІРКА КЛЮЧІВ: RxNum (реальний STM32) або sensor (симуляція)
+                    const sensorId = data.sensor !== undefined ? data.sensor : data.RxNum;
+
+                    if (sensorId !== undefined) {
+                        console.log(`${TAG} Sensor ${sensorId} Alive! RSSI=${data.rssi}`);
+                        updateSensorStatus(sensorId, 'active', data.rssi);
+                        setPingProgress(`Сенсор ${sensorId} OK...`);
+                    } else {
+                        console.log(`${TAG} ⚠️ Unknown Ping Packet:`, data);
+                    }
+                }
+                break;
+            case 30: // TRIGGER
+                if (data.sensor === 0 && !session) {
+                    setState('active');
+                    setSession({ startTime: Date.now(), triggers: [] });
+                } else {
+                    handleTrigger(data);
+                }
+                break;
+            case 31:
+                setElapsedTime(data.elapsed);
+                break;
         }
     };
 
@@ -278,41 +294,118 @@ export const useTrainingBle = () => {
 
     const handleTrigger = (data: any) => {
         setSensors(prev => prev.map(s => s.id === data.sensor ? { ...s, status: 'active', triggerTime: data.time, splitTime: data.split } : s));
-        setSession(prev => { if (!prev) return null; return { ...prev, triggers: [...prev.triggers, { sensorId: data.sensor, time: data.time, split: data.split }], }; });
+        setSession(prev => {
+            if (!prev) return null;
+            return { ...prev, triggers: [...prev.triggers, { sensorId: data.sensor, time: data.time, split: data.split }] };
+        });
     };
 
     const sendCommand = async (command: CommandType) => {
-        if (!device || !connected) return;
+        if (!device || !connected) {
+            console.log(`${TAG} Not connected`);
+            return;
+        }
         try {
+            console.log(`${TAG} 📤 Sending:`, JSON.stringify(command));
             const base64Data = Buffer.from(JSON.stringify(command)).toString('base64');
-            await device.writeCharacteristicWithResponseForService(BLE_CONFIG.SERVICE_UUID, BLE_CONFIG.TX_CHARACTERISTIC_UUID, base64Data);
-        } catch (error) { console.error('[COMMAND] Error sending'); }
-    };
 
-    // --- ACTIONS ---
-    const startDiscovery = async () => {
-        // Перед пінгом теж варто перевірити Bluetooth
-        const isEnabled = await checkBluetoothState();
-        if (!isEnabled) return;
-
-        if (connected) {
-            setState('discovering');
-            setPingProgress('Пінг...');
-            isPinging.current = true;
-            setSensors(prev => prev.map(s => s.id === 0 ? s : { ...s, status: 'unknown' }));
-            sendCommand({ type: 22 });
-        } else {
-            scanForDevices();
+            // Використовуємо WithResponse, бо це працювало в твоєму "робочому коді"
+            await device.writeCharacteristicWithResponseForService(
+                BLE_CONFIG.SERVICE_UUID,
+                BLE_CONFIG.TX_CHARACTERISTIC_UUID,
+                base64Data
+            );
+        } catch (error: any) {
+            console.error(`${TAG} Send Error:`, error.message);
         }
     };
 
-    const stopPing = () => { isPinging.current = false; setState('ready'); setPingProgress(''); };
-    const startTraining = () => { const count = sensors.filter(s => s.status === 'active' && s.id !== 0).length; if (count === 0) { Alert.alert("Увага", "Не знайдено активних сенсорів"); return; } sendCommand({ type: 20, sensors: count }); setState('armed'); };
-    const stopTraining = () => { sendCommand({ type: 21 }); };
-    const resetSession = () => { sendCommand({ type: 24 }); setState('idle'); setSession(null); setElapsedTime(0); setSensors(prev => prev.map(s => ({ ...s, status: s.id === 0 ? 'active' : 'unknown', triggerTime: undefined, splitTime: undefined }))); };
+    // --- ACTIONS ---
+
+    const forceStopPing = () => {
+        if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
+        isPinging.current = false;
+        setState('ready');
+        setPingProgress('');
+        const activeCount = sensors.filter(s => s.status === 'active').length;
+        Alert.alert('Пінгування завершено', `Активних: ${activeCount}`);
+    };
+
+    const startDiscovery = async () => {
+        if (connected && device) {
+            const isAlive = await device.isConnected();
+            if (isAlive) {
+                console.log(`${TAG} Starting Ping Sequence`);
+                // Reset UI
+                setSensors(prev => prev.map(s => s.id === 0 ? s : { ...s, status: 'unknown', rssi: undefined }));
+                setState('discovering');
+                setPingProgress('Пінг...');
+                isPinging.current = true;
+
+                // Safety Timeout 5s
+                if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
+                pingTimeoutRef.current = setTimeout(() => {
+                    console.log(`${TAG} Ping Timeout!`);
+                    if (isPinging.current) forceStopPing();
+                }, 5000);
+
+                await sendCommand({ type: 22 });
+                return;
+            }
+        }
+        setDevice(null); setConnected(false);
+        await scanForDevices();
+    };
+
+    const disconnect = async () => {
+        console.log(`${TAG} Manual Disconnect`);
+        if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
+
+        // 1. UI Reset
+        setConnected(false);
+        setState('idle');
+        setDevice(null);
+
+        // 2. BLE Cleanup
+        if (subscriptionRef.current) {
+            subscriptionRef.current.remove();
+            subscriptionRef.current = null;
+        }
+        if (device) {
+            try { await device.cancelConnection(); } catch (e) {}
+        }
+
+        // 3. Delayed State Reset
+        setTimeout(() => {
+            setSensors(prev => prev.map(s => ({ ...s, status: s.id === 0 ? 'active' : 'unknown', rssi: undefined })));
+            setSession(null);
+            setElapsedTime(0);
+            setPingProgress('');
+        }, 100);
+    };
+
+    const startTraining = () => {
+        const count = sensors.filter(s => s.status === 'active' && s.id !== 0).length;
+        if (count === 0) { Alert.alert("Увага", "Немає активних сенсорів, але спробуємо почати."); }
+        sendCommand({ type: 20, sensors: count });
+        setState('armed');
+        setPingProgress('Очікування старту...');
+    };
+
+    const stopTraining = () => { sendCommand({ type: 21 }); setPingProgress(''); };
+
+    const resetSession = () => {
+        sendCommand({ type: 24 });
+        setState('idle');
+        setSession(null);
+        setElapsedTime(0);
+        setPingProgress('');
+        setSensors(prev => prev.map(s => ({ ...s, status: s.id === 0 ? 'active' : 'unknown', triggerTime: undefined, splitTime: undefined })));
+    };
 
     return {
         connected, state, sensors, session, elapsedTime, pingProgress,
-        startDiscovery, stopPing, startTraining, stopTraining, resetSession
+        startDiscovery, stopPing: forceStopPing, startTraining, stopTraining, resetSession,
+        disconnect
     };
 };

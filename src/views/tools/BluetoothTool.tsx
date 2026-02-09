@@ -6,11 +6,11 @@ import { useTrainingBle } from '../../hooks/useTrainingBle';
 import { SensorCard } from '../components/SensorCard';
 import { formatTime } from '../../utils/time';
 
+
 interface BluetoothToolProps {
     onBack: () => void;
 }
 
-// --- НОВИЙ КОМПОНЕНТ АНІМАЦІЇ ---
 const PulseRing = ({ delay }: { delay: number }) => {
     const animValue = useRef(new Animated.Value(0)).current;
 
@@ -20,7 +20,7 @@ const PulseRing = ({ delay }: { delay: number }) => {
             Animated.loop(
                 Animated.timing(animValue, {
                     toValue: 1,
-                    duration: 2000, // Тривалість однієї хвилі
+                    duration: 2000,
                     easing: Easing.out(Easing.ease),
                     useNativeDriver: true,
                     delay: delay,
@@ -33,12 +33,12 @@ const PulseRing = ({ delay }: { delay: number }) => {
 
     const scale = animValue.interpolate({
         inputRange: [0, 1],
-        outputRange: [1, 2.5], // Збільшується від 100% до 250%
+        outputRange: [1, 2.5],
     });
 
     const opacity = animValue.interpolate({
         inputRange: [0, 0.5, 1],
-        outputRange: [0.6, 0.3, 0], // Зникає під кінець
+        outputRange: [0.6, 0.3, 0],
     });
 
     return (
@@ -77,9 +77,7 @@ export default function BluetoothTool({ onBack }: BluetoothToolProps) {
             {/* 2. MAIN STATUS CARD */}
             <View className={`p-6 rounded-3xl border items-center shadow-lg mb-4 ${connected ? 'bg-slate-800 border-green-500/30' : 'bg-slate-800 border-slate-700'}`}>
 
-                {/* 👇 КОНТЕЙНЕР ІКОНКИ З АНІМАЦІЄЮ */}
                 <View className="mb-4 items-center justify-center">
-                    {/* Анімовані кільця (показуємо тільки при пошуку) */}
                     {state === 'discovering' && (
                         <View className="absolute w-20 h-20 items-center justify-center">
                             <PulseRing delay={0} />
@@ -87,7 +85,6 @@ export default function BluetoothTool({ onBack }: BluetoothToolProps) {
                         </View>
                     )}
 
-                    {/* Сама іконка (поверх кілець) */}
                     <View className={`w-20 h-20 rounded-full items-center justify-center border-2 z-10 ${connected ? 'bg-green-500/20 border-green-500' : 'bg-slate-700 border-slate-600'}`}>
                         <MaterialCommunityIcons
                             name={connected ? "bluetooth" : "bluetooth-off"}

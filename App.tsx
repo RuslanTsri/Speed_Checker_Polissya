@@ -14,6 +14,8 @@ import SessionsScreen from './src/views/screens/SessionsScreen';
 import SettingsScreen from './src/views/screens/SettingsScreen';
 import HomeScreen from './src/views/screens/HomeScreen';
 
+import { BleProvider } from './src/context/BleContext';
+
 export default function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [currentTab, setCurrentTab] = useState<TabType>('HOME');
@@ -86,6 +88,7 @@ export default function App() {
 
     return (
         <SafeAreaProvider>
+            <BleProvider>
             <StatusBar style="light" />
 
             <MainLayout
@@ -148,6 +151,7 @@ export default function App() {
                     </TouchableOpacity>
                 </View>
             </BottomModal>
+                </BleProvider>
         </SafeAreaProvider>
     );
 }

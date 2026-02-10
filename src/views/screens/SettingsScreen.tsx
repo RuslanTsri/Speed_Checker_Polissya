@@ -102,7 +102,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
             onPress={isSwitch ? () => {} : onPress}
             className="flex-row items-center justify-between py-4 border-b border-slate-700/50 last:border-0"
         >
-            {/* ЛІВА ЧАСТИНА (Іконка + Назва) - Займає доступний простір (flex-1) */}
             <View className="flex-row items-center flex-1 mr-2">
                 <View className="mr-4 w-6 items-center">{icon}</View>
                 <Text
@@ -188,7 +187,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
 
                 <Section title="Система">
                     <SettingItem icon={<Feather name="bell" size={20} color="#94a3b8" />} title="Сповіщення" isSwitch value={isNotifEnabled} onPress={toggleNotif} />
-                    <SettingItem icon={<Feather name="volume-2" size={20} color="#94a3b8" />} title="Звук при фініші" isSwitch value={isSoundEnabled} onPress={toggleSound} />
+
                 </Section>
 
                 <Section title="Керування даними">

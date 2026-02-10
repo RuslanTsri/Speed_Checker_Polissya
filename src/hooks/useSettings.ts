@@ -1,8 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Alert } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { Alert, Vibration, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useBle } from '../context/BleContext'; // Імпорт глобального стору
+import * as Notifications from 'expo-notifications';
+import { Audio } from 'expo-av';
 
+import { useBle } from '../context/BleContext';
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+    }),
+})
 // --- ТИПИ ДАНИХ ---
 export interface UserProfile {
     name: string;
@@ -32,35 +44,78 @@ export const useSettings = () => {
     const [isNotifEnabled, setIsNotifEnabled] = useState(true);
     const [isSoundEnabled, setIsSoundEnabled] = useState(false);
 
-    // 🔥 БЕРЕМО МЕТОДИ З ГЛОБАЛЬНОГО КОНТЕКСТУ BLUETOOTH
-    // (Переконайтесь, що pingMaster додано в useTrainingBle.ts, як ми робили раніше)
+    // 🔥 БЕРЕМО ДАНІ З BLE
     const {
         connected,
-        pingMaster, // Наша функція для відправки CMD 22
-        pingProgress, // Текст "Перевірка зв'язку..."
+        pingMaster,
+        pingProgress,
         state: bleState,
+        finalTime,
         device
     } = useBle();
 
+    const prevStateRef = useRef(bleState);
+
     // ---------------------------------------------------------
-    // 🔥 ФУНКЦІЯ: Перевірка зв'язку (ПІНГ МАСТЕРА)
+    //СЛУХАЧ ФІНІШУ
+    // ---------------------------------------------------------
+    useEffect(() => {
+        const handleFinishEvent = async () => {
+            // Перевіряємо: якщо поточний стан "finished", а попередній БУВ НЕ "finished"
+            if (bleState === 'finished' && prevStateRef.current !== 'finished') {
+                console.log("🏁 Фініш зафіксовано в налаштуваннях!");
+
+                if (isSoundEnabled) {
+                    try {
+                        console.log("🔊 Програвання звуку...");
+                        Vibration.vibrate([0, 500, 200, 500]);
+
+                        // Варіант Б: Ваш MP3 файл (розкоментуйте, якщо додали файл в assets)
+                        /*
+                        const { sound } = await Audio.Sound.createAsync(
+                            require('../../assets/sounds/finish_beep.mp3')
+                        );
+                        await sound.playAsync();
+                        */
+                    } catch (error) {
+                        console.log("Помилка звуку:", error);
+                    }
+                }
+
+                if (isNotifEnabled) {
+                    await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: "🏁 Фініш!",
+                            body: `Гравець завершив заїзд!`,
+                            sound: true,
+                        },
+                        trigger: null, // null = відправити миттєво
+                    });
+                }
+            }
+            // Оновлюємо реф для наступної перевірки
+            prevStateRef.current = bleState;
+        };
+
+        handleFinishEvent();
+    }, [bleState, finalTime, isNotifEnabled, isSoundEnabled]); // Слідкуємо за цими змінними
+
+
+    // ---------------------------------------------------------
+    // ФУНКЦІЯ: Перевірка зв'язку (ПІНГ МАСТЕРА)
     // ---------------------------------------------------------
     const checkMasterConnection = async () => {
         if (connected) {
-            // Якщо підключено -> перевіряємо чи живий Мастер
-            // Функція pingMaster сама встановить pingProgress
             const sent = await pingMaster();
             if (!sent) {
-                // Якщо раптом пінг не пройшов (наприклад, device втрачено)
                 Alert.alert("Помилка", "Не вдалося відправити команду на Master Node");
             }
         } else {
-            // Якщо не підключено -> просто інформуємо
             Alert.alert("Інфо", "Система не підключена. Перейдіть в меню сканування.");
         }
     };
 
-    // --- ЗАВАНТАЖЕННЯ ДАНИХ (AsyncStorage) ---
+    // --- ЗАВАНТАЖЕННЯ ДАНИХ ---
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -73,6 +128,13 @@ export const useSettings = () => {
                 if (profileData) setUserProfile(JSON.parse(profileData));
                 if (notifData !== null) setIsNotifEnabled(JSON.parse(notifData));
                 if (soundData !== null) setIsSoundEnabled(JSON.parse(soundData));
+
+                // 🔥 Запитуємо дозвіл на сповіщення при старті додатка (Android/iOS)
+                const { status } = await Notifications.getPermissionsAsync();
+                if (status !== 'granted') {
+                    await Notifications.requestPermissionsAsync();
+                }
+
             } catch (e) {
                 console.error("Load Error:", e);
             } finally {
@@ -136,7 +198,7 @@ export const useSettings = () => {
         checkMasterConnection,
         bleStatus: {
             connected,
-            pingProgress, // Текст прогресу ("Перевірка...")
+            pingProgress,
             state: bleState,
             deviceName: device?.name
         }

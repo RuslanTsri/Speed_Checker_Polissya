@@ -42,7 +42,7 @@
       }
     },
     "plugins": [
-      "react-native-ble-plx"
+      "@sfourdrinier/react-native-ble-plx"
     ]
   }
 }

@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, TextInput, Ima
 import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 
 import { BottomModal } from '../components/BottomModal';
+import { useSettings } from '../../hooks/useSettings';
 
 const PRESET_AVATARS = [
     'https://img.icons8.com/color/480/wolf.png',
@@ -17,10 +18,10 @@ const PRESET_AVATARS = [
 interface SettingsScreenProps {
     onLogout: () => void;
     onOpenPinChange: () => void;
+    onOpenBluetooth: () => void;
 }
 
-export default function SettingsScreen({ onLogout, onOpenPinChange }: SettingsScreenProps) {
-    // 🔥 Беремо все з useSettings, включаючи BLE логіку
+export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBluetooth }: SettingsScreenProps) {
     const {
         isLoading,
         userProfile,
@@ -30,8 +31,8 @@ export default function SettingsScreen({ onLogout, onOpenPinChange }: SettingsSc
         toggleNotif,
         toggleSound,
         clearCache,
-        GetBleConnectionStatus, // Наша нова функція
-        bleStatus               // Статус для відображення
+        checkMasterConnection,
+        bleStatus
     } = useSettings();
 
     const [isEditModalVisible, setEditModalVisible] = useState(false);
@@ -39,24 +40,37 @@ export default function SettingsScreen({ onLogout, onOpenPinChange }: SettingsSc
     const [tempRole, setTempRole] = useState('');
     const [tempAvatar, setTempAvatar] = useState('');
 
-    // --- ВІДОБРАЖЕННЯ СТАТУСУ ---
     let connectionText = "Відключено";
     let connectionColor = "text-red-400";
     let iconColor = "#ef4444";
 
     if (bleStatus.connected) {
-        if (bleStatus.state === 'discovering') {
-            connectionText = bleStatus.pingProgress || "Пінг...";
+        if (bleStatus.pingProgress) {
+            connectionText = bleStatus.pingProgress;
             connectionColor = "text-yellow-400";
             iconColor = "#facc15";
         } else {
-            connectionText = "Підключено (STM32)"; // Замінили ESP32 на STM32
+            connectionText = bleStatus.deviceName || 'Підключено';
             connectionColor = "text-green-400";
             iconColor = "#4ade80";
         }
     }
 
-    // --- (Логіка модалки і профілю без змін) ---
+    const handleConnectionPress = () => {
+        if (bleStatus.connected) {
+            checkMasterConnection();
+        } else {
+            Alert.alert(
+                "Bluetooth вимкнено",
+                "Перейти до меню підключення?",
+                [
+                    { text: "Ні", style: "cancel" },
+                    { text: "Так", onPress: onOpenBluetooth }
+                ]
+            );
+        }
+    };
+
     const openEditModal = () => {
         setTempName(userProfile.name);
         setTempRole(userProfile.role);
@@ -88,15 +102,37 @@ export default function SettingsScreen({ onLogout, onOpenPinChange }: SettingsSc
             onPress={isSwitch ? () => {} : onPress}
             className="flex-row items-center justify-between py-4 border-b border-slate-700/50 last:border-0"
         >
-            <View className="flex-row items-center">
+            {/* ЛІВА ЧАСТИНА (Іконка + Назва) - Займає доступний простір (flex-1) */}
+            <View className="flex-row items-center flex-1 mr-2">
                 <View className="mr-4 w-6 items-center">{icon}</View>
-                <Text className={`text-base font-medium ${color}`}>{title}</Text>
+                <Text
+                    className={`text-base font-medium ${color}`}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                >
+                    {title}
+                </Text>
             </View>
+
             {isSwitch ? (
-                <Switch trackColor={{ false: "#334155", true: "#facc15" }} thumbColor={value ? "#fff" : "#94a3b8"} onValueChange={onPress} value={value} />
+                <Switch
+                    trackColor={{ false: "#334155", true: "#facc15" }}
+                    thumbColor={value ? "#fff" : "#94a3b8"}
+                    onValueChange={onPress}
+                    value={value}
+                />
             ) : (
-                <View className="flex-row items-center">
-                    {value && <Text className={`${valueColor} mr-2 text-sm font-bold`}>{value}</Text>}
+                <View className="flex-row items-center shrink-0">
+                    {value && (
+                        <Text
+                            className={`${valueColor} mr-2 text-sm font-bold text-right`}
+                            style={{ maxWidth: 160 }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                        >
+                            {value}
+                        </Text>
+                    )}
                     <Feather name="chevron-right" size={20} color="#475569" />
                 </View>
             )}
@@ -113,17 +149,18 @@ export default function SettingsScreen({ onLogout, onOpenPinChange }: SettingsSc
     return (
         <View className="flex-1 bg-slate-900">
             <ScrollView className="flex-1 px-4 pt-4">
+                {/* ПРОФІЛЬ */}
                 <View className="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex-row items-center mb-8 shadow-md">
                     <View className="w-16 h-16 bg-slate-700 rounded-full items-center justify-center mr-4 border-2 border-slate-600 overflow-hidden">
                         <Image source={{ uri: userProfile.avatar }} className="w-full h-full" resizeMode="cover" />
                     </View>
                     <View className="flex-1">
-                        <Text className="text-white text-xl font-bold">{userProfile.name}</Text>
-                        <Text className="text-slate-400 text-sm">{userProfile.role}</Text>
+                        <Text className="text-white text-xl font-bold" numberOfLines={1}>{userProfile.name}</Text>
+                        <Text className="text-slate-400 text-sm" numberOfLines={1}>{userProfile.role}</Text>
                         <View className="flex-row mt-2">
                             <View className={`px-2 py-0.5 rounded mr-2 border ${bleStatus.connected ? 'bg-green-500/20 border-green-500/30' : 'bg-slate-700 border-slate-600'}`}>
                                 <Text className={`${bleStatus.connected ? 'text-green-400' : 'text-slate-500'} text-[10px] font-bold uppercase`}>
-                                    {bleStatus.connected ? 'SYSTEM ONLINE' : 'OFFLINE'}
+                                    {bleStatus.connected ? 'ONLINE' : 'OFFLINE'}
                                 </Text>
                             </View>
                         </View>
@@ -133,19 +170,19 @@ export default function SettingsScreen({ onLogout, onOpenPinChange }: SettingsSc
                     </TouchableOpacity>
                 </View>
 
+                {/* ДАТЧИКИ ТА ОБЛАДНАННЯ */}
                 <Section title="Датчики та Обладнання">
-                    {/* 🔥 ВИКЛИКАЄМО GetBleConnectionStatus */}
                     <SettingItem
                         icon={
-                            bleStatus.state === 'discovering'
-                                ? <ActivityIndicator size="small" color="#facc15" />
-                                : <Feather name="wifi" size={20} color={iconColor} />
+                            bleStatus.pingProgress ? <ActivityIndicator size="small" color="#facc15" /> :
+                                <Feather name="wifi" size={20} color={iconColor} />
                         }
-                        title="Статус з'єднання STM32"
+                        title="З'єднання (STM32)"
                         value={connectionText}
                         valueColor={connectionColor}
-                        onPress={GetBleConnectionStatus}
+                        onPress={handleConnectionPress}
                     />
+
                     <SettingItem icon={<Ionicons name="battery-charging" size={20} color="#facc15" />} title="Заряд датчиків" value="В розробці" onPress={() => {}} />
                 </Section>
 
@@ -156,7 +193,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange }: SettingsSc
 
                 <Section title="Керування даними">
                     <SettingItem icon={<Feather name="file-text" size={20} color="#94a3b8" />} title="Експорт у PDF" onPress={() => Alert.alert("Експорт", "Звіт формується...")} />
-                    <SettingItem icon={<Feather name="trash-2" size={20} color="#ef4444" />} title="Скинути налаштування" onPress={clearCache} color="text-red-400" />
+
                 </Section>
 
                 <TouchableOpacity onPress={onLogout} className="bg-red-900/20 border border-red-900 p-4 rounded-xl flex-row justify-center items-center mb-10 mt-2">

@@ -1,195 +1,62 @@
 import { useState, useEffect, useRef } from 'react';
-
-
-
 import { Alert, Platform, PermissionsAndroid } from 'react-native';
-
-
-
 import { Buffer } from 'buffer';
-
-
-
-
-
-
-
 import { SensorInfo, TrainingSession, TrainingState, CommandType } from '../types/telemetry';
-
-
-
 import { BLE_CONFIG } from '../constants/bleConfig';
-
-
-
-
-
-
 
 let bleManagerInstance: any = null;
 
-
-
 const TAG = '[BLE-DEBUG]';
 
-
-
-
-
-
-
 export const useTrainingBle = () => {
-
-
-
 // =========================================================================
-
-
-
-// 🌍WEB MODE (Заглушка для браузера)
-
-
-
+// 🌍 WEB MODE (Заглушка для браузера)
 // =========================================================================
-
-
-
     if (Platform.OS === 'web') {
-
-
-
         const [connected, setConnected] = useState(false);
-
-
-
         const [state, setState] = useState<TrainingState>('idle');
-
-
-
         const [elapsedTime, setElapsedTime] = useState(0);
-
-
-
         const [pingProgress, setPingProgress] = useState('');
-
-
-
         const [sensors, setSensors] = useState<SensorInfo[]>([
-
-
-
             { id: 0, status: 'unknown' }, { id: 1, status: 'unknown' },
-
-
-
             { id: 2, status: 'unknown' }, { id: 3, status: 'unknown' },
-
-
-
             { id: 4, status: 'unknown' }, { id: 5, status: 'unknown' },
-
-
-
         ]);
 
-
-
-
-
-
-
         return {
-
-
-
             connected, state, sensors, session: null, elapsedTime, pingProgress,
-
-
+            // 👇 ДОДАЄМО ВІДСУТНІ ПОЛЯ, ЩОБ TS НЕ ЛАЯВСЯ
+            device: { name: "Web Device" },
+            startTime: 0,
+            finalTime: 0,
 
             startDiscovery: () => {
-
-
-
                 setState('discovering');
-
-
-
                 setTimeout(() => {
-
-
-
                     setConnected(true);
-
-
-
                     setState('idle');
-
-
-
                     setSensors(s => s.map(x => ({...x, status: 'active'})));
-
-
-
                 }, 1000);
-
-
-
             },
 
-
+            // 👇 ОСЬ ВОНО! ДОДАЄМО ЗАГЛУШКУ pingMaster
+            pingMaster: async () => {
+                console.log('Web Ping Master');
+                return true;
+            },
 
             stopPing: () => setState('ready'),
-
-
-
             startTraining: () => setState('active'),
-
-
-
             stopTraining: () => setState('finished'),
-
-
-
             resetSession: () => setState('idle'),
-
-
-
             disconnect: () => setConnected(false)
-
-
-
         };
-
-
-
     }
-
-
-
-
-
-
-
 // =========================================================================
-
-
-
 // NATIVE MODE (Робоча логіка)
-
-
-
 // =========================================================================
 
-
-
-
-
-
-
-    const BLE = require('react-native-ble-plx');
-
-
-
+    const BLE = require('@sfourdrinier/react-native-ble-plx');
     if (!bleManagerInstance) bleManagerInstance = new BLE.BleManager();
 
 
@@ -1535,11 +1402,36 @@ export const useTrainingBle = () => {
         setSensors(prev => prev.map(s => ({ ...s, status: s.id === 0 ? 'active' : 'unknown', triggerTime: undefined, splitTime: undefined })));
     };
 
+    const pingMaster = async () => {
+        if (!device || !connected) return false;
 
+        try {
+            const isAlive = await device.isConnected();
+            if (!isAlive) {
+                setConnected(false);
+                return false;
+            }
+
+            // Відправляємо CMD 22 (PING), але НЕ змінюємо state на 'discovering'
+            // Це дозволить отримати відповідь від Мастера без скидання UI датчиків
+            console.log(`${TAG} Pinging Master Node...`);
+            setPingProgress('Перевірка зв\'язку...');
+
+            await sendCommand({ type: 22 });
+
+            // Очистимо текст через секунду, щоб користувач бачив ефект
+            setTimeout(() => setPingProgress(''), 1500);
+
+            return true;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    };
     return {
         connected, state, sensors, session, elapsedTime, pingProgress,
         startDiscovery, stopPing: forceStopPing, startTraining, stopTraining, resetSession,
-        disconnect
+        disconnect,pingMaster,device
 
     };
     }

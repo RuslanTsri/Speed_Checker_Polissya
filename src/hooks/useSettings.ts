@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Alert, Vibration, Platform } from 'react-native';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { Audio } from 'expo-av';
 
 import { useBle } from '../context/BleContext';
 
@@ -39,12 +39,10 @@ const DEFAULT_PROFILE: UserProfile = {
 export const useSettings = () => {
     const [isLoading, setIsLoading] = useState(true);
 
-    // Стан налаштувань користувача
     const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_PROFILE);
     const [isNotifEnabled, setIsNotifEnabled] = useState(true);
     const [isSoundEnabled, setIsSoundEnabled] = useState(false);
 
-    // 🔥 БЕРЕМО ДАНІ З BLE
     const {
         connected,
         pingMaster,
@@ -89,17 +87,15 @@ export const useSettings = () => {
                             body: `Гравець завершив заїзд!`,
                             sound: true,
                         },
-                        trigger: null, // null = відправити миттєво
+                        trigger: null,
                     });
                 }
             }
-            // Оновлюємо реф для наступної перевірки
             prevStateRef.current = bleState;
         };
 
         handleFinishEvent();
-    }, [bleState, finalTime, isNotifEnabled, isSoundEnabled]); // Слідкуємо за цими змінними
-
+    }, [bleState, finalTime, isNotifEnabled, isSoundEnabled]);
 
     // ---------------------------------------------------------
     // ФУНКЦІЯ: Перевірка зв'язку (ПІНГ МАСТЕРА)
@@ -129,12 +125,10 @@ export const useSettings = () => {
                 if (notifData !== null) setIsNotifEnabled(JSON.parse(notifData));
                 if (soundData !== null) setIsSoundEnabled(JSON.parse(soundData));
 
-                // 🔥 Запитуємо дозвіл на сповіщення при старті додатка (Android/iOS)
                 const { status } = await Notifications.getPermissionsAsync();
                 if (status !== 'granted') {
                     await Notifications.requestPermissionsAsync();
                 }
-
             } catch (e) {
                 console.error("Load Error:", e);
             } finally {
@@ -162,7 +156,6 @@ export const useSettings = () => {
             return true;
         } catch (e) { return false; }
     };
-
     // --- ПЕРЕМИКАЧІ ---
     const toggleNotif = async () => {
         const newValue = !isNotifEnabled;
@@ -193,8 +186,6 @@ export const useSettings = () => {
         toggleNotif,
         toggleSound,
         clearCache,
-
-        // Експортуємо логіку Bluetooth для UI
         checkMasterConnection,
         bleStatus: {
             connected,

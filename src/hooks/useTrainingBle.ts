@@ -39,7 +39,6 @@ export const useTrainingBle = () => {
                 }, 1000);
             },
 
-            // 👇 ОСЬ ВОНО! ДОДАЄМО ЗАГЛУШКУ pingMaster
             pingMaster: async () => {
                 console.log('Web Ping Master');
                 return true;
@@ -58,553 +57,156 @@ export const useTrainingBle = () => {
 
     const BLE = require('@sfourdrinier/react-native-ble-plx');
     if (!bleManagerInstance) bleManagerInstance = new BLE.BleManager();
-
-
-
     const bleManager = bleManagerInstance;
-
-
-
     const { ScanMode } = BLE;
 
-
-
-
-
-
-
 // --- STATE ---
-
-
-
     const [device, setDevice] = useState<any>(null);
-
-
-
     const [connected, setConnected] = useState(false);
-
-
-
     const [state, setState] = useState<TrainingState>('idle');
-
-
-
     const [elapsedTime, setElapsedTime] = useState(0);
-
-
-
     const [pingProgress, setPingProgress] = useState<string>('');
-
-
-
-
-
-
-
     const [sensors, setSensors] = useState<SensorInfo[]>([
 
-
-
         { id: 0, status: 'active' },
-
-
-
         { id: 1, status: 'unknown' },
-
-
-
         { id: 2, status: 'unknown' },
-
-
-
         { id: 3, status: 'unknown' },
-
-
-
         { id: 4, status: 'unknown' },
-
-
-
         { id: 5, status: 'unknown' },
-
-
-
     ]);
-
-
-
-
-
-
 
     const [session, setSession] = useState<TrainingSession | null>(null);
 
-
-
-
-
-
-
 // --- REFS ---
-
-
-
     const isConnecting = useRef(false);
-
-
-
     const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-
-
     const pingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-
-
     const isPinging = useRef(false);
-
-
-
     const subscriptionRef = useRef<any>(null);
-
-
-
     const deviceRef = useRef<any>(null);
 
-
-
-
-
-
-
 // --- CLEANUP ---
-
-
-
     useEffect(() => {
-
-
-
         return () => {
-
-
-
             console.log(`${TAG} Unmounting - Cleaning up`);
-
-
-
             stopScanning();
-
-
-
             if (subscriptionRef.current) {
-
-
-
                 subscriptionRef.current.remove();
-
-
-
             }
-
-
 
             if (deviceRef.current) {
-
-
-
                 deviceRef.current.cancelConnection().catch(() => {});
-
-
-
             }
-
-
-
         };
-
-
-
     }, []);
 
-
-
-
-
-
-
 // --- PERMISSIONS ---
-
-
-
     const requestPermissions = async (): Promise<boolean> => {
-
-
 
         if (Platform.OS === 'android') {
 
-
-
             try {
-
-
 
                 if (Platform.Version >= 31) {
 
-
-
                     const result = await PermissionsAndroid.requestMultiple([
 
-
-
                         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-
-
-
                         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-
-
-
                         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-
-
-
                     ]);
-
-
 
                     return result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
 
-
-
                         result['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED &&
-
-
-
                         result['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.GRANTED;
-
-
-
                 } else {
 
-
-
                     const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
-
-
-
                     return granted === PermissionsAndroid.RESULTS.GRANTED;
-
-
-
                 }
-
-
 
             } catch (err) { return false; }
 
-
-
         }
-
-
-
         return true;
-
-
-
     };
-
-
-
-
-
-
 
 // --- SCANNING ---
-
-
-
     const stopScanning = () => {
-
-
-
         bleManager.stopDeviceScan();
-
-
-
         if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
-
-
-
     };
-
-
-
-
-
-
 
     const scanForDevices = async () => {
 
-
-
         const hasPermissions = await requestPermissions();
-
-
-
         if (!hasPermissions) {
-
-
-
             Alert.alert('Помилка', 'Немає дозволів на Bluetooth');
-
-
-
             return;
-
-
-
         }
-
-
-
-
-
-
 
         if (connected && device) {
-
-
-
             console.log(`${TAG} Already connected`);
-
-
-
             return;
-
-
-
         }
-
-
-
-
-
-
-
         stopScanning();
-
-
-
         setState('discovering');
-
-
 
         let deviceFound = false;
 
-
-
-
-
-
-
         console.log(`${TAG} Scanning...`);
-
-
-
-
-
-
 
         bleManager.startDeviceScan(null, { scanMode: ScanMode.LowLatency, allowDuplicates: false }, (error: any, scannedDevice: any) => {
 
-
-
             if (error) {
-
-
-
                 if (error.errorCode !== 201) {
-
-
-
                     console.error(`${TAG} Scan Error:`, error);
-
-
-
                     stopScanning();
-
-
-
                     setState('idle');
-
-
-
                 }
-
-
-
                 return;
-
-
-
             }
-
-
-
-
-
-
 
             if (scannedDevice?.name && !deviceFound) {
-
-
-
                 const nameMatch = BLE_CONFIG.DEVICE_NAME_PREFIX.some(prefix =>
-
-
-
                     scannedDevice.name.toUpperCase().includes(prefix.toUpperCase())
-
-
-
                 );
 
-
-
-
-
-
-
                 if (nameMatch) {
-
-
-
                     deviceFound = true;
-
-
-
                     console.log(`${TAG} Found: ${scannedDevice.name}`);
-
-
-
                     stopScanning();
-
-
-
                     setTimeout(() => connectToDevice(scannedDevice), 1000);
-
-
-
                 }
-
-
-
             }
-
-
-
         });
 
-
-
-
-
-
-
         scanTimeoutRef.current = setTimeout(() => {
-
-
-
             if (!deviceFound && !connected && !isConnecting.current) {
-
-
-
                 console.log(`${TAG} Scan Timeout`);
-
-
-
                 stopScanning();
-
-
-
                 setState('idle');
-
-
-
                 Alert.alert('Не знайдено', 'Перевірте STM32');
-
-
-
             }
 
-
-
         }, 15000);
-
-
-
     };
-
-
-
-
-
-
 
 // --- CONNECTION ---
 
-
-
     const connectToDevice = async (scannedDevice: any) => {
-
-
-
         if (isConnecting.current) return;
-
-
 
         try {
 
-
-
             isConnecting.current = true;
-
-
-
             console.log(`${TAG} Connecting to ${scannedDevice.name}...`);
-
-
-
-
-
-
-
             const connectedDevice = await scannedDevice.connect({ autoConnect: false, timeout: 10000 });
-
-
-
             console.log(`${TAG} Connected. Discovering...`);
-
-
-
-
-
-
-
-// 🔥 ВАЖЛИВО: Запит MTU для Android (допомагає з довгими Rx пакетами)
-
-
-
             if (Platform.OS === 'android') {
-
-
-
                 try {
-
-
-
                     await connectedDevice.requestMTU(512);
 
 
@@ -1076,291 +678,71 @@ export const useTrainingBle = () => {
 // -------------------------------
 
             if (triggeredId === finishSensorId) {
-
                 console.log(`${TAG} 🏁 FINISH LINE CROSSED (Sensor ${triggeredId})`);
-
-
-
 // 1. Зупиняємо таймер в UI
-
                 setState('finished');
-
-
-
 // 2. Встановлюємо фінальний час таймера точно як на сенсорі
-
                 setElapsedTime(triggerTime);
-
-
-
-// 3. Відправляємо команду STOP на STM32 (Type 21),
-
-// щоб він знав, що заїзд завершено і перестав слати синхронізацію
-
                 sendCommand({ type: 21 });
-
-
-
             } else {
-
                 console.log(`${TAG} ⏱️ SPLIT TIME (Sensor ${triggeredId})`);
-
-// Таймер продовжує бігти, просто записали проміжний результат
-
             }
-
         }
-
     };
-
     const sendCommand = async (command: CommandType) => {
-
-
-
         if (!device || !connected) {
-
-
-
             console.log(`${TAG} Not connected`);
-
-
-
             return;
-
-
-
         }
-
-
-
         try {
-
-
-
             console.log(`${TAG} 📤 Sending:`, JSON.stringify(command));
-
-
-
             const base64Data = Buffer.from(JSON.stringify(command)).toString('base64');
-
-
-
-
-
-
-
-// Використовуємо WithResponse, бо це працювало в твоєму "робочому коді"
-
-
-
             await device.writeCharacteristicWithResponseForService(
-
-
-
                 BLE_CONFIG.SERVICE_UUID,
-
-
-
                 BLE_CONFIG.TX_CHARACTERISTIC_UUID,
-
-
-
                 base64Data
-
-
-
             );
-
-
-
         } catch (error: any) {
-
-
-
             console.error(`${TAG} Send Error:`, error.message);
-
-
-
         }
-
-
-
     };
-
-
-
-
-
-
-
 // --- ACTIONS ---
-
-
-
-
-
-
-
     const forceStopPing = () => {
-
-
-
         if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
-
-
-
         isPinging.current = false;
-
-
-
         setState('ready');
-
-
-
         setPingProgress('');
-
-
-
         const activeCount = sensors.filter(s => s.status === 'active').length;
-
-
-
         Alert.alert('Пінгування завершено', `Активних: ${activeCount}`);
-
-
-
     };
-
-
-
-
-
-
-
     const startDiscovery = async () => {
-
-
-
         if (connected && device) {
-
-
-
             const isAlive = await device.isConnected();
-
-
-
             if (isAlive) {
-
-
-
                 console.log(`${TAG} Starting Ping Sequence`);
-
-
-
 // Reset UI
-
-
-
                 setSensors(prev => prev.map(s => s.id === 0 ? s : { ...s, status: 'unknown', rssi: undefined }));
-
-
-
                 setState('discovering');
-
-
-
                 setPingProgress('Пінг...');
-
-
-
                 isPinging.current = true;
-
-
-
-
-
-
-
 // Safety Timeout 5s
-
-
-
                 if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
-
-
-
                 pingTimeoutRef.current = setTimeout(() => {
-
-
-
                     console.log(`${TAG} Ping Timeout!`);
-
-
-
                     if (isPinging.current) forceStopPing();
-
-
-
                 }, 5000);
-
-
-
-
-
-
-
                 await sendCommand({ type: 22 });
-
-
-
                 return;
-
-
-
             }
-
-
-
         }
-
-
-
         setDevice(null); setConnected(false);
-
-
-
         await scanForDevices();
-
-
-
     };
-
-
-
-
-
-
 
     const disconnect = async () => {
-
-
-
         console.log(`${TAG} Manual Disconnect`);
-
-
-
         if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
-
-
-
-
-
-
-
 // 1. UI Reset
-
-
-
         setConnected(false);
         setState('idle');
         setDevice(null);
@@ -1412,8 +794,6 @@ export const useTrainingBle = () => {
                 return false;
             }
 
-            // Відправляємо CMD 22 (PING), але НЕ змінюємо state на 'discovering'
-            // Це дозволить отримати відповідь від Мастера без скидання UI датчиків
             console.log(`${TAG} Pinging Master Node...`);
             setPingProgress('Перевірка зв\'язку...');
 

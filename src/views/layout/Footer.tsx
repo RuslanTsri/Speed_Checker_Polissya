@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-// 👇 1. Імпортуємо бібліотеку іконок
 import { Ionicons } from '@expo/vector-icons';
 
 export type TabType = 'HOME' | 'PLAYERS' | 'SESSIONS' | 'SETTINGS';
@@ -13,7 +12,7 @@ interface FooterProps {
 export const Footer = ({ activeTab, onSwitch }: FooterProps) => {
     const tabs: { id: TabType; label: string; iconName: keyof typeof Ionicons.glyphMap }[] = [
         { id: 'HOME', label: 'Головна', iconName: 'home' },
-        { id: 'PLAYERS', label: 'Гравці', iconName: 'people' },
+        { id: 'PLAYERS', label: 'Команди', iconName: 'people' },
         { id: 'SESSIONS', label: 'Сесії', iconName: 'stats-chart' },
         { id: 'SETTINGS', label: 'Налашт.', iconName: 'settings' },
     ];

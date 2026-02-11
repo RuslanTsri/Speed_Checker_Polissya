@@ -7,7 +7,7 @@ import { Footer, TabType } from './Footer';
 interface MainLayoutProps {
     children: React.ReactNode;
     currentTab: TabType;
-    onSwitchTab: (tab: TabType) => void;
+    onSwitchTab: (tab: TabType, params?: any) => void;
     onLogout?: () => void;
     onOpenPinChange?: () => void;
 }

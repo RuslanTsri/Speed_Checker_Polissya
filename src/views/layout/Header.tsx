@@ -21,7 +21,7 @@ export const Header = ({ onGoHome, onLogout, onChangePin }: HeaderProps) => {
 
             <TouchableOpacity onPress={onGoHome} activeOpacity={0.6}>
                 <Text className="text-yellow-400 text-lg font-black tracking-[0.2em] uppercase italic">
-                    Telemetry System
+                    Tempo Metrics
                 </Text>
             </TouchableOpacity>
 

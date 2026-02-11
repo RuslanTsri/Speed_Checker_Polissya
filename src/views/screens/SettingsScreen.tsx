@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-
 import { BottomModal } from '../components/BottomModal';
 import { useSettings } from '../../hooks/useSettings';
 
@@ -30,7 +29,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
         updateProfile,
         toggleNotif,
         toggleSound,
-        clearCache,
         checkMasterConnection,
         bleStatus
     } = useSettings();
@@ -40,19 +38,19 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
     const [tempRole, setTempRole] = useState('');
     const [tempAvatar, setTempAvatar] = useState('');
 
+    // Стан для теми (поки що локальний)
+    const [isDarkMode, setIsDarkMode] = useState(true);
+
     let connectionText = "Відключено";
     let connectionColor = "text-red-400";
-    let iconColor = "#ef4444";
 
     if (bleStatus.connected) {
         if (bleStatus.pingProgress) {
             connectionText = bleStatus.pingProgress;
             connectionColor = "text-yellow-400";
-            iconColor = "#facc15";
         } else {
             connectionText = bleStatus.deviceName || 'Підключено';
             connectionColor = "text-green-400";
-            iconColor = "#4ade80";
         }
     }
 
@@ -88,27 +86,30 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
         setTimeout(() => { onOpenPinChange(); }, 300);
     };
 
+    const handleFAQ = () => {
+        Alert.alert("FAQ", "Тут буде довідкова інформація та поширені запитання.");
+    };
+
     if (isLoading) {
         return (
-            <View className="flex-1 bg-slate-900 items-center justify-center">
+            <View className="flex-1 bg-slate-950 items-center justify-center">
                 <ActivityIndicator size="large" color="#facc15" />
             </View>
         );
     }
 
-    const SettingItem = ({ icon, title, value, isSwitch = false, onPress, color = "text-white", valueColor = "text-slate-500" }: any) => (
+    // Компонент пункту налаштувань (оновлений дизайн)
+    const SettingItem = ({ icon, title, value, isSwitch = false, switchValue, onSwitchChange, onPress, valueColor = "text-slate-500", destructive = false }: any) => (
         <TouchableOpacity
             activeOpacity={isSwitch ? 1 : 0.7}
             onPress={isSwitch ? () => {} : onPress}
-            className="flex-row items-center justify-between py-4 border-b border-slate-700/50 last:border-0"
+            className="flex-row items-center justify-between py-4 border-b border-slate-800 last:border-0"
         >
-            <View className="flex-row items-center flex-1 mr-2">
-                <View className="mr-4 w-6 items-center">{icon}</View>
-                <Text
-                    className={`text-base font-medium ${color}`}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                >
+            <View className="flex-row items-center flex-1 mr-4">
+                <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${destructive ? 'bg-red-500/10' : 'bg-slate-800 border border-slate-700'}`}>
+                    {icon}
+                </View>
+                <Text className={`text-base font-bold ${destructive ? 'text-red-400' : 'text-white'}`}>
                     {title}
                 </Text>
             </View>
@@ -116,120 +117,164 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
             {isSwitch ? (
                 <Switch
                     trackColor={{ false: "#334155", true: "#facc15" }}
-                    thumbColor={value ? "#fff" : "#94a3b8"}
-                    onValueChange={onPress}
-                    value={value}
+                    thumbColor={switchValue ? "#fff" : "#94a3b8"}
+                    onValueChange={onSwitchChange}
+                    value={switchValue}
                 />
             ) : (
-                <View className="flex-row items-center shrink-0">
+                <View className="flex-row items-center">
                     {value && (
-                        <Text
-                            className={`${valueColor} mr-2 text-sm font-bold text-right`}
-                            style={{ maxWidth: 160 }}
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
-                        >
+                        <Text className={`${valueColor} mr-2 text-sm font-medium`}>
                             {value}
                         </Text>
                     )}
-                    <Feather name="chevron-right" size={20} color="#475569" />
+                    <Feather name="chevron-right" size={20} color={destructive ? "#ef4444" : "#64748b"} />
                 </View>
             )}
         </TouchableOpacity>
     );
 
-    const Section = ({ title, children }: any) => (
-        <View className="mb-6">
-            <Text className="text-slate-500 uppercase text-xs font-bold tracking-widest mb-2 ml-2">{title}</Text>
-            <View className="bg-slate-800 rounded-2xl px-4 border border-slate-700 shadow-sm">{children}</View>
-        </View>
-    );
-
     return (
-        <View className="flex-1 bg-slate-900">
-            <ScrollView className="flex-1 px-4 pt-4">
-                {/* ПРОФІЛЬ */}
-                <View className="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex-row items-center mb-8 shadow-md">
-                    <View className="w-16 h-16 bg-slate-700 rounded-full items-center justify-center mr-4 border-2 border-slate-600 overflow-hidden">
+        <View className="flex-1 bg-slate-950 pt-4">
+            {/* Header */}
+            <View className="flex-row items-center justify-between px-4 mb-6">
+                <Text className="text-white text-3xl font-bold">Налаштування</Text>
+            </View>
+
+            <ScrollView className="flex-1 px-4">
+
+                {/* 1. ПРОФІЛЬ (Картка) */}
+                <TouchableOpacity
+                    onPress={openEditModal}
+                    className="bg-slate-900 p-5 rounded-3xl border border-slate-800 flex-row items-center mb-8 shadow-sm active:bg-slate-800"
+                >
+                    <View className="w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-700 mr-4 overflow-hidden">
                         <Image source={{ uri: userProfile.avatar }} className="w-full h-full" resizeMode="cover" />
                     </View>
                     <View className="flex-1">
-                        <Text className="text-white text-xl font-bold" numberOfLines={1}>{userProfile.name}</Text>
-                        <Text className="text-slate-400 text-sm" numberOfLines={1}>{userProfile.role}</Text>
-                        <View className="flex-row mt-2">
-                            <View className={`px-2 py-0.5 rounded mr-2 border ${bleStatus.connected ? 'bg-green-500/20 border-green-500/30' : 'bg-slate-700 border-slate-600'}`}>
-                                <Text className={`${bleStatus.connected ? 'text-green-400' : 'text-slate-500'} text-[10px] font-bold uppercase`}>
-                                    {bleStatus.connected ? 'ONLINE' : 'OFFLINE'}
-                                </Text>
-                            </View>
+                        <Text className="text-white text-xl font-bold mb-1">{userProfile.name}</Text>
+                        <Text className="text-slate-400 text-sm mb-2">{userProfile.role}</Text>
+
+                        <View className="flex-row items-center">
+                            <View className={`w-2 h-2 rounded-full mr-2 ${bleStatus.connected ? 'bg-green-400' : 'bg-slate-500'}`} />
+                            <Text className={`text-xs font-bold ${bleStatus.connected ? 'text-green-400' : 'text-slate-500'}`}>
+                                {bleStatus.connected ? 'ONLINE' : 'OFFLINE'}
+                            </Text>
                         </View>
                     </View>
-                    <TouchableOpacity onPress={openEditModal} className="bg-slate-700 p-3 rounded-xl border border-slate-600 active:bg-slate-600">
+                    <View className="bg-slate-800 p-3 rounded-xl border border-slate-700">
                         <Feather name="edit-2" size={18} color="#facc15" />
-                    </TouchableOpacity>
-                </View>
+                    </View>
+                </TouchableOpacity>
 
-                {/* ДАТЧИКИ ТА ОБЛАДНАННЯ */}
-                <Section title="Датчики та Обладнання">
+                {/* 2. ПІДКЛЮЧЕННЯ */}
+                <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4 ml-2">Обладнання</Text>
+                <View className="bg-slate-900 rounded-3xl px-5 py-2 border border-slate-800 mb-8">
                     <SettingItem
-                        icon={
-                            bleStatus.pingProgress ? <ActivityIndicator size="small" color="#facc15" /> :
-                                <Feather name="wifi" size={20} color={iconColor} />
-                        }
+                        icon={bleStatus.pingProgress ? <ActivityIndicator size="small" color="#facc15" /> : <Feather name="bluetooth" size={20} color="#facc15" />}
                         title="З'єднання (STM32)"
                         value={connectionText}
                         valueColor={connectionColor}
                         onPress={handleConnectionPress}
                     />
+                    <SettingItem
+                        icon={<Ionicons name="battery-charging" size={20} color="#4ade80" />}
+                        title="Заряд датчиків"
+                        value="98%"
+                        valueColor="text-green-400"
+                        onPress={() => {}}
+                    />
+                </View>
 
-                    <SettingItem icon={<Ionicons name="battery-charging" size={20} color="#facc15" />} title="Заряд датчиків" value="В розробці" onPress={() => {}} />
-                </Section>
+                {/* 3. ЗАГАЛЬНІ */}
+                <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4 ml-2">Система</Text>
+                <View className="bg-slate-900 rounded-3xl px-5 py-2 border border-slate-800 mb-8">
+                    <SettingItem
+                        icon={<Feather name="bell" size={20} color="#94a3b8" />}
+                        title="Сповіщення"
+                        isSwitch
+                        switchValue={isNotifEnabled}
+                        onSwitchChange={toggleNotif}
+                    />
+                    <SettingItem
+                        icon={<Feather name={isDarkMode ? "moon" : "sun"} size={20} color="#94a3b8" />}
+                        title="Темна тема"
+                        isSwitch
+                        switchValue={isDarkMode}
+                        onSwitchChange={() => setIsDarkMode(!isDarkMode)}
+                    />
+                    <SettingItem
+                        icon={<Feather name="help-circle" size={20} color="#60a5fa" />}
+                        title="FAQ та Допомога"
+                        onPress={handleFAQ}
+                    />
+                </View>
 
-                <Section title="Система">
-                    <SettingItem icon={<Feather name="bell" size={20} color="#94a3b8" />} title="Сповіщення" isSwitch value={isNotifEnabled} onPress={toggleNotif} />
+                {/* 4. ІНШЕ */}
+                <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4 ml-2">Інше</Text>
+                <View className="bg-slate-900 rounded-3xl px-5 py-2 border border-slate-800 mb-10">
+                    <SettingItem
+                        icon={<Feather name="file-text" size={20} color="#94a3b8" />}
+                        title="Експорт усіх даних (PDF)"
+                        onPress={() => Alert.alert("Експорт", "Функція в розробці")}
+                    />
+                    <SettingItem
+                        icon={<Feather name="log-out" size={20} color="#ef4444" />}
+                        title="Вийти з акаунту"
+                        destructive
+                        onPress={onLogout}
+                    />
+                </View>
 
-                </Section>
-
-                <Section title="Керування даними">
-                    <SettingItem icon={<Feather name="file-text" size={20} color="#94a3b8" />} title="Експорт у PDF" onPress={() => Alert.alert("Експорт", "Звіт формується...")} />
-
-                </Section>
-
-                <TouchableOpacity onPress={onLogout} className="bg-red-900/20 border border-red-900 p-4 rounded-xl flex-row justify-center items-center mb-10 mt-2">
-                    <Feather name="log-out" size={20} color="#ef4444" style={{ marginRight: 8 }} />
-                    <Text className="text-red-500 font-bold uppercase tracking-widest">Вийти з акаунту</Text>
-                </TouchableOpacity>
             </ScrollView>
 
-            <BottomModal visible={isEditModalVisible} onClose={() => setEditModalVisible(false)} title="Редагування профілю">
+            {/* МОДАЛКА РЕДАГУВАННЯ ПРОФІЛЮ */}
+            <BottomModal visible={isEditModalVisible} onClose={() => setEditModalVisible(false)} title="Редагування">
                 <View className="items-center mb-6">
-                    <View className="w-24 h-24 rounded-full bg-slate-800 border-2 border-yellow-400 items-center justify-center overflow-hidden mb-4">
+                    <View className="w-24 h-24 rounded-full bg-slate-900 border-2 border-yellow-400 items-center justify-center overflow-hidden mb-6">
                         <Image source={{ uri: tempAvatar || userProfile.avatar }} className="w-full h-full" />
                     </View>
-                    <Text className="text-slate-400 text-xs uppercase font-bold mb-2">Оберіть аватар</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+
+                    <Text className="text-slate-400 text-xs uppercase font-bold mb-3 tracking-widest">Оберіть аватар</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row mb-6">
                         {PRESET_AVATARS.map((avatarUrl, index) => (
                             <TouchableOpacity
                                 key={index}
                                 onPress={() => setTempAvatar(avatarUrl)}
-                                className={`w-14 h-14 rounded-full mr-3 border-2 overflow-hidden ${tempAvatar === avatarUrl ? 'border-yellow-400 opacity-100' : 'border-slate-700 opacity-50'}`}
+                                className={`w-14 h-14 rounded-full mr-3 border-2 overflow-hidden ${tempAvatar === avatarUrl ? 'border-yellow-400 opacity-100' : 'border-slate-800 opacity-40'}`}
                             >
                                 <Image source={{ uri: avatarUrl }} className="w-full h-full" />
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
+
+                    <View className="w-full">
+                        <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-2 ml-1">ПІБ Тренера</Text>
+                        <TextInput
+                            value={tempName}
+                            onChangeText={setTempName}
+                            className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 mb-4 text-lg"
+                            placeholderTextColor="#475569"
+                        />
+
+                        <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-2 ml-1">Посада</Text>
+                        <TextInput
+                            value={tempRole}
+                            onChangeText={setTempRole}
+                            className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 mb-8 text-lg"
+                            placeholderTextColor="#475569"
+                        />
+
+                        <TouchableOpacity onPress={handleSaveProfile} className="bg-yellow-400 p-5 rounded-2xl items-center mb-3 shadow-lg shadow-yellow-400/20">
+                            <Text className="text-slate-900 font-bold text-lg uppercase">Зберегти</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={startPinChange} className="bg-slate-900 border border-slate-800 p-5 rounded-2xl items-center flex-row justify-center">
+                            <Feather name="lock" size={18} color="#94a3b8" style={{ marginRight: 8 }} />
+                            <Text className="text-slate-400 font-bold uppercase tracking-wider">Змінити PIN-код</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-                <Text className="text-slate-400 text-xs uppercase font-bold mb-2 ml-1">ПІБ Тренера</Text>
-                <TextInput value={tempName} onChangeText={setTempName} className="bg-slate-800 text-white p-4 rounded-xl border border-slate-700 mb-4 text-lg" placeholderTextColor="#475569" />
-                <Text className="text-slate-400 text-xs uppercase font-bold mb-2 ml-1">Посада</Text>
-                <TextInput value={tempRole} onChangeText={setTempRole} className="bg-slate-800 text-white p-4 rounded-xl border border-slate-700 mb-6 text-lg" placeholderTextColor="#475569" />
-                <TouchableOpacity onPress={handleSaveProfile} className="bg-yellow-400 p-4 rounded-xl items-center mb-3">
-                    <Text className="text-slate-900 font-bold text-lg uppercase">Зберегти зміни</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={startPinChange} className="bg-slate-800 border border-slate-700 p-4 rounded-xl items-center flex-row justify-center">
-                    <Feather name="lock" size={18} color="#94a3b8" style={{ marginRight: 8 }} />
-                    <Text className="text-slate-400 font-bold uppercase tracking-wider">Змінити PIN-код</Text>
-                </TouchableOpacity>
             </BottomModal>
         </View>
     );

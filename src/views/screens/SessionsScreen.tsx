@@ -1,18 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-// Імпортуємо наші нові тулзи
 import SessionsGeneral from '../tools/SessionsGeneral';
 import SessionsTeam, { TeamSession } from '../tools/SessionsTeam';
 import SessionDetails from '../tools/SessionDetails';
 
-export default function SessionsScreen() {
-    const [mainTab, setMainTab] = useState<'GENERAL' | 'TEAM'>('TEAM');
+export type SessionTabType = 'GENERAL' | 'TEAM';
+
+interface SessionsScreenProps {
+    initialTab?: SessionTabType;
+}
+
+export default function SessionsScreen({ initialTab }: SessionsScreenProps) {
+    const [mainTab, setMainTab] = useState<SessionTabType>(initialTab || 'TEAM');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTeamSession, setSelectedTeamSession] = useState<TeamSession | null>(null);
 
-    // Якщо обрано конкретну сесію, рендеримо тільки екран деталей
+    useEffect(() => {
+        setMainTab(initialTab || 'TEAM');
+    }, [initialTab]);
+
     if (selectedTeamSession) {
         return (
             <SessionDetails
@@ -22,7 +30,6 @@ export default function SessionsScreen() {
         );
     }
 
-    // Інакше рендеримо загальний екран з табами
     return (
         <View className="flex-1 bg-slate-950 pt-4">
             {/* Головний Header */}
@@ -30,7 +37,6 @@ export default function SessionsScreen() {
                 <Text className="text-white text-3xl font-bold">Звіти</Text>
             </View>
 
-            {/* Головні Таби */}
             <View className="flex-row px-4 mb-6 space-x-3">
                 <TouchableOpacity
                     onPress={() => setMainTab('TEAM')}
@@ -47,7 +53,6 @@ export default function SessionsScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Пошук */}
             <View className="px-4 mb-6">
                 <View className="bg-slate-900 flex-row items-center px-4 rounded-2xl border border-slate-800 h-14">
                     <Feather name="search" size={20} color="#64748b" className="mr-3" />
@@ -61,7 +66,6 @@ export default function SessionsScreen() {
                 </View>
             </View>
 
-            {/* Контент залежно від обраного таба */}
             {mainTab === 'TEAM' ? (
                 <SessionsTeam
                     searchQuery={searchQuery}

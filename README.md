@@ -20,4 +20,8 @@
 ### 6. Робота з дизайнером
 * [ ] Коли дизайнер завершить свою роботу. Перенести Frontend частину з Figma в наш проект.
 
+
+### Додатково
+* [ ] Пофіксити кнопку стоп в src/views/tools/BluetoothTool.tsx від зависань програми 
+
 #### GitHub: https://github.com/RuslanTsri/Speed_Checker_Polissya

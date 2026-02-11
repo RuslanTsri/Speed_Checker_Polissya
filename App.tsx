@@ -10,17 +10,17 @@ import { BottomModal } from './src/views/components/BottomModal';
 
 import AuthScreen from './src/views/screens/AuthScreen';
 import PlayersScreen from './src/views/screens/PlayersScreen';
-import SessionsScreen from './src/views/screens/SessionsScreen';
+import SessionsScreen, { SessionTabType } from './src/views/screens/SessionsScreen';
 import SettingsScreen from './src/views/screens/SettingsScreen';
 import HomeScreen from './src/views/screens/HomeScreen';
-import BluetoothTool from './src/views/tools/BluetoothTool'; // ✅ 1. ІМПОРТУЄМО ІНСТРУМЕНТ
+import BluetoothTool from './src/views/tools/BluetoothTool';
 
 import { BleProvider } from './src/context/BleContext';
 
 export default function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    // Додаємо 'TOOLS' до типу, або просто ігноруємо TS тут, якщо тип жорсткий
     const [currentTab, setCurrentTab] = useState<TabType | 'TOOLS'>('HOME');
+    const [sessionsInitialTab, setSessionsInitialTab] = useState<SessionTabType | undefined>(undefined);
 
     // --- СТАН PIN-КОДУ ---
     const [isPinModalVisible, setPinModalVisible] = useState(false);
@@ -28,7 +28,14 @@ export default function App() {
     const [newPin, setNewPin] = useState('');
     const [confirmPin, setConfirmPin] = useState('');
     const OLD_PIN_MOCK = "1111";
-
+    const handleNavigate = (tab: TabType | 'TOOLS', params?: any) => {
+        if (tab === 'SESSIONS') {
+            setSessionsInitialTab(params?.subTab);
+        } else {
+            setSessionsInitialTab(undefined);
+        }
+        setCurrentTab(tab);
+    };
     const handleOpenPinModal = () => {
         setOldPin(''); setNewPin(''); setConfirmPin(''); setPinModalVisible(true);
     };
@@ -44,11 +51,12 @@ export default function App() {
 
     const renderScreen = () => {
         switch (currentTab) {
-            case 'HOME': return <HomeScreen />;
+            case 'HOME':
+                // Правильно: передаємо нашу розумну функцію-обгортку
+                return <HomeScreen onNavigate={handleNavigate} />;
             case 'PLAYERS': return <PlayersScreen />;
-            case 'SESSIONS': return <SessionsScreen />;
-
-            // ✅ 2. ДОДАЄМО КЕЙС ДЛЯ BLUETOOTH ІНСТРУМЕНТУ
+            case 'SESSIONS':
+                return <SessionsScreen key={sessionsInitialTab} initialTab={sessionsInitialTab} />;
             case 'TOOLS':
                 // @ts-ignore
                 return <BluetoothTool onBack={() => setCurrentTab('SETTINGS')} />;
@@ -58,7 +66,6 @@ export default function App() {
                 return <SettingsScreen
                     onLogout={handleLogout}
                     onOpenPinChange={handleOpenPinModal}
-                    // ✅ 3. ПЕРЕДАЄМО ФУНКЦІЮ ПЕРЕХОДУ
                     onOpenBluetooth={() => setCurrentTab('TOOLS')}
                 />;
             default: return null;

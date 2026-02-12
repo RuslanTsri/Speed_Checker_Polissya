@@ -1,14 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { AppModal } from '../../components/AppModal'; // Використовуємо твою існуючу модалку
-
-// Мокові гравці
-const DUMMY_PLAYERS = Array.from({ length: 10 }).map((_, i) => ({
-    id: i.toString(),
-    name: `Гравець ${i + 1}`,
-    number: i + 1
-}));
+import { usePlayerSelection } from '../../../hooks/tempoMetrics/usePlayerSelection';
 
 interface Props {
     onBack: () => void;
@@ -16,20 +9,13 @@ interface Props {
 }
 
 export default function PlayerSelector({ onBack, onSelect }: Props) {
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [isAddModalVisible, setAddModalVisible] = useState(false);
+    const {
+        players, selectedIds, toggleSelection, toggleAll,
+        isEmpty, setAddModalVisible, handleImport
+    } = usePlayerSelection();
 
-    const toggleSelection = (id: string) => {
-        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    };
-
-    const toggleAll = () => {
-        if (selectedIds.length === DUMMY_PLAYERS.length) setSelectedIds([]);
-        else setSelectedIds(DUMMY_PLAYERS.map(p => p.id));
-    };
-
-    // Якщо гравців 0 (порожній масив), показуємо екран заглушку (Скрін 5)
-    if (DUMMY_PLAYERS.length === 0) {
+    // Екран-заглушка (Empty State)
+    if (isEmpty) {
         return (
             <View className="flex-1 bg-slate-950 pt-4 px-4">
                 <View className="flex-row items-center justify-between mb-6">
@@ -40,7 +26,7 @@ export default function PlayerSelector({ onBack, onSelect }: Props) {
                 <View className="items-center justify-center flex-1 mb-20">
                     <Text className="text-slate-500 font-bold uppercase tracking-widest mb-8">Додано: 0 гравців</Text>
                     <View className="flex-row gap-4 w-full">
-                        <TouchableOpacity onPress={() => Alert.alert("Імпорт", "...")} className="flex-1 bg-slate-900 border border-slate-800 p-6 rounded-3xl items-start">
+                        <TouchableOpacity onPress={handleImport} className="flex-1 bg-slate-900 border border-slate-800 p-6 rounded-3xl items-start">
                             <View className="bg-emerald-500/10 p-3 rounded-xl mb-4"><Feather name="file-text" size={24} color="#34d399" /></View>
                             <Text className="text-white font-bold text-lg mb-1">Імпорт з файлу</Text>
                             <Text className="text-slate-500 text-xs">CSV або Excel</Text>
@@ -56,7 +42,7 @@ export default function PlayerSelector({ onBack, onSelect }: Props) {
                     <Text className="text-slate-600 font-bold text-lg uppercase">Продовжити</Text>
                 </TouchableOpacity>
             </View>
-        )
+        );
     }
 
     return (
@@ -68,7 +54,7 @@ export default function PlayerSelector({ onBack, onSelect }: Props) {
             </View>
 
             <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-blue-500 font-bold text-base">ОБРАНО: <Text className="text-white">{selectedIds.length}</Text> з {DUMMY_PLAYERS.length}</Text>
+                <Text className="text-blue-500 font-bold text-base">ОБРАНО: <Text className="text-white">{selectedIds.length}</Text> з {players.length}</Text>
             </View>
 
             <View className="bg-slate-900 flex-row items-center px-4 rounded-2xl border border-slate-800 h-14 mb-4">
@@ -79,12 +65,12 @@ export default function PlayerSelector({ onBack, onSelect }: Props) {
             <View className="flex-row justify-between mb-4 px-1">
                 <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Список гравців</Text>
                 <TouchableOpacity onPress={toggleAll}>
-                    <Text className="text-yellow-400 text-[10px] font-bold uppercase tracking-widest">{selectedIds.length === DUMMY_PLAYERS.length ? 'Зняти вибір з усіх' : 'Обрати всіх'}</Text>
+                    <Text className="text-yellow-400 text-[10px] font-bold uppercase tracking-widest">{selectedIds.length === players.length ? 'Зняти вибір з усіх' : 'Обрати всіх'}</Text>
                 </TouchableOpacity>
             </View>
 
             <FlatList
-                data={DUMMY_PLAYERS}
+                data={players}
                 keyExtractor={item => item.id}
                 contentContainerStyle={{ paddingBottom: 100 }}
                 renderItem={({ item }) => {

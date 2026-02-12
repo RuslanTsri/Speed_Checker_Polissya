@@ -1,12 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-
-// Мокові дані (пізніше заміниш на реальні з бази/контексту)
-const DUMMY_TEAMS = [
-    { id: '1', name: 'ФК «Динамо» U17', players: 24, lastSession: 'Вчора' },
-    { id: '2', name: 'СДЮШОР «Зміна»', players: 0, lastSession: null },
-];
+import { useTeamSelection } from '../../../hooks/tempoMetrics/useTeamSelection';
 
 interface Props {
     onBack: () => void;
@@ -14,8 +9,7 @@ interface Props {
 }
 
 export default function TeamSelector({ onBack, onSelect }: Props) {
-    const [search, setSearch] = useState('');
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const { teams, search, setSearch, selectedId, setSelectedId } = useTeamSelection();
 
     return (
         <View className="flex-1 bg-slate-950 pt-4 px-4">
@@ -44,7 +38,7 @@ export default function TeamSelector({ onBack, onSelect }: Props) {
 
             {/* List */}
             <FlatList
-                data={DUMMY_TEAMS}
+                data={teams}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => (
                     <TouchableOpacity

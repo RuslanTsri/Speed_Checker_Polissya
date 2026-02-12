@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     View,
     Text,
@@ -11,23 +11,22 @@ import {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 
+// 🔥 Hook
+import { useAuthScreen } from '../../hooks/useAuthScreen';
+
 interface AuthScreenProps {
     onLogin: () => void;
 }
 
 export default function AuthScreen({ onLogin }: AuthScreenProps) {
-    const [isRegistering, setIsRegistering] = useState(false);
-    const [name, setName] = useState('');
-    const [pin, setPin] = useState('');
-
-    const handleSubmit = () => {
-        // Тут пізніше буде перевірка в базі даних
-        if (pin.length === 4) {
-            onLogin();
-        } else {
-            alert("PIN має бути 4 цифри");
-        }
-    };
+    // Вся логіка тут
+    const {
+        isRegistering,
+        name, setName,
+        pin, setPin,
+        handleSubmit,
+        toggleMode
+    } = useAuthScreen(onLogin);
 
     return (
         <KeyboardAvoidingView
@@ -41,6 +40,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                 className="px-6"
                 showsVerticalScrollIndicator={false}
             >
+                {/* 1. LOGO & TITLE */}
                 <View className="items-center mb-12">
                     <View className="w-28 h-28 bg-slate-900 rounded-[32px] items-center justify-center mb-8 border border-slate-800 shadow-2xl shadow-black">
                         <Ionicons name="flash" size={56} color="#facc15" />
@@ -56,8 +56,10 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     </Text>
                 </View>
 
+                {/* 2. FORM */}
                 <View className="w-full space-y-5">
 
+                    {/* Name Input (Only Registration) */}
                     {isRegistering && (
                         <View>
                             <Text className="text-slate-500 ml-3 mb-2 text-[10px] uppercase font-bold tracking-widest">
@@ -77,6 +79,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                         </View>
                     )}
 
+                    {/* PIN Input */}
                     <View>
                         <Text className="text-slate-500 ml-3 mb-2 text-[10px] uppercase font-bold tracking-widest">
                             {isRegistering ? 'Створіть PIN (4 цифри)' : 'Введіть PIN-код'}
@@ -96,6 +99,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                         </View>
                     </View>
 
+                    {/* Action Button */}
                     <TouchableOpacity
                         onPress={handleSubmit}
                         activeOpacity={0.8}
@@ -113,7 +117,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     <Text className="text-slate-500 font-medium">
                         {isRegistering ? 'Вже є акаунт? ' : 'Новий пристрій? '}
                     </Text>
-                    <TouchableOpacity onPress={() => setIsRegistering(!isRegistering)} className="py-2">
+                    <TouchableOpacity onPress={toggleMode} className="py-2">
                         <Text className="text-yellow-400 font-bold border-b border-yellow-400/30">
                             {isRegistering ? 'Увійти' : 'Створити акаунт'}
                         </Text>

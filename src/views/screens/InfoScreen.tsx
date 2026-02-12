@@ -1,19 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-
-interface Player {
-    id: string;
-    name: string;
-    number: string;
-    position: 'GK' | 'DEF' | 'MID' | 'FWD';
-    photoUrl: string;
-    stats?: {
-        bestTime: string;
-        lastTime: string;
-        totalSessions: number;
-    }
-}
+import { usePlayerInfo, Player } from '../../hooks/players/usePlayerInfo';
 
 interface InfoScreenProps {
     player: Player;
@@ -22,22 +10,31 @@ interface InfoScreenProps {
 }
 
 export default function InfoScreen({ player, onBack, onDelete }: InfoScreenProps) {
+    // Вся логіка тут
+    const {
+        positionLabel,
+        handleDeletePress,
+        handleBack
+    } = usePlayerInfo(player, onBack, onDelete);
+
     return (
         <ScrollView className="flex-1 bg-slate-900 pt-4 px-4">
+            {/* Header */}
             <View className="flex-row justify-between items-center mb-6">
-                <TouchableOpacity onPress={onBack} className="flex-row items-center">
+                <TouchableOpacity onPress={handleBack} className="flex-row items-center">
                     <Feather name="arrow-left" size={24} color="#facc15" />
                     <Text className="text-yellow-400 font-bold ml-2 text-lg">Назад</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    onPress={() => onDelete(player.id)}
+                    onPress={handleDeletePress}
                     className="bg-slate-800 p-2 rounded-lg border border-slate-700"
                 >
                     <Feather name="trash-2" size={20} color="#ef4444" />
                 </TouchableOpacity>
             </View>
 
+            {/* Main Info */}
             <View className="items-center mb-8">
                 <View className="w-48 h-48 rounded-full border-4 border-yellow-400 shadow-2xl shadow-yellow-400/20 items-center justify-center overflow-hidden mb-6 bg-slate-800">
                     <Image source={{ uri: player.photoUrl }} className="w-full h-full" resizeMode="cover" />
@@ -53,7 +50,7 @@ export default function InfoScreen({ player, onBack, onDelete }: InfoScreenProps
                     </View>
                     <View className="bg-yellow-400 px-6 py-3 rounded-2xl items-center min-w-[90px] shadow-lg shadow-yellow-400/20">
                         <Text className="text-slate-900 text-xs uppercase font-bold mb-1">Позиція</Text>
-                        <Text className="text-slate-900 font-black text-3xl">{player.position}</Text>
+                        <Text className="text-slate-900 font-black text-2xl">{positionLabel}</Text>
                     </View>
                 </View>
             </View>
@@ -62,6 +59,7 @@ export default function InfoScreen({ player, onBack, onDelete }: InfoScreenProps
 
             <Text className="text-slate-400 font-bold uppercase text-xs tracking-widest mb-4 mt-4">Особисті показники</Text>
 
+            {/* Stats Grid */}
             <View className="flex-row justify-between mb-4">
                 <View className="w-[48%] bg-slate-800 p-5 rounded-3xl border border-slate-700 items-center shadow-sm">
                     <View className="w-12 h-12 bg-green-500/10 rounded-full items-center justify-center mb-3">
@@ -80,6 +78,7 @@ export default function InfoScreen({ player, onBack, onDelete }: InfoScreenProps
                 </View>
             </View>
 
+            {/* Total Activity */}
             <View className="bg-slate-800 p-5 rounded-3xl border border-slate-700 flex-row justify-between items-center mb-20 shadow-sm">
                 <View className="flex-row items-center">
                     <View className="w-10 h-10 bg-slate-700 rounded-full items-center justify-center mr-4">

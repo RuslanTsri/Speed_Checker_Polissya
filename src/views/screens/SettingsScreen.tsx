@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, TextInput, Image, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { BottomModal } from '../components/BottomModal';
-import { useSettings } from '../../hooks/useSettings';
+import { useSettingsScreen } from '../../hooks/useSettingsScreen';
 
 const PRESET_AVATARS = [
     'https://img.icons8.com/color/480/wolf.png',
@@ -21,74 +21,33 @@ interface SettingsScreenProps {
 }
 
 export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBluetooth }: SettingsScreenProps) {
+    // 🔥 Вся логіка тепер тут
     const {
         isLoading,
         userProfile,
+        bleStatus,
+        connectionText,
+        connectionColor,
         isNotifEnabled,
-        isSoundEnabled,
-        updateProfile,
+        isDarkMode,
+        setIsDarkMode,
         toggleNotif,
-        toggleSound,
-        checkMasterConnection,
-        bleStatus
-    } = useSettings();
 
-    const [isEditModalVisible, setEditModalVisible] = useState(false);
-    const [tempName, setTempName] = useState('');
-    const [tempRole, setTempRole] = useState('');
-    const [tempAvatar, setTempAvatar] = useState('');
+        // Modal State
+        isEditModalVisible,
+        setEditModalVisible,
+        tempName, setTempName,
+        tempRole, setTempRole,
+        tempAvatar, setTempAvatar,
 
-    // Стан для теми (поки що локальний)
-    const [isDarkMode, setIsDarkMode] = useState(true);
-
-    let connectionText = "Відключено";
-    let connectionColor = "text-red-400";
-
-    if (bleStatus.connected) {
-        if (bleStatus.pingProgress) {
-            connectionText = bleStatus.pingProgress;
-            connectionColor = "text-yellow-400";
-        } else {
-            connectionText = bleStatus.deviceName || 'Підключено';
-            connectionColor = "text-green-400";
-        }
-    }
-
-    const handleConnectionPress = () => {
-        if (bleStatus.connected) {
-            checkMasterConnection();
-        } else {
-            Alert.alert(
-                "Bluetooth вимкнено",
-                "Перейти до меню підключення?",
-                [
-                    { text: "Ні", style: "cancel" },
-                    { text: "Так", onPress: onOpenBluetooth }
-                ]
-            );
-        }
-    };
-
-    const openEditModal = () => {
-        setTempName(userProfile.name);
-        setTempRole(userProfile.role);
-        setTempAvatar(userProfile.avatar);
-        setEditModalVisible(true);
-    };
-
-    const handleSaveProfile = async () => {
-        const success = await updateProfile(tempName, tempRole, tempAvatar);
-        if (success) setEditModalVisible(false);
-    };
-
-    const startPinChange = () => {
-        setEditModalVisible(false);
-        setTimeout(() => { onOpenPinChange(); }, 300);
-    };
-
-    const handleFAQ = () => {
-        Alert.alert("FAQ", "Тут буде довідкова інформація та поширені запитання.");
-    };
+        // Handlers
+        handleConnectionPress,
+        openEditModal,
+        handleSaveProfile,
+        startPinChange,
+        handleFAQ,
+        handleExport
+    } = useSettingsScreen({ onOpenPinChange, onOpenBluetooth });
 
     if (isLoading) {
         return (
@@ -97,42 +56,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
             </View>
         );
     }
-
-    // Компонент пункту налаштувань (оновлений дизайн)
-    const SettingItem = ({ icon, title, value, isSwitch = false, switchValue, onSwitchChange, onPress, valueColor = "text-slate-500", destructive = false }: any) => (
-        <TouchableOpacity
-            activeOpacity={isSwitch ? 1 : 0.7}
-            onPress={isSwitch ? () => {} : onPress}
-            className="flex-row items-center justify-between py-4 border-b border-slate-800 last:border-0"
-        >
-            <View className="flex-row items-center flex-1 mr-4">
-                <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${destructive ? 'bg-red-500/10' : 'bg-slate-800 border border-slate-700'}`}>
-                    {icon}
-                </View>
-                <Text className={`text-base font-bold ${destructive ? 'text-red-400' : 'text-white'}`}>
-                    {title}
-                </Text>
-            </View>
-
-            {isSwitch ? (
-                <Switch
-                    trackColor={{ false: "#334155", true: "#facc15" }}
-                    thumbColor={switchValue ? "#fff" : "#94a3b8"}
-                    onValueChange={onSwitchChange}
-                    value={switchValue}
-                />
-            ) : (
-                <View className="flex-row items-center">
-                    {value && (
-                        <Text className={`${valueColor} mr-2 text-sm font-medium`}>
-                            {value}
-                        </Text>
-                    )}
-                    <Feather name="chevron-right" size={20} color={destructive ? "#ef4444" : "#64748b"} />
-                </View>
-            )}
-        </TouchableOpacity>
-    );
 
     return (
         <View className="flex-1 bg-slate-950 pt-4">
@@ -216,7 +139,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     <SettingItem
                         icon={<Feather name="file-text" size={20} color="#94a3b8" />}
                         title="Експорт усіх даних (PDF)"
-                        onPress={() => Alert.alert("Експорт", "Функція в розробці")}
+                        onPress={handleExport}
                     />
                     <SettingItem
                         icon={<Feather name="log-out" size={20} color="#ef4444" />}
@@ -279,3 +202,39 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
         </View>
     );
 }
+
+// Виніс компонент елементу налаштувань, щоб не засмічувати основну функцію
+const SettingItem = ({ icon, title, value, isSwitch = false, switchValue, onSwitchChange, onPress, valueColor = "text-slate-500", destructive = false }: any) => (
+    <TouchableOpacity
+        activeOpacity={isSwitch ? 1 : 0.7}
+        onPress={isSwitch ? () => {} : onPress}
+        className="flex-row items-center justify-between py-4 border-b border-slate-800 last:border-0"
+    >
+        <View className="flex-row items-center flex-1 mr-4">
+            <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${destructive ? 'bg-red-500/10' : 'bg-slate-800 border border-slate-700'}`}>
+                {icon}
+            </View>
+            <Text className={`text-base font-bold ${destructive ? 'text-red-400' : 'text-white'}`}>
+                {title}
+            </Text>
+        </View>
+
+        {isSwitch ? (
+            <Switch
+                trackColor={{ false: "#334155", true: "#facc15" }}
+                thumbColor={switchValue ? "#fff" : "#94a3b8"}
+                onValueChange={onSwitchChange}
+                value={switchValue}
+            />
+        ) : (
+            <View className="flex-row items-center">
+                {value && (
+                    <Text className={`${valueColor} mr-2 text-sm font-medium`}>
+                        {value}
+                    </Text>
+                )}
+                <Feather name="chevron-right" size={20} color={destructive ? "#ef4444" : "#64748b"} />
+            </View>
+        )}
+    </TouchableOpacity>
+);

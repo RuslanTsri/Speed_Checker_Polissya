@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
-import { TeamSession } from './SessionsTeam';
+import { TeamSession } from '../../hooks/sessions/useSessionsData';
+import { useSessionDetails } from '../../hooks/sessions/useSessionDetails';
 
 interface Props {
     session: TeamSession;
@@ -11,55 +10,15 @@ interface Props {
 }
 
 export default function SessionDetails({ session, onBack }: Props) {
-    const [subTab, setSubTab] = useState<'BEST' | 'ALL'>('BEST');
-    const [roundFilter, setRoundFilter] = useState<'ALL' | number>('ALL');
+    const {
+        subTab, setSubTab,
+        roundFilter, setRoundFilter,
+        rounds,
+        filteredAttempts,
+        sortedResults,
+        handleExport
+    } = useSessionDetails(session);
 
-    const rounds = Array.from(new Set(session.results.flatMap(r => r.attempts.map(a => a.round)))).sort();
-    const allAttemptsFlat = session.results.flatMap(player =>
-        player.attempts.map(attempt => ({
-            playerName: player.playerName,
-            round: attempt.round,
-            time: attempt.time
-        }))
-    );
-    const filteredAttempts = roundFilter === 'ALL' ? allAttemptsFlat : allAttemptsFlat.filter(a => a.round === roundFilter);
-
-    const exportToCSV = async () => {
-        try {
-            let csvContent = "\uFEFFКоманда;Гравець;Номер;Кращий час (с);Макс швидкість (км/год);Раунд;Час раунду (с)\n";
-
-            session.results.forEach(player => {
-                player.attempts.forEach(attempt => {
-                    // 🔥 Строго 2 знаки після коми і примусова заміна на кому
-                    const bestTimeStr = player.bestTime.toFixed(2).replace('.', ',');
-                    const maxSpeedStr = player.maxSpeed.toFixed(1).replace('.', ',');
-                    const attemptTimeStr = attempt.time.toFixed(2).replace('.', ',');
-
-                    csvContent += `${session.teamName};${player.playerName};${player.number};${bestTimeStr};${maxSpeedStr};${attempt.round};${attemptTimeStr}\n`;
-                });
-            });
-
-            // 🔥 Додаємо Date.now() до назви, щоб завжди створювався УНІКАЛЬНИЙ новий файл
-            const fileUri = `${FileSystem.documentDirectory}results_team_${Date.now()}.csv`;
-
-            await FileSystem.writeAsStringAsync(fileUri, csvContent, {
-                encoding: FileSystem.EncodingType.UTF8
-            });
-
-            if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(fileUri, {
-                    mimeType: 'text/csv',
-                    dialogTitle: `Експорт: ${session.teamName}`,
-                    UTI: 'public.comma-separated-values-text'
-                });
-            } else {
-                Alert.alert("Помилка", "Експорт не підтримується на цьому пристрої");
-            }
-        } catch (error) {
-            console.error(error);
-            Alert.alert("Помилка", "Не вдалося згенерувати файл");
-        }
-    };
     return (
         <View className="flex-1 bg-slate-950 pt-4">
             {/* Header */}
@@ -71,7 +30,7 @@ export default function SessionDetails({ session, onBack }: Props) {
                     <Text className="text-white text-lg font-bold">Результати</Text>
                     <Text className="text-slate-500 text-xs">{session.testType}</Text>
                 </View>
-                <TouchableOpacity onPress={exportToCSV} className="p-2 -mr-2">
+                <TouchableOpacity onPress={handleExport} className="p-2 -mr-2">
                     <Feather name="upload" size={20} color="#facc15" />
                 </TouchableOpacity>
             </View>
@@ -100,7 +59,7 @@ export default function SessionDetails({ session, onBack }: Props) {
                 </View>
             </View>
 
-            {/* Sub Tabs */}
+            {/* Tabs */}
             <View className="flex-row mx-4 bg-slate-900 p-1 rounded-xl mb-4 border border-slate-800">
                 <TouchableOpacity onPress={() => setSubTab('BEST')} className={`flex-1 py-2 rounded-lg items-center ${subTab === 'BEST' ? 'bg-slate-800 border border-slate-700' : ''}`}>
                     <Text className={`font-bold text-sm ${subTab === 'BEST' ? 'text-white' : 'text-slate-500'}`}>Підсумок (Best)</Text>
@@ -110,10 +69,10 @@ export default function SessionDetails({ session, onBack }: Props) {
                 </TouchableOpacity>
             </View>
 
-            {/* TAB: ПІДСУМОК (BEST) */}
+            {/* LIST: BEST */}
             {subTab === 'BEST' && (
                 <FlatList
-                    data={[...session.results].sort((a, b) => a.bestTime - b.bestTime)}
+                    data={sortedResults}
                     keyExtractor={item => item.id}
                     contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
                     renderItem={({ item, index }) => {
@@ -142,7 +101,7 @@ export default function SessionDetails({ session, onBack }: Props) {
                 />
             )}
 
-            {/* TAB: УСІ СПРОБИ */}
+            {/* LIST: ALL ATTEMPTS */}
             {subTab === 'ALL' && (
                 <View className="flex-1">
                     <View className="px-4 mb-4">

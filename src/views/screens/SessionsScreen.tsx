@@ -1,55 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
 import SessionsGeneral from '../tools/SessionsGeneral';
-import SessionsTeam, { TeamSession } from '../tools/SessionsTeam';
+import SessionsTeam from '../tools/SessionsTeam';
 import SessionDetails from '../tools/SessionDetails';
 
-export type SessionTabType = 'GENERAL' | 'TEAM';
+import { useSessionsManager, SessionTabType } from '../../hooks/sessions/useSessionsManager';
 
 interface SessionsScreenProps {
     initialTab?: SessionTabType;
 }
 
 export default function SessionsScreen({ initialTab }: SessionsScreenProps) {
-    const [mainTab, setMainTab] = useState<SessionTabType>(initialTab || 'TEAM');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedTeamSession, setSelectedTeamSession] = useState<TeamSession | null>(null);
+    const {
+        activeTab, setActiveTab,
+        searchQuery, setSearchQuery,
+        selectedTeamSession, setSelectedTeamSession,
+        clearSelection
+    } = useSessionsManager(initialTab);
 
+    // Скидаємо таб при зміні props
     useEffect(() => {
-        setMainTab(initialTab || 'TEAM');
+        if (initialTab) setActiveTab(initialTab);
     }, [initialTab]);
 
     if (selectedTeamSession) {
         return (
             <SessionDetails
                 session={selectedTeamSession}
-                onBack={() => setSelectedTeamSession(null)}
+                onBack={clearSelection}
             />
         );
     }
 
     return (
         <View className="flex-1 bg-slate-950 pt-4">
-            {/* Головний Header */}
             <View className="flex-row items-center justify-between px-4 mb-6">
                 <Text className="text-white text-3xl font-bold">Звіти</Text>
             </View>
 
             <View className="flex-row px-4 mb-6 space-x-3">
-                <TouchableOpacity
-                    onPress={() => setMainTab('TEAM')}
-                    className={`px-5 py-2 rounded-xl border ${mainTab === 'TEAM' ? 'bg-yellow-400 border-yellow-400' : 'bg-slate-900 border-slate-800'}`}
-                >
-                    <Text className={`font-bold text-sm ${mainTab === 'TEAM' ? 'text-slate-900' : 'text-slate-400'}`}>Командні</Text>
+                <TouchableOpacity onPress={() => setActiveTab('TEAM')} className={`px-5 py-2 rounded-xl border ${activeTab === 'TEAM' ? 'bg-yellow-400 border-yellow-400' : 'bg-slate-900 border-slate-800'}`}>
+                    <Text className={`font-bold text-sm ${activeTab === 'TEAM' ? 'text-slate-900' : 'text-slate-400'}`}>Командні</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                    onPress={() => setMainTab('GENERAL')}
-                    className={`px-5 py-2 rounded-xl border ${mainTab === 'GENERAL' ? 'bg-yellow-400 border-yellow-400' : 'bg-slate-900 border-slate-800'}`}
-                >
-                    <Text className={`font-bold text-sm ${mainTab === 'GENERAL' ? 'text-slate-900' : 'text-slate-400'}`}>Загальні / Швидкі</Text>
+                <TouchableOpacity onPress={() => setActiveTab('GENERAL')} className={`px-5 py-2 rounded-xl border ${activeTab === 'GENERAL' ? 'bg-yellow-400 border-yellow-400' : 'bg-slate-900 border-slate-800'}`}>
+                    <Text className={`font-bold text-sm ${activeTab === 'GENERAL' ? 'text-slate-900' : 'text-slate-400'}`}>Загальні / Швидкі</Text>
                 </TouchableOpacity>
             </View>
 
@@ -66,15 +62,10 @@ export default function SessionsScreen({ initialTab }: SessionsScreenProps) {
                 </View>
             </View>
 
-            {mainTab === 'TEAM' ? (
-                <SessionsTeam
-                    searchQuery={searchQuery}
-                    onSelectSession={setSelectedTeamSession}
-                />
+            {activeTab === 'TEAM' ? (
+                <SessionsTeam searchQuery={searchQuery} onSelectSession={setSelectedTeamSession} />
             ) : (
-                <SessionsGeneral
-                    searchQuery={searchQuery}
-                />
+                <SessionsGeneral searchQuery={searchQuery} />
             )}
         </View>
     );

@@ -1,22 +1,95 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View } from 'react-native';
 
-export default function SpeedCheckerTool({ onBack }: { onBack: () => void }) {
-    return (
-        <View className="flex-1 px-4 pt-4">
-            <TouchableOpacity onPress={onBack} className="mb-6"><Text className="text-yellow-400 text-lg">❮ Назад</Text></TouchableOpacity>
+// Імпорти наших під-екранів
+import SpeedCheckerModeSelector from './SpeedChecker/SpeedCheckerModeSelector';
+import QuickTestConfig from './SpeedChecker/QuickTestConfig';
+import TeamSelector from './SpeedChecker/TeamSelector';
+import PlayerSelector from './SpeedChecker/PlayerSelector';
+import SpeedTestRun from './SpeedChecker/SpeedTestRun';
 
-            <View className="flex-1 items-center justify-center">
-                <Text className="text-8xl mb-4">🏃💨</Text>
-                <Text className="text-white text-3xl font-black uppercase italic mb-2">Speed Checker</Text>
-                <Text className="text-slate-400 text-center px-10">
-                    Тут буде інтерфейс для заміру швидкості через датчики.
-                </Text>
+// Типи екранів
+type SpeedCheckerScreen =
+    | 'MODE_SELECT'
+    | 'QUICK_CONFIG'
+    | 'TEAM_SELECT'
+    | 'PLAYER_SELECT'
+    | 'TEST_RUN';
 
-                <TouchableOpacity className="mt-8 bg-yellow-400 px-8 py-4 rounded-xl">
-                    <Text className="text-slate-900 font-bold uppercase">Готовий до старту</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+// 🔥 ВИПРАВЛЕНО: Головний тул приймає тільки onBack
+interface SpeedCheckerToolProps {
+    onBack: () => void;
+}
+
+export default function SpeedCheckerTool({ onBack }: SpeedCheckerToolProps) {
+    const [currentScreen, setCurrentScreen] = useState<SpeedCheckerScreen>('MODE_SELECT');
+
+    // Стан конфігурації тесту
+    const [testConfig, setTestConfig] = useState({
+        mode: 'DEVICE' as 'DEVICE' | 'MANUAL',
+        type: 'QUICK' as 'QUICK' | 'TEAM',
+        distance: 30,
+        teamId: null as string | null,
+        selectedPlayers: [] as string[]
+    });
+
+    // --- НАВІГАЦІЯ ---
+
+    const handleModeSelect = (mode: 'DEVICE' | 'MANUAL', type: 'QUICK' | 'TEAM') => {
+        setTestConfig(prev => ({ ...prev, mode, type }));
+        if (type === 'QUICK') {
+            setCurrentScreen('QUICK_CONFIG');
+        } else {
+            setCurrentScreen('TEAM_SELECT');
+        }
+    };
+
+    const handleTeamSelect = (teamId: string) => {
+        setTestConfig(prev => ({ ...prev, teamId }));
+        setCurrentScreen('PLAYER_SELECT');
+    };
+
+    const handlePlayersSelect = (playerIds: string[]) => {
+        setTestConfig(prev => ({ ...prev, selectedPlayers: playerIds }));
+        setCurrentScreen('QUICK_CONFIG');
+    };
+
+    const handleStartTest = (distance: number) => {
+        setTestConfig(prev => ({ ...prev, distance }));
+        setCurrentScreen('TEST_RUN');
+    };
+
+    // --- РЕНДЕР ---
+    switch (currentScreen) {
+        case 'MODE_SELECT':
+            return <SpeedCheckerModeSelector onBack={onBack} onSelect={handleModeSelect} />;
+
+        case 'TEAM_SELECT':
+            return <TeamSelector onBack={() => setCurrentScreen('MODE_SELECT')} onSelect={handleTeamSelect} />;
+
+        case 'PLAYER_SELECT':
+            return <PlayerSelector onBack={() => setCurrentScreen('TEAM_SELECT')} onSelect={handlePlayersSelect} />;
+
+        case 'QUICK_CONFIG':
+            return (
+                <QuickTestConfig
+                    onBack={() => setCurrentScreen(testConfig.type === 'QUICK' ? 'MODE_SELECT' : 'PLAYER_SELECT')}
+                    onStart={handleStartTest}
+                    testType={testConfig.type}
+                    selectedPlayersCount={testConfig.selectedPlayers.length}
+                />
+            );
+
+        case 'TEST_RUN':
+            return (
+                <SpeedTestRun
+                    config={testConfig}
+                    onBack={() => setCurrentScreen('QUICK_CONFIG')}
+                    onFinish={() => setCurrentScreen('MODE_SELECT')}
+                />
+            );
+
+        default:
+            return null;
+    }
 }

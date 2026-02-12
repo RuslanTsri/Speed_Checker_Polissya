@@ -52,7 +52,6 @@ export default function PlayersScreen() {
     const [newPlayerName, setNewPlayerName] = useState('');
     const [isImportVisible, setImportVisible] = useState(false);
 
-    // 🔥 Стан для Dropdown меню (Три крапки)
     const [isDropdownVisible, setDropdownVisible] = useState(false);
 
     // ==========================================
@@ -156,18 +155,16 @@ export default function PlayersScreen() {
                         {selectedTeam.name}
                     </Text>
 
-                    {/* Кнопка Трьох Крапок */}
                     <TouchableOpacity onPress={() => setDropdownVisible(true)} className="p-2 -mr-2">
                         <Feather name="more-vertical" size={20} color="#94a3b8" />
                     </TouchableOpacity>
                 </View>
 
-                {/* 🔥 МОДАЛКА DROPDOWN ДЛЯ ТРЬОХ КРАПОК */}
                 <Modal visible={isDropdownVisible} transparent animationType="fade">
                     <TouchableOpacity
                         style={{ flex: 1 }}
                         activeOpacity={1}
-                        onPress={() => setDropdownVisible(false)} // Закриття по кліку повз меню
+                        onPress={() => setDropdownVisible(false)}
                     >
                         {/* Позиціонування меню в правому верхньому куті */}
                         <View className="absolute top-16 right-4 bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden min-w-[160px]">

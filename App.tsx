@@ -1,5 +1,5 @@
 import "./global.css";
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -17,7 +17,10 @@ import BluetoothTool from './src/views/tools/BluetoothTool';
 
 // Context & Logic
 import { BleProvider } from './src/context/BleContext';
-import { useAppLogic } from './src/hooks/useAppLogic'; // 🔥 Hook
+import { useAppLogic } from './src/hooks/useAppLogic';
+
+
+import { supabase } from './src/lib/supabase';
 
 export default function App() {
     // Вся логіка тут
@@ -40,6 +43,23 @@ export default function App() {
         handleSubmitPinChange
     } = useAppLogic();
 
+    useEffect(() => {
+        const testConnection = async () => {
+            console.log("🔄 Перевірка зв'язку з Supabase...");
+
+            // Спробуємо просто отримати сесію (це не потребує таблиць)
+            const { data, error } = await supabase.auth.getSession();
+
+            if (error) {
+                console.error("❌ Помилка підключення:", error.message);
+            } else {
+                console.log("✅ Supabase клієнт ініціалізовано успішно!");
+                console.log("🔗 URL:", process.env.EXPO_PUBLIC_SUPABASE_URL ? "Завантажено" : "Не знайдено");
+            }
+        };
+        testConnection();
+
+    }, []);
     // Логіка рендеру залишається у View, бо це UI-свіч
     const renderScreen = () => {
         switch (currentTab) {

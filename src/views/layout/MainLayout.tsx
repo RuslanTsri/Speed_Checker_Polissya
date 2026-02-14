@@ -8,8 +8,9 @@ interface MainLayoutProps {
     children: React.ReactNode;
     currentTab: TabType;
     onSwitchTab: (tab: TabType, params?: any) => void;
-    onLogout?: () => void;
+    onLogout: () => void;
     onOpenPinChange?: () => void;
+
 }
 
 export const MainLayout = ({

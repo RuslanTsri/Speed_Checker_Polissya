@@ -6,12 +6,15 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    ScrollView
+    ScrollView,
+    ActivityIndicator
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 
-// 🔥 Hook
+// 👇 Імпортуємо твою універсальну модалку
+import { AppModal } from '../components/AppModal';
+
 import { useAuthScreen } from '../../hooks/useAuthScreen';
 
 interface AuthScreenProps {
@@ -19,10 +22,13 @@ interface AuthScreenProps {
 }
 
 export default function AuthScreen({ onLogin }: AuthScreenProps) {
-    // Вся логіка тут
     const {
         isRegistering,
+        isLoading,
+        showVerifyModal,
+        handleVerifyConfirmed,
         name, setName,
+        email, setEmail,
         pin, setPin,
         handleSubmit,
         toggleMode
@@ -40,91 +46,103 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                 className="px-6"
                 showsVerticalScrollIndicator={false}
             >
-                {/* 1. LOGO & TITLE */}
-                <View className="items-center mb-12">
-                    <View className="w-28 h-28 bg-slate-900 rounded-[32px] items-center justify-center mb-8 border border-slate-800 shadow-2xl shadow-black">
-                        <Ionicons name="flash" size={56} color="#facc15" />
+                {/* 1. LOGO */}
+                <View className="items-center mb-8">
+                    <View className="w-24 h-24 bg-slate-900 rounded-[32px] items-center justify-center mb-6 border border-slate-800 shadow-2xl shadow-black">
+                        <Ionicons name="flash" size={48} color="#facc15" />
                     </View>
 
-                    <Text className="text-white text-4xl font-black tracking-tight text-center mb-4">
+                    <Text className="text-white text-3xl font-black tracking-tight text-center mb-2">
                         Tempo Metrics
                     </Text>
-
-                    <Text className="text-slate-400 text-base font-medium text-center leading-6 px-2">
-                        Точний замір швидкості футболістів.{'\n'}
-                        Результати одразу в застосунку та CSV.
+                    <Text className="text-slate-400 text-sm text-center">
+                        {isRegistering ? "Створення нового профілю тренера" : "Вхід до системи"}
                     </Text>
                 </View>
 
                 {/* 2. FORM */}
-                <View className="w-full space-y-5">
+                <View className="w-full space-y-4">
 
-                    {/* Name Input (Only Registration) */}
+                    {/* Ім'я */}
                     {isRegistering && (
                         <View>
-                            <Text className="text-slate-500 ml-3 mb-2 text-[10px] uppercase font-bold tracking-widest">
-                                Ваше Ім'я
-                            </Text>
-                            <View className="bg-slate-900 rounded-2xl border border-slate-800 px-4 py-1 flex-row items-center">
-                                <Feather name="user" size={20} color="#64748b" style={{ marginRight: 10 }} />
-                                <TextInput
-                                    value={name}
-                                    onChangeText={setName}
-                                    placeholder="Наприклад: Олександр"
-                                    placeholderTextColor="#475569"
-                                    className="flex-1 text-white text-lg py-4 font-bold"
-                                    autoCapitalize="words"
-                                />
+                            <Text className="text-slate-500 ml-3 mb-2 text-[10px] uppercase font-bold tracking-widest">Ваше ПІБ</Text>
+                            <View className="bg-slate-900 rounded-2xl border border-slate-800 px-4 flex-row items-center h-14">
+                                <Feather name="user" size={18} color="#64748b" style={{ marginRight: 10 }} />
+                                <TextInput value={name} onChangeText={setName} placeholder="Прізвище та Ім'я" placeholderTextColor="#475569" className="flex-1 text-white text-base font-bold h-full" autoCapitalize="words" />
                             </View>
                         </View>
                     )}
 
-                    {/* PIN Input */}
+                    {/* Email */}
                     <View>
-                        <Text className="text-slate-500 ml-3 mb-2 text-[10px] uppercase font-bold tracking-widest">
-                            {isRegistering ? 'Створіть PIN (4 цифри)' : 'Введіть PIN-код'}
-                        </Text>
-                        <View className="bg-slate-900 rounded-2xl border border-slate-800 px-4 py-1 flex-row items-center">
-                            <Feather name="lock" size={20} color="#64748b" style={{ marginRight: 10 }} />
-                            <TextInput
-                                value={pin}
-                                onChangeText={setPin}
-                                placeholder="• • • •"
-                                placeholderTextColor="#475569"
-                                keyboardType="numeric"
-                                secureTextEntry
-                                maxLength={4}
-                                className="flex-1 text-white text-3xl font-black tracking-[0.5em] py-4 text-center"
-                            />
+                        <Text className="text-slate-500 ml-3 mb-2 text-[10px] uppercase font-bold tracking-widest">Email (Логін)</Text>
+                        <View className="bg-slate-900 rounded-2xl border border-slate-800 px-4 flex-row items-center h-14">
+                            <Feather name="mail" size={18} color="#64748b" style={{ marginRight: 10 }} />
+                            <TextInput value={email} onChangeText={setEmail} placeholder="coach@example.com" placeholderTextColor="#475569" keyboardType="email-address" autoCapitalize="none" className="flex-1 text-white text-base font-bold h-full" />
                         </View>
                     </View>
 
-                    {/* Action Button */}
-                    <TouchableOpacity
-                        onPress={handleSubmit}
-                        activeOpacity={0.8}
-                        className="bg-yellow-400 w-full py-5 rounded-2xl items-center mt-4 shadow-lg shadow-yellow-400/20 active:bg-yellow-500"
-                    >
-                        <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">
-                            {isRegistering ? 'Зареєструватись' : 'Увійти'}
-                        </Text>
-                    </TouchableOpacity>
+                    {/* PIN */}
+                    <View>
+                        <Text className="text-slate-500 ml-3 mb-2 text-[10px] uppercase font-bold tracking-widest">{isRegistering ? 'Придумайте PIN (4 цифри)' : 'Ваш PIN-код'}</Text>
+                        <View className="bg-slate-900 rounded-2xl border border-slate-800 px-4 flex-row items-center h-16">
+                            <Feather name="lock" size={18} color="#64748b" style={{ marginRight: 10 }} />
+                            <TextInput value={pin} onChangeText={setPin} placeholder="• • • •" placeholderTextColor="#475569" keyboardType="numeric" secureTextEntry maxLength={4} className="flex-1 text-white text-2xl font-black tracking-[0.5em] text-center h-full" />
+                        </View>
+                    </View>
 
+                    {/* Кнопка */}
+                    <TouchableOpacity onPress={handleSubmit} disabled={isLoading} activeOpacity={0.8} className="bg-yellow-400 w-full h-14 rounded-2xl items-center justify-center mt-4 shadow-lg shadow-yellow-400/20 active:bg-yellow-500">
+                        {isLoading ? <ActivityIndicator color="#0f172a" /> : <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">{isRegistering ? 'Створити акаунт' : 'Увійти'}</Text>}
+                    </TouchableOpacity>
                 </View>
 
-                {/* 3. FOOTER SWITCHER */}
-                <View className="mt-10 flex-row justify-center items-center">
-                    <Text className="text-slate-500 font-medium">
-                        {isRegistering ? 'Вже є акаунт? ' : 'Новий пристрій? '}
-                    </Text>
-                    <TouchableOpacity onPress={toggleMode} className="py-2">
-                        <Text className="text-yellow-400 font-bold border-b border-yellow-400/30">
-                            {isRegistering ? 'Увійти' : 'Створити акаунт'}
-                        </Text>
+                {/* 3. SWITCHER */}
+                <View className="mt-8 flex-row justify-center items-center">
+                    <Text className="text-slate-500 font-medium text-sm">{isRegistering ? 'Вже є акаунт? ' : 'Немає акаунту? '}</Text>
+                    <TouchableOpacity onPress={toggleMode} className="py-2 px-1">
+                        <Text className="text-yellow-400 font-bold text-sm">{isRegistering ? 'Увійти' : 'Зареєструватися'}</Text>
                     </TouchableOpacity>
                 </View>
 
             </ScrollView>
+
+            {/* 🔥🔥🔥 ТВОЯ УНІВЕРСАЛЬНА МОДАЛКА 🔥🔥🔥 */}
+            <AppModal
+                visible={showVerifyModal}
+                onClose={handleVerifyConfirmed}
+                title="Реєстрація успішна"
+                type="bottom" // Можеш змінити на 'center', якщо хочеш вікно посередині
+            >
+                <View className="items-center pb-4">
+                    {/* Велика іконка пошти */}
+                    <View className="w-24 h-24 bg-slate-800 rounded-full items-center justify-center mb-6 border-4 border-slate-700 shadow-xl">
+                        <Feather name="mail" size={48} color="#facc15" />
+                    </View>
+
+                    <Text className="text-white text-center text-xl font-bold mb-4">
+                        Лист вже у тебе! 🚀
+                    </Text>
+
+                    <Text className="text-slate-400 text-center text-base leading-6 mb-8 px-2">
+                        Ми відправили посилання для підтвердження на:{'\n'}
+                        <Text className="text-yellow-400 font-bold text-lg">{email}</Text>
+                        {'\n\n'}
+                        Натисни на посилання в листі, а потім повертайся сюди для входу.
+                    </Text>
+
+                    <TouchableOpacity
+                        onPress={handleVerifyConfirmed}
+                        className="bg-yellow-400 w-full py-4 rounded-xl items-center shadow-lg shadow-yellow-400/20 active:bg-yellow-500"
+                    >
+                        <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">
+                            Зрозуміло, увійти
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </AppModal>
+
         </KeyboardAvoidingView>
     );
 }

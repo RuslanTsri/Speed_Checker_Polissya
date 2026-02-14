@@ -1,121 +1,91 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { useSettings } from './useSettings';
+import { useUser } from '../context/UserContext';
+import { authService } from '../services/authService';
 
-interface UseSettingsScreenProps {
+interface UseSettingsProps {
     onOpenPinChange: () => void;
     onOpenBluetooth: () => void;
 }
 
-export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSettingsScreenProps) => {
-    // 1. Отримуємо глобальні дані та методи з базового хука
-    const {
-        isLoading,
-        userProfile,
-        isNotifEnabled,
-        isSoundEnabled,
-        updateProfile,
-        toggleNotif,
-        toggleSound,
-        checkMasterConnection,
-        bleStatus
-    } = useSettings();
+export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSettingsProps) => {
+    const { profile, refreshProfile } = useUser();
+    const [isLoading, setIsLoading] = useState(false);
 
-    // 2. Локальний стан UI (те, що стосується лише цього екрану)
+    // Modal State
     const [isEditModalVisible, setEditModalVisible] = useState(false);
+
+    // Тимчасові стани для редагування
     const [tempName, setTempName] = useState('');
-    const [tempRole, setTempRole] = useState('');
     const [tempAvatar, setTempAvatar] = useState('');
+
+    // Налаштування системи (локальні)
+    const [isNotifEnabled, setIsNotifEnabled] = useState(true);
     const [isDarkMode, setIsDarkMode] = useState(true);
 
-    // 3. Обчислювані значення для UI (Статус з'єднання)
-    let connectionText = "Відключено";
-    let connectionColor = "text-red-400";
-
-    if (bleStatus.connected) {
-        if (bleStatus.pingProgress) {
-            connectionText = bleStatus.pingProgress;
-            connectionColor = "text-yellow-400";
-        } else {
-            connectionText = bleStatus.deviceName || 'Підключено';
-            connectionColor = "text-green-400";
-        }
-    }
-
-    // 4. Обробники подій (Handlers)
-
-    // Клік по статусу з'єднання
-    const handleConnectionPress = () => {
-        if (bleStatus.connected) {
-            checkMasterConnection();
-        } else {
-            Alert.alert(
-                "Bluetooth вимкнено",
-                "Перейти до меню підключення?",
-                [
-                    { text: "Ні", style: "cancel" },
-                    { text: "Так", onPress: onOpenBluetooth }
-                ]
-            );
-        }
-    };
-
-    // Відкриття модалки редагування (ініціалізація полів)
+    // Відкриття модалки
     const openEditModal = () => {
-        setTempName(userProfile.name);
-        setTempRole(userProfile.role);
-        setTempAvatar(userProfile.avatar);
+        setTempName(profile?.full_name || '');
+        setTempAvatar(profile?.avatar_url || '');
         setEditModalVisible(true);
     };
 
-    // Збереження профілю
+    // --- ЄДИНА ФУНКЦІЯ ЗБЕРЕЖЕННЯ ---
     const handleSaveProfile = async () => {
-        const success = await updateProfile(tempName, tempRole, tempAvatar);
-        if (success) setEditModalVisible(false);
-    };
+        const cleanName = tempName.trim();
 
-    // Зміна ПІН-коду
-    const startPinChange = () => {
-        setEditModalVisible(false);
-        // Невелика затримка, щоб модалка встигла закритись
-        setTimeout(() => { onOpenPinChange(); }, 300);
-    };
+        if (cleanName.length < 2) {
+            Alert.alert("Помилка", "Ім'я занадто коротке");
+            return;
+        }
 
-    const handleFAQ = () => {
-        Alert.alert("FAQ", "Тут буде довідкова інформація та поширені запитання.");
-    };
+        setIsLoading(true);
+        console.log("💾 [Settings] Saving profile...");
 
-    const handleExport = () => {
-        Alert.alert("Експорт", "Функція в розробці");
+        try {
+            // Оновлюємо тільки ім'я та аватар (роль не чіпаємо)
+            const { error } = await authService.updateCurrentProfile({
+                full_name: cleanName,
+                avatar_url: tempAvatar
+            });
+
+            if (error) throw error;
+
+            console.log("✅ [Settings] Saved to Supabase");
+
+            // Важливо: оновлюємо глобальний контекст
+            await refreshProfile();
+
+            setEditModalVisible(false);
+            // Alert.alert("Успіх", "Профіль оновлено! 🚀"); // Можна прибрати, щоб не дратувати юзера
+        } catch (e: any) {
+            console.error("❌ [Settings] Save Error:", e.message);
+            Alert.alert("Помилка", e.message || "Не вдалося зберегти зміни");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return {
-        // Data
         isLoading,
-        userProfile,
-        bleStatus,
-        connectionText,
-        connectionColor,
+        userProfile: {
+            name: profile?.full_name || 'Тренер',
+            role: profile?.role || 'COACH',
+            avatar: profile?.avatar_url || 'https://img.icons8.com/color/480/coach.png'
+        },
         isNotifEnabled,
-        isSoundEnabled,
         isDarkMode,
-
-        // Modal & Form State
+        setIsDarkMode,
+        toggleNotif: () => setIsNotifEnabled(!isNotifEnabled),
         isEditModalVisible,
         setEditModalVisible,
         tempName, setTempName,
-        tempRole, setTempRole,
         tempAvatar, setTempAvatar,
-
-        // Actions
-        setIsDarkMode,
-        toggleNotif,
-        toggleSound,
-        handleConnectionPress,
         openEditModal,
         handleSaveProfile,
-        startPinChange,
-        handleFAQ,
-        handleExport
+        handleConnectionPress: onOpenBluetooth,
+        startPinChange: onOpenPinChange,
+        handleFAQ: () => Alert.alert("FAQ", "Розділ у розробці"),
+        handleExport: () => Alert.alert("Експорт", "Формування PDF...")
     };
 };

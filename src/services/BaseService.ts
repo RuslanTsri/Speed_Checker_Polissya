@@ -14,7 +14,7 @@ export interface ListResponse<T> {
 
 export class BaseService<T> {
     protected tableName: string;
-    // 👇 Змінили ZodSchema на ZodObject<any>, щоб працював метод .partial()
+
     protected schema?: ZodObject<any>;
 
     constructor(tableName: string, schema?: ZodObject<any>) {

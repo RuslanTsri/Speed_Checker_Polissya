@@ -11,10 +11,7 @@ import {
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-
-// 👇 Імпортуємо твою універсальну модалку
 import { AppModal } from '../components/AppModal';
-
 import { useAuthScreen } from '../../hooks/useAuthScreen';
 
 interface AuthScreenProps {
@@ -25,6 +22,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
     const {
         isRegistering,
         isLoading,
+        errorMessage,
         showVerifyModal,
         handleVerifyConfirmed,
         name, setName,
@@ -92,6 +90,15 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                         </View>
                     </View>
 
+                    {errorMessage && (
+                        <View className="bg-red-500/10 border border-red-500/50 p-3 rounded-xl mt-2 flex-row items-center justify-center">
+                            <Feather name="alert-circle" size={16} color="#ef4444" style={{ marginRight: 8 }} />
+                            <Text className="text-red-400 font-bold text-sm text-center">
+                                {errorMessage}
+                            </Text>
+                        </View>
+                    )}
+
                     {/* Кнопка */}
                     <TouchableOpacity onPress={handleSubmit} disabled={isLoading} activeOpacity={0.8} className="bg-yellow-400 w-full h-14 rounded-2xl items-center justify-center mt-4 shadow-lg shadow-yellow-400/20 active:bg-yellow-500">
                         {isLoading ? <ActivityIndicator color="#0f172a" /> : <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">{isRegistering ? 'Створити акаунт' : 'Увійти'}</Text>}
@@ -108,15 +115,13 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
 
             </ScrollView>
 
-            {/* 🔥🔥🔥 ТВОЯ УНІВЕРСАЛЬНА МОДАЛКА 🔥🔥🔥 */}
             <AppModal
                 visible={showVerifyModal}
                 onClose={handleVerifyConfirmed}
                 title="Реєстрація успішна"
-                type="bottom" // Можеш змінити на 'center', якщо хочеш вікно посередині
+                type="bottom"
             >
                 <View className="items-center pb-4">
-                    {/* Велика іконка пошти */}
                     <View className="w-24 h-24 bg-slate-800 rounded-full items-center justify-center mb-6 border-4 border-slate-700 shadow-xl">
                         <Feather name="mail" size={48} color="#facc15" />
                     </View>

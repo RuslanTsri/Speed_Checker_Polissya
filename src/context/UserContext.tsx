@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { authService, Profile } from '../services/authService';
+import { Alert } from 'react-native';
 
 interface UserContextType {
     user: User | null;
@@ -11,6 +12,7 @@ interface UserContextType {
     logout: () => Promise<void>;
 }
 
+
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
@@ -19,11 +21,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchProfile = async (userId: string) => {
+        // Захист від undefined
+        if (!userId) return;
+
         console.log("👤 [UserContext] Завантажуємо профіль...");
         const { data, error } = await authService.getById(userId);
+
         if (!error && data) {
             setProfile(data);
-            console.log("✅ [UserContext] Профіль завантажено:", data.full_name);
+            console.log("✅ [UserContext] Профіль завантажено:", data.full_name || "Без імені");
         } else {
             console.error("❌ [UserContext] Помилка профілю:", error);
         }
@@ -35,73 +41,91 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     const logout = async () => {
         console.log("🚀 [UserContext] Початок процесу виходу...");
-        setIsLoading(true); // Показуємо спінер на секунду, поки чистимо дані
+        setIsLoading(true);
         try {
-            // 1. Вихід із Supabase (це видалить токен з AsyncStorage)
-            await authService.signOut();
-
-            // 2. Очищаємо локальний стейт
+            // Спробуємо вийти через Supabase
+            const { error } = await authService.signOut();
+            if (error) throw error;
+        } catch (error: any) {
+            // Навіть якщо Supabase видасть помилку (наприклад, токен вже невалідний),
+            // ми все одно маємо очистити локальний стейт!
+            console.warn("⚠️ [UserContext] Помилка при signOut (це нормально, якщо токен протух):", error.message);
+        } finally {
             setUser(null);
             setProfile(null);
-
-            console.log("✅ [UserContext] Сесія очищена");
-        } catch (error) {
-            console.error("❌ [UserContext] Помилка при виході:", error);
-        } finally {
-            setIsLoading(false); // Повертаємо можливість рендеру (тепер user = null, тому відкриється Auth)
+            setIsLoading(false);
+            console.log("✅ [UserContext] Локальна сесія очищена");
         }
     };
 
     useEffect(() => {
-        let isMounted = true; // Щоб уникнути помилок при розмонтуванні
+        let isMounted = true;
 
         const checkSession = async () => {
             console.log("🔍 [UserContext] 1. Старт перевірки сесії...");
 
             try {
-                // 🔥 ХАК: Створюємо гонку (Race).
-                // Якщо Supabase думає довше 3 секунд -> викидаємо помилку і пускаємо юзера на вхід.
-                const sessionPromise = supabase.auth.getSession();
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error("Timeout")), 3000)
-                );
+                // Отримуємо сесію
+                const { data, error } = await supabase.auth.getSession();
 
-                // Чекаємо хто швидше: база чи таймер
-                const result: any = await Promise.race([sessionPromise, timeoutPromise]);
-                const session = result.data?.session;
+                if (error) {
+                    console.error("❌ [UserContext] Помилка сесії:", error.message);
+                    if (error.message.includes("Invalid Refresh Token") || error.message.includes("Not Found")) {
+                        console.log("♻️ Токен невалідний -> Примусовий вихід");
+                        await logout(); // Чистимо все
+                        return;
+                    }
+                    throw error;
+                }
 
-                if (session?.user) {
+                if (data.session?.user) {
                     console.log("🔓 [UserContext] 2. Знайдено активну сесію!");
                     if (isMounted) {
-                        setUser(session.user);
-                        // Завантажуємо профіль, але не блокуємо UI, якщо це довго
-                        fetchProfile(session.user.id);
+                        setUser(data.session.user);
+                        fetchProfile(data.session.user.id);
                     }
                 } else {
-                    console.log("🤷‍♂️ [UserContext] 2. Сесії немає (користувач не входив).");
+                    console.log("🤷‍♂️ [UserContext] 2. Сесії немає.");
+                    if (isMounted) {
+                        setUser(null);
+                        setProfile(null);
+                    }
                 }
             } catch (error) {
-                console.warn("⚠️ [UserContext] Перевірка сесії перервана (або тайм-аут):", error);
-                // Тут нічого страшного, просто покажемо AuthScreen
+                console.warn("⚠️ [UserContext] Глобальний збій перевірки:", error);
+                if (isMounted) {
+                    setUser(null);
+                    setProfile(null);
+                }
             } finally {
-                console.log("🏁 [UserContext] 3. Завантаження вимкнено.");
                 if (isMounted) setIsLoading(false);
             }
         };
 
         checkSession();
 
-        // Слухач змін (Вхід/Вихід)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (isMounted) {
-                if (session?.user) {
-                    setUser(session.user);
-                    if (!profile) fetchProfile(session.user.id);
-                } else {
+        // Слухач змін
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log(`📣 [Auth Event]: ${event}`);
+
+            // 1. Якщо токен оновився — просто логуємо
+            if (event === 'TOKEN_REFRESHED') {
+                console.log('🔄 Токен оновлено');
+            }
+
+            if (event === 'SIGNED_OUT') {
+                if (isMounted) {
                     setUser(null);
                     setProfile(null);
+                    setIsLoading(false);
                 }
-                setIsLoading(false);
+            }
+            else if (session?.user) {
+                if (isMounted) {
+                    setUser(session.user);
+                    if (!profile) fetchProfile(session.user.id);
+                    setIsLoading(false);
+                }
             }
         });
 

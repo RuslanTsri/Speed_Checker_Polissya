@@ -2,8 +2,6 @@ import { z } from 'zod';
 import { supabase } from '../lib/supabase';
 import { BaseService, ServiceResponse } from './BaseService';
 
-// 1. Схема валідації Профілю (Zod)
-// Це захистить нас від "кривих" даних при оновленні профілю
 const ProfileSchema = z.object({
     id: z.string().optional(),
     full_name: z.any(), // Тимчасово дозволяємо будь-що
@@ -13,10 +11,8 @@ const ProfileSchema = z.object({
     updated_at: z.any(),
 }).passthrough();
 
-// Тип TypeScript на основі схеми
 export type Profile = z.infer<typeof ProfileSchema>;
 
-// 2. Клас AuthService, що розширює BaseService
 class AuthService extends BaseService<Profile> {
 
     constructor() {

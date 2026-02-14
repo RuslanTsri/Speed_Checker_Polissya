@@ -17,17 +17,16 @@ import BluetoothTool from './src/views/tools/BluetoothTool';
 
 // Context & Logic
 import { BleProvider } from './src/context/BleContext';
-import { UserProvider, useUser } from './src/context/UserContext'; // 👇 Імпорт
+import { UserProvider, useUser } from './src/context/UserContext';
 import { useAppLogic } from './src/hooks/useAppLogic';
+import {Feather} from "@expo/vector-icons";
 
 
 
-// --- Внутрішній компонент (Бо useUser та useAppLogic працюють тільки всередині Provider) ---
 const AppContent = () => {
     // 1. Беремо глобального юзера
     const { user, isLoading } = useUser();
 
-    // 2. Беремо логіку додатку (навігація, пін-коди)
     const {
         currentTab,
         sessionsInitialTab,
@@ -38,7 +37,7 @@ const AppContent = () => {
         newPin, setNewPin,
         confirmPin, setConfirmPin,
         isPinLoading,
-
+        pinError,
         // Actions
         handleLogout,
         handleNavigate,
@@ -46,7 +45,6 @@ const AppContent = () => {
         handleSubmitPinChange
     } = useAppLogic();
 
-    // 3. Поки вантажиться сесія — показуємо спінер (або Splash Screen)
     if (isLoading) {
         return (
             <View className="flex-1 bg-slate-950 justify-center items-center">
@@ -55,18 +53,15 @@ const AppContent = () => {
         );
     }
 
-    // 4. Якщо немає юзера — показуємо Авторизацію
     if (!user) {
         return (
             <SafeAreaProvider>
                 <StatusBar style="light" />
-                {/* AuthScreen сам оновить контекст при вході, тому тут порожній колбек або нічого */}
                 <AuthScreen onLogin={() => {}} />
             </SafeAreaProvider>
         );
     }
 
-    // 5. Логіка рендеру екранів
     const renderScreen = () => {
         switch (currentTab) {
             case 'HOME':
@@ -106,19 +101,23 @@ const AppContent = () => {
                 {/* PIN Change Modal */}
                 <BottomModal
                     visible={isPinModalVisible}
-                    onClose={() => !isPinLoading && setPinModalVisible(false)} // Забороняємо закривати під час збереження
+                    onClose={() => !isPinLoading && setPinModalVisible(false)}
                     title="Безпека"
                 >
                     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                         <View className="p-1">
+
+                            {/* ПОТОЧНИЙ PIN */}
                             <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">Поточний PIN</Text>
                             <TextInput
                                 value={oldPin} onChangeText={setOldPin}
                                 keyboardType="numeric" secureTextEntry maxLength={4}
                                 placeholder="••••" placeholderTextColor="#334155"
-                                className="bg-slate-950 text-white p-5 rounded-2xl border border-slate-800 mb-4 text-2xl tracking-[0.5em] text-center font-bold"
+                                // Якщо є помилка -> рамка стає червоною, інакше сіра
+                                className={`bg-slate-950 text-white p-5 rounded-2xl border mb-4 text-2xl tracking-[0.5em] text-center font-bold ${pinError ? 'border-red-500/50' : 'border-slate-800'}`}
                             />
 
+                            {/* НОВИЙ PIN */}
                             <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">Новий PIN</Text>
                             <TextInput
                                 value={newPin} onChangeText={setNewPin}
@@ -127,14 +126,25 @@ const AppContent = () => {
                                 className="bg-slate-950 text-white p-5 rounded-2xl border border-slate-800 mb-4 text-2xl tracking-[0.5em] text-center font-bold"
                             />
 
+                            {/* ПОВТОР PIN */}
                             <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">Повторіть новий PIN</Text>
                             <TextInput
                                 value={confirmPin} onChangeText={setConfirmPin}
                                 keyboardType="numeric" secureTextEntry maxLength={4}
                                 placeholder="••••" placeholderTextColor="#334155"
-                                className="bg-slate-950 text-white p-5 rounded-2xl border border-slate-800 mb-8 text-2xl tracking-[0.5em] text-center font-bold"
+                                className="bg-slate-950 text-white p-5 rounded-2xl border border-slate-800 mb-6 text-2xl tracking-[0.5em] text-center font-bold"
                             />
 
+                            {pinError && (
+                                <View className="bg-red-500/10 border border-red-500/50 p-3 rounded-xl mb-6 flex-row items-center justify-center">
+                                    <Feather name="alert-circle" size={16} color="#ef4444" style={{ marginRight: 8 }} />
+                                    <Text className="text-red-400 font-bold text-sm text-center">
+                                        {pinError}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* КНОПКА ЗБЕРЕГТИ */}
                             <TouchableOpacity
                                 onPress={handleSubmitPinChange}
                                 disabled={isPinLoading}
@@ -155,7 +165,6 @@ const AppContent = () => {
     );
 };
 
-// --- Основний експорт ---
 export default function App() {
     return (
         <UserProvider>

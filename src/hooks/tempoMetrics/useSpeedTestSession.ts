@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useBle } from '../../context/BleContext';
 
@@ -10,39 +10,47 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
-    // Отримуємо список гравців з конфігу
-    const playersQueue = config.selectedPlayers && config.selectedPlayers.length > 0
-        ? config.selectedPlayers
-        : [{ id: 'guest', name: 'Гість', number: '-' }];
-
-    // Поточний об'єкт гравця
-    const currentPlayerObj = playersQueue[currentPlayerIndex];
-
+    // 1. Спочатку оголошуємо стани сесії
     const isRunning = state === 'active';
     const isFinished = state === 'finished';
     const isReady = state === 'armed';
 
-    // --- ЛОГІКА СЕНСОРІВ ---
+    // 2. Отримуємо активні сенсори (Це має бути перед totalSensors)
     let activeSensors = sensors
         .filter(s => s.status === 'active')
         .sort((a, b) => a.id - b.id);
 
-    // Авто-стоп таймера, якщо останній сенсор активований
-    if (isRunning && activeSensors.length > 1) {
-        const lastSensor = activeSensors[activeSensors.length - 1];
-        if (lastSensor.triggerTime && lastSensor.triggerTime > 0) {
-            stopTraining();
+    // 3. Якщо ми на Фініші, відфільтровуємо сенсори, які не спрацювали
+    if (isFinished) {
+        const lastTriggered = [...activeSensors].reverse().find(s => s.triggerTime !== undefined);
+        if (lastTriggered) {
+            activeSensors = activeSensors.filter(s => s.id <= lastTriggered.id);
         }
     }
 
-    // Відфільтровуємо лише ті сенсори, що спрацювали до фінішу (щоб уникнути фантомних спрацювань)
-    if (isFinished) {
-        const lastTriggeredSensorId = activeSensors.reduce((maxId, s) =>
-            (s.triggerTime && s.triggerTime > 0) ? s.id : maxId, 0);
-        activeSensors = activeSensors.filter(s => s.id <= lastTriggeredSensorId);
-    }
+    // 4. Тепер можна рахувати довжину та прогрес
+    const totalSensors = activeSensors.length;
 
-    // --- ФОРМАТУВАННЯ ---
+    // --- ЛОГИ ---
+    useEffect(() => {
+        console.log("--- SpeedTestSession Init ---");
+        console.log("Config received:", config);
+        console.log("Total players in queue:", config.selectedPlayers?.length);
+    }, []);
+
+    // Отримуємо список об'єктів гравців
+    const playersQueue = config.selectedPlayers && config.selectedPlayers.length > 0
+        ? config.selectedPlayers
+        : [{ id: 'guest', name: 'Гість', number: '-' }];
+
+    const currentPlayerObj = playersQueue[currentPlayerIndex];
+
+    useEffect(() => {
+        console.log(`Current Player Changed: [${currentPlayerIndex}] ${currentPlayerObj?.name}`);
+    }, [currentPlayerIndex, currentPlayerObj]);
+
+
+    // --- ФОРМАТУВАННЯ ЧАСУ ---
     const formatTime = (totalSeconds: number) => {
         if (!totalSeconds && totalSeconds !== 0) return { main: "00:00", decimal: ".00" };
         const mins = Math.floor(totalSeconds / 60);
@@ -56,27 +64,33 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
     const timeObj = formatTime(elapsedTime / 1000);
 
-    // Розрахунок прогресу для візуалізації треку
+    // --- ПРОГРЕС ---
     const lastTriggeredIndex = activeSensors.reduce((lastIdx, sensor, idx) => {
-        if (sensor.id === 0 && (isRunning || isFinished)) return Math.max(lastIdx, 0);
-        if (sensor.triggerTime !== undefined && sensor.triggerTime > 0) return idx;
+        const isStart = idx === 0;
+        const hasTime = sensor.triggerTime !== undefined;
+
+        if (isStart && (isRunning || isFinished)) return 0;
+        if (hasTime) return idx;
         return lastIdx;
     }, -1);
 
-    const progressPercent = activeSensors.length > 1
-        ? (Math.max(0, lastTriggeredIndex) / (activeSensors.length - 1)) * 100
+    const progressPercent = totalSensors > 1
+        ? (Math.max(0, lastTriggeredIndex) / (totalSensors - 1)) * 100
         : 0;
 
-    // Розрахунок сплітів для таблиці
+    // --- СПЛІТИ ---
     const splitRows: { label: string; time: number; type: 'SPLIT' | 'TOTAL' }[] = [];
     if (activeSensors.length > 1) {
         for (let i = 1; i < activeSensors.length; i++) {
             const current = activeSensors[i];
             const prev = activeSensors[i - 1];
-            if (current.triggerTime && prev.triggerTime) {
+            if (current.triggerTime !== undefined && prev.triggerTime !== undefined) {
                 const diff = (current.triggerTime - prev.triggerTime) / 1000;
+                const label = i === activeSensors.length - 1 ? 'START ➔ FINISH' : `GATE ${i} ➔ GATE ${i+1}`;
                 splitRows.push({
-                    label: i === activeSensors.length - 1 ? `Гейт ${prev.id} ➔ Фініш` : `Гейт ${prev.id} ➔ Гейт ${current.id}`,
+                    label: i === activeSensors.length - 1 && activeSensors.length === 2
+                        ? 'START ➔ FINISH'
+                        : label,
                     time: diff,
                     type: 'SPLIT'
                 });
@@ -87,29 +101,23 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         }
     }
 
-    // --- ОСНОВНА ДІЯ: ПЕРЕХІД ДО НАСТУПНОГО ГРАВЦЯ ---
+    // --- ДІЯ: НАСТУПНИЙ ГРАВЕЦЬ ---
     const nextPlayer = () => {
-        // 1. Скидаємо всі стани в BleContext (час, тригери сенсорів)
+        console.log("Button 'NEXT' pressed");
         resetSession();
 
-        // 2. Перевіряємо чи є наступний гравець
         if (currentPlayerIndex < playersQueue.length - 1) {
             setCurrentPlayerIndex(prev => prev + 1);
         } else {
-            // Якщо гравці закінчилися
-            Alert.alert(
-                "Тест завершено",
-                "Всі обрані гравці пройшли тестування.",
-                [{ text: "До результатів", onPress: onFinish }]
-            );
+            Alert.alert("Тест завершено", "Всі гравці пройшли тест.", [{ text: "ОК", onPress: onFinish }]);
         }
     };
 
     return {
         currentPlayerObj,
-        teamName: config.teamName || 'Вільне тренування',
         currentPlayerIndex,
         totalPlayers: playersQueue.length,
+        teamName: config.teamName || 'Вільне тренування',
         isDataLoaded: true,
         isRunning,
         isFinished,

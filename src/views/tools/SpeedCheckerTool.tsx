@@ -9,6 +9,10 @@ import SpeedTestRun from './TempoMetrics/SpeedTestRun';
 
 import { useSpeedCheckerRouter } from '../../hooks/tools/useSpeedCheckerRouter';
 
+const ScreenContainer = ({ children }: { children: React.ReactNode }) => (
+    <View className="flex-1 bg-slate-950">{children}</View>
+);
+
 export default function SpeedCheckerTool({ onBack }: { onBack: () => void }) {
     const {
         currentScreen,
@@ -23,58 +27,54 @@ export default function SpeedCheckerTool({ onBack }: { onBack: () => void }) {
         handleBackFromRun
     } = useSpeedCheckerRouter();
 
-    const Container = ({ children }: { children: React.ReactNode }) => (
-        <View className="flex-1 bg-slate-950">{children}</View>
-    );
-
+    // Використовуємо switch для рендеру екранів
     switch (currentScreen) {
         case 'MODE_SELECT':
             return (
-                <Container>
+                <ScreenContainer>
                     <SpeedCheckerModeSelector onBack={onBack} onSelect={handleModeSelect} />
-                </Container>
+                </ScreenContainer>
             );
 
         case 'TEAM_SELECT':
             return (
-                <Container>
+                <ScreenContainer>
                     <TeamSelector onBack={handleBackFromTeam} onSelect={handleTeamSelect} />
-                </Container>
+                </ScreenContainer>
             );
 
         case 'PLAYER_SELECT':
             return (
-                <Container>
+                <ScreenContainer>
                     <PlayerSelector
                         teamId={testConfig.teamId || ''}
                         onBack={handleBackFromPlayers}
                         onSelect={handlePlayersSelect}
                     />
-                </Container>
+                </ScreenContainer>
             );
 
         case 'QUICK_CONFIG':
             return (
-                <Container>
+                <ScreenContainer>
                     <QuickTestConfig
                         onBack={handleBackFromConfig}
                         onStart={handleStartTest}
-                        // Передаємо параметри точно за іменами в інтерфейсі QuickTestConfig
                         playerCount={testConfig.selectedPlayers.length}
                         testType={testConfig.type}
                     />
-                </Container>
+                </ScreenContainer>
             );
 
         case 'TEST_RUN':
             return (
-                <Container>
+                <ScreenContainer>
                     <SpeedTestRun
                         config={testConfig}
                         onBack={handleBackFromRun}
                         onFinish={onBack}
                     />
-                </Container>
+                </ScreenContainer>
             );
 
         default:

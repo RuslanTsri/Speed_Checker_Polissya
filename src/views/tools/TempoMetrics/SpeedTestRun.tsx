@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSpeedTestSession } from '../../../hooks/tempoMetrics/useSpeedTestSession';
 
@@ -10,11 +10,12 @@ interface Props {
 }
 
 export default function SpeedTestRun({ config, onBack, onFinish }: Props) {
-    // Весь стейт та логіка тепер в хуку
     const {
-        currentPlayer,
+        currentPlayerObj,   // 👈 Об'єкт з ім'ям
+        teamName,           // 👈 Назва команди
         currentPlayerIndex,
         totalPlayers,
+
         isRunning,
         isFinished,
         isReady,
@@ -29,24 +30,36 @@ export default function SpeedTestRun({ config, onBack, onFinish }: Props) {
         formatTime
     } = useSpeedTestSession(config, onFinish);
 
+
+
     return (
         <ScrollView className="flex-1 bg-slate-950 pt-4 px-4" contentContainerStyle={{ paddingBottom: 40 }}>
             {/* Header */}
             <View className="flex-row items-center justify-between mb-6">
                 <TouchableOpacity onPress={onBack} className="p-2 -ml-2"><Feather name="chevron-left" size={28} color="white" /></TouchableOpacity>
-                <Text className="text-white text-lg font-bold">Тестування</Text>
+                <View className="items-center">
+                    <Text className="text-white text-lg font-bold">Тестування</Text>
+                    {/* 🔥 Назва команди */}
+                    <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{teamName}</Text>
+                </View>
                 <View className="w-10" />
             </View>
 
             {/* Гравець Info */}
             <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-8 flex-row justify-between items-center">
                 <View className="flex-row items-center">
-                    <View className="w-10 h-10 bg-slate-800 rounded-full items-center justify-center mr-3 border border-slate-700">
-                        <Text className="text-slate-400 font-bold">#{currentPlayerIndex + 1}</Text>
+                    <View className="w-12 h-12 bg-slate-800 rounded-full items-center justify-center mr-4 border border-slate-700">
+                        {/* 🔥 Номер гравця або індекс */}
+                        <Text className="text-slate-400 font-bold text-lg">
+                            {currentPlayerObj.number ? `${currentPlayerObj.number}` : `#${currentPlayerIndex + 1}`}
+                        </Text>
                     </View>
                     <View>
-                        <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Гравець</Text>
-                        <Text className="text-white font-bold text-lg">{currentPlayer}</Text>
+                        <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                            Гравець {currentPlayerIndex + 1} з {totalPlayers}
+                        </Text>
+                        {/* 🔥 Ім'я гравця */}
+                        <Text className="text-white font-bold text-xl">{currentPlayerObj.name}</Text>
                     </View>
                 </View>
             </View>
@@ -67,7 +80,7 @@ export default function SpeedTestRun({ config, onBack, onFinish }: Props) {
                 {isReady && <Text className="text-yellow-500 font-bold uppercase animate-pulse mt-2">Очікування старту...</Text>}
             </View>
 
-            {/* TRACK VISUALIZATION */}
+            {/* TRACK VISUALIZATION (Без змін) */}
             <View className="mb-12 h-80 relative w-full items-center">
                 <View className="absolute top-0 bottom-0 w-[2px] bg-slate-800" />
                 <View className="absolute top-0 w-[2px] bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]" style={{ height: `${progressPercent}%` }} />
@@ -157,7 +170,9 @@ export default function SpeedTestRun({ config, onBack, onFinish }: Props) {
                             <Text className="text-white font-bold uppercase">Скинути</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={nextPlayer} className="flex-[2] bg-yellow-400 py-4 rounded-2xl items-center shadow-lg shadow-yellow-400/20">
-                            <Text className="text-slate-900 font-black text-lg uppercase">Наступний</Text>
+                            <Text className="text-slate-900 font-black text-lg uppercase">
+                                {currentPlayerIndex === totalPlayers - 1 ? 'Завершити' : 'Наступний'}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 )}

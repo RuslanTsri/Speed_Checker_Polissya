@@ -6,12 +6,11 @@ import { useTestConfiguration } from '../../../hooks/tempoMetrics/useTestConfigu
 interface Props {
     onBack: () => void;
     onStart: (distance: number) => void;
-    testType: string;
-    selectedPlayersCount: number;
+    playerCount: number;
+    testType?: string;
 }
 
-export default function QuickTestConfig({ onBack, onStart, testType, selectedPlayersCount }: Props) {
-    // Вся логіка тут
+export default function QuickTestConfig({ onBack, onStart, playerCount, testType }: Props) {
     const {
         distance, setDistance,
         splitPositions, adjustSplit,
@@ -32,10 +31,11 @@ export default function QuickTestConfig({ onBack, onStart, testType, selectedPla
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Info Chips */}
                 <View className="flex-row justify-center space-x-2 mb-8">
+                    {/* 🔥 ВИПРАВЛЕНО: Використовуємо playerCount замість selectedPlayersCount */}
                     {testType === 'TEAM' && (
                         <View className="bg-blue-500/10 border border-blue-500/30 px-3 py-1.5 rounded-lg flex-row items-center">
                             <Feather name="users" size={12} color="#60a5fa" style={{ marginRight: 6 }} />
-                            <Text className="text-blue-400 text-xs font-bold">Гравців: {selectedPlayersCount}</Text>
+                            <Text className="text-blue-400 text-xs font-bold">Гравців: {playerCount}</Text>
                         </View>
                     )}
                     <View className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg flex-row items-center">
@@ -71,11 +71,9 @@ export default function QuickTestConfig({ onBack, onStart, testType, selectedPla
                         )}
                     </View>
 
-                    {/* 🔥 TRACK CONTAINER */}
                     <View className="h-40 relative mx-4">
                         <View className="h-[2px] bg-slate-700 w-full absolute top-1/2 mt-[-1px]" />
 
-                        {/* START MARKER */}
                         <View className="absolute top-0 bottom-0 w-20 -ml-10 items-center justify-center" style={{ left: '0%' }}>
                             <View className="mb-2 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                                 <Text className="text-slate-500 font-bold text-[10px]">0 м</Text>
@@ -84,7 +82,6 @@ export default function QuickTestConfig({ onBack, onStart, testType, selectedPla
                             <Text className="mt-2 text-[10px] font-bold text-slate-500">START</Text>
                         </View>
 
-                        {/* INTERMEDIATE MARKERS */}
                         {splitPositions.map((pos, i) => {
                             const percent = (pos / distance) * 100;
                             return (
@@ -98,7 +95,6 @@ export default function QuickTestConfig({ onBack, onStart, testType, selectedPla
                             );
                         })}
 
-                        {/* FINISH MARKER */}
                         <View className="absolute top-0 bottom-0 w-20 -ml-10 items-center justify-center" style={{ left: '100%' }}>
                             <View className="mb-2 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                                 <Text className="text-white font-bold text-[10px]">{distance} м</Text>
@@ -119,17 +115,17 @@ export default function QuickTestConfig({ onBack, onStart, testType, selectedPla
                                     <View className="w-8 h-8 rounded-full bg-blue-500/20 items-center justify-center mr-3 border border-blue-500/30">
                                         <Text className="text-blue-400 font-bold">{index + 1}</Text>
                                     </View>
-                                    <Text className="text-white font-bold">Гейт {index + 1} (Спліт)</Text>
+                                    <Text className="text-white font-bold">Гейт {index + 1}</Text>
                                 </View>
 
                                 <View className="flex-row items-center bg-slate-950 rounded-xl border border-slate-800 p-1">
-                                    <TouchableOpacity onPress={() => adjustSplit(index, -5)} className={`w-10 h-10 items-center justify-center rounded-lg ${(index === 0 && pos <= 5) || (index > 0 && pos <= splitPositions[index-1] + 5) ? 'bg-slate-900 opacity-50' : 'bg-slate-900 active:bg-slate-800'}`}>
+                                    <TouchableOpacity onPress={() => adjustSplit(index, -5)} className="w-10 h-10 items-center justify-center">
                                         <Feather name="minus" size={18} color="white" />
                                     </TouchableOpacity>
                                     <View className="w-16 items-center">
-                                        <Text className="text-white font-bold text-lg">{pos} <Text className="text-slate-500 text-xs">м</Text></Text>
+                                        <Text className="text-white font-bold text-lg">{pos}м</Text>
                                     </View>
-                                    <TouchableOpacity onPress={() => adjustSplit(index, 5)} className={`w-10 h-10 items-center justify-center rounded-lg ${(index === splitPositions.length - 1 && pos >= distance - 5) || (index < splitPositions.length - 1 && pos >= splitPositions[index+1] - 5) ? 'bg-slate-900 opacity-50' : 'bg-slate-900 active:bg-slate-800'}`}>
+                                    <TouchableOpacity onPress={() => adjustSplit(index, 5)} className="w-10 h-10 items-center justify-center">
                                         <Feather name="plus" size={18} color="white" />
                                     </TouchableOpacity>
                                 </View>
@@ -138,7 +134,7 @@ export default function QuickTestConfig({ onBack, onStart, testType, selectedPla
                     </View>
                 )}
 
-                <TouchableOpacity onPress={() => onStart(distance)} className="bg-yellow-400 w-full py-5 rounded-2xl items-center mb-10 shadow-lg shadow-yellow-400/20 active:bg-yellow-500 flex-row justify-center">
+                <TouchableOpacity onPress={() => onStart(distance)} className="bg-yellow-400 w-full py-5 rounded-2xl items-center mb-10 shadow-lg active:bg-yellow-500 flex-row justify-center">
                     <Feather name="play" size={20} color="#0f172a" style={{ marginRight: 8 }} />
                     <Text className="text-slate-900 font-black text-lg uppercase">Почати тест</Text>
                 </TouchableOpacity>

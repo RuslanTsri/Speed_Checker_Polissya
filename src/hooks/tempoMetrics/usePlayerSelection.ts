@@ -1,37 +1,76 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Alert } from 'react-native';
+import { playerService, Player } from '../../services/playerService';
 
-const DUMMY_PLAYERS = Array.from({ length: 10 }).map((_, i) => ({
-    id: i.toString(),
-    name: `Гравець ${i + 1}`,
-    number: i + 1
-}));
-
-export const usePlayerSelection = () => {
+export const usePlayerSelection = (teamId: string) => {
+    const [allPlayers, setAllPlayers] = useState<Player[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [search, setSearch] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Для модалок додавання (якщо список пустий)
     const [isAddModalVisible, setAddModalVisible] = useState(false);
 
-    // Тут в майбутньому буде запит до бази даних за ID команди
-    const players = DUMMY_PLAYERS;
+    useEffect(() => {
+        if (teamId) {
+            loadPlayers();
+        }
+    }, [teamId]);
 
+    const loadPlayers = async () => {
+        setIsLoading(true);
+        const { data, error } = await playerService.getByTeam(teamId);
+
+        if (error) {
+            Alert.alert("Помилка", "Не вдалося завантажити гравців");
+        } else {
+            // Сортуємо за іменем
+            setAllPlayers(data || []);
+        }
+        setIsLoading(false);
+    };
+
+    // Фільтрація
+    const filteredPlayers = useMemo(() => {
+        return allPlayers.filter(p =>
+            p.name.toLowerCase().includes(search.toLowerCase())
+        );
+    }, [allPlayers, search]);
+
+    // Логіка вибору (Toggle Selection)
     const toggleSelection = (id: string) => {
-        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+        setSelectedIds(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(item => item !== id);
+            } else {
+                return [...prev, id];
+            }
+        });
     };
 
+    // Обрати всіх / Зняти вибір з усіх
     const toggleAll = () => {
-        if (selectedIds.length === players.length) setSelectedIds([]);
-        else setSelectedIds(players.map(p => p.id));
+        if (selectedIds.length === allPlayers.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(allPlayers.map(p => p.id || '')); // id optional у типі, але в базі точно є
+        }
     };
 
-    const handleImport = () => Alert.alert("Імпорт", "Функція в розробці");
+    const handleImport = () => {
+        Alert.alert("Інфо", "Тут відкриється імпорт CSV (використайте логіку з PlayersScreen)");
+    };
 
     return {
-        players,
+        players: filteredPlayers,
         selectedIds,
+        search,
+        setSearch,
         toggleSelection,
         toggleAll,
-        isEmpty: players.length === 0,
-        isAddModalVisible,
+        isEmpty: allPlayers.length === 0 && !isLoading,
+        isLoading,
+        // Для Empty State
         setAddModalVisible,
         handleImport
     };

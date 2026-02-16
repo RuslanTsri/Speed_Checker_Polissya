@@ -1,21 +1,15 @@
 import React from 'react';
 import { View } from 'react-native';
 
-// Екрани
 import SpeedCheckerModeSelector from './TempoMetrics/SpeedCheckerModeSelector';
 import QuickTestConfig from './TempoMetrics/QuickTestConfig';
 import TeamSelector from './TempoMetrics/TeamSelector';
 import PlayerSelector from './TempoMetrics/PlayerSelector';
 import SpeedTestRun from './TempoMetrics/SpeedTestRun';
 
-
 import { useSpeedCheckerRouter } from '../../hooks/tools/useSpeedCheckerRouter';
 
-interface SpeedCheckerToolProps {
-    onBack: () => void;
-}
-
-export default function SpeedCheckerTool({ onBack }: SpeedCheckerToolProps) {
+export default function SpeedCheckerTool({ onBack }: { onBack: () => void }) {
     const {
         currentScreen,
         testConfig,
@@ -29,33 +23,58 @@ export default function SpeedCheckerTool({ onBack }: SpeedCheckerToolProps) {
         handleBackFromRun
     } = useSpeedCheckerRouter();
 
+    const Container = ({ children }: { children: React.ReactNode }) => (
+        <View className="flex-1 bg-slate-950">{children}</View>
+    );
+
     switch (currentScreen) {
         case 'MODE_SELECT':
-            return <SpeedCheckerModeSelector onBack={onBack} onSelect={handleModeSelect} />;
+            return (
+                <Container>
+                    <SpeedCheckerModeSelector onBack={onBack} onSelect={handleModeSelect} />
+                </Container>
+            );
 
         case 'TEAM_SELECT':
-            return <TeamSelector onBack={handleBackFromTeam} onSelect={handleTeamSelect} />;
+            return (
+                <Container>
+                    <TeamSelector onBack={handleBackFromTeam} onSelect={handleTeamSelect} />
+                </Container>
+            );
 
         case 'PLAYER_SELECT':
-            return <PlayerSelector onBack={handleBackFromPlayers} onSelect={handlePlayersSelect} />;
+            return (
+                <Container>
+                    <PlayerSelector
+                        teamId={testConfig.teamId || ''}
+                        onBack={handleBackFromPlayers}
+                        onSelect={handlePlayersSelect}
+                    />
+                </Container>
+            );
 
         case 'QUICK_CONFIG':
             return (
-                <QuickTestConfig
-                    onBack={handleBackFromConfig}
-                    onStart={handleStartTest}
-                    testType={testConfig.type}
-                    selectedPlayersCount={testConfig.selectedPlayers.length}
-                />
+                <Container>
+                    <QuickTestConfig
+                        onBack={handleBackFromConfig}
+                        onStart={handleStartTest}
+                        // Передаємо параметри точно за іменами в інтерфейсі QuickTestConfig
+                        playerCount={testConfig.selectedPlayers.length}
+                        testType={testConfig.type}
+                    />
+                </Container>
             );
 
         case 'TEST_RUN':
             return (
-                <SpeedTestRun
-                    config={testConfig}
-                    onBack={handleBackFromRun}
-                    onFinish={onBack} // По завершенню повертаємося в головне меню (або можна на результати)
-                />
+                <Container>
+                    <SpeedTestRun
+                        config={testConfig}
+                        onBack={handleBackFromRun}
+                        onFinish={onBack}
+                    />
+                </Container>
             );
 
         default:

@@ -10,9 +10,13 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
-    // Ініціалізація гравців
-    const players = config.selectedPlayers.length > 0 ? config.selectedPlayers : ['Гість'];
-    const currentPlayer = players[currentPlayerIndex];
+    // Отримуємо список гравців з конфігу
+    const playersQueue = config.selectedPlayers && config.selectedPlayers.length > 0
+        ? config.selectedPlayers
+        : [{ id: 'guest', name: 'Гість', number: '-' }];
+
+    // Поточний об'єкт гравця
+    const currentPlayerObj = playersQueue[currentPlayerIndex];
 
     const isRunning = state === 'active';
     const isFinished = state === 'finished';
@@ -23,17 +27,22 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         .filter(s => s.status === 'active')
         .sort((a, b) => a.id - b.id);
 
-    // Якщо фінішували, відрізаємо "зайві" сенсори, які могли бути активовані випадково після фінішу
+    // Авто-стоп таймера, якщо останній сенсор активований
+    if (isRunning && activeSensors.length > 1) {
+        const lastSensor = activeSensors[activeSensors.length - 1];
+        if (lastSensor.triggerTime && lastSensor.triggerTime > 0) {
+            stopTraining();
+        }
+    }
+
+    // Відфільтровуємо лише ті сенсори, що спрацювали до фінішу (щоб уникнути фантомних спрацювань)
     if (isFinished) {
-        const lastTriggeredSensorId = activeSensors.reduce((maxId, s) => {
-            return (s.triggerTime && s.triggerTime > 0) ? s.id : maxId;
-        }, 0);
+        const lastTriggeredSensorId = activeSensors.reduce((maxId, s) =>
+            (s.triggerTime && s.triggerTime > 0) ? s.id : maxId, 0);
         activeSensors = activeSensors.filter(s => s.id <= lastTriggeredSensorId);
     }
 
-    const totalSensors = activeSensors.length;
-
-    // --- ФОРМАТУВАННЯ ЧАСУ ---
+    // --- ФОРМАТУВАННЯ ---
     const formatTime = (totalSeconds: number) => {
         if (!totalSeconds && totalSeconds !== 0) return { main: "00:00", decimal: ".00" };
         const mins = Math.floor(totalSeconds / 60);
@@ -47,18 +56,18 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
     const timeObj = formatTime(elapsedTime / 1000);
 
-    // --- ПРОГРЕС ---
+    // Розрахунок прогресу для візуалізації треку
     const lastTriggeredIndex = activeSensors.reduce((lastIdx, sensor, idx) => {
         if (sensor.id === 0 && (isRunning || isFinished)) return Math.max(lastIdx, 0);
         if (sensor.triggerTime !== undefined && sensor.triggerTime > 0) return idx;
         return lastIdx;
     }, -1);
 
-    const progressPercent = totalSensors > 1
-        ? (Math.max(0, lastTriggeredIndex) / (totalSensors - 1)) * 100
+    const progressPercent = activeSensors.length > 1
+        ? (Math.max(0, lastTriggeredIndex) / (activeSensors.length - 1)) * 100
         : 0;
 
-    // --- СПЛІТИ (ТАБЛИЦЯ) ---
+    // Розрахунок сплітів для таблиці
     const splitRows: { label: string; time: number; type: 'SPLIT' | 'TOTAL' }[] = [];
     if (activeSensors.length > 1) {
         for (let i = 1; i < activeSensors.length; i++) {
@@ -66,10 +75,11 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
             const prev = activeSensors[i - 1];
             if (current.triggerTime && prev.triggerTime) {
                 const diff = (current.triggerTime - prev.triggerTime) / 1000;
-                const label = i === activeSensors.length - 1
-                    ? `Гейт ${prev.id} ➔ Фініш`
-                    : `Гейт ${prev.id} ➔ Гейт ${current.id}`;
-                splitRows.push({ label, time: diff, type: 'SPLIT' });
+                splitRows.push({
+                    label: i === activeSensors.length - 1 ? `Гейт ${prev.id} ➔ Фініш` : `Гейт ${prev.id} ➔ Гейт ${current.id}`,
+                    time: diff,
+                    type: 'SPLIT'
+                });
             }
         }
         if (isFinished && elapsedTime > 0) {
@@ -77,21 +87,30 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         }
     }
 
-    // --- ДІЇ ---
+    // --- ОСНОВНА ДІЯ: ПЕРЕХІД ДО НАСТУПНОГО ГРАВЦЯ ---
     const nextPlayer = () => {
+        // 1. Скидаємо всі стани в BleContext (час, тригери сенсорів)
         resetSession();
-        if (currentPlayerIndex < players.length - 1) {
+
+        // 2. Перевіряємо чи є наступний гравець
+        if (currentPlayerIndex < playersQueue.length - 1) {
             setCurrentPlayerIndex(prev => prev + 1);
         } else {
-            Alert.alert("Тест завершено", "Всі гравці пройшли тест.", [{ text: "ОК", onPress: onFinish }]);
+            // Якщо гравці закінчилися
+            Alert.alert(
+                "Тест завершено",
+                "Всі обрані гравці пройшли тестування.",
+                [{ text: "До результатів", onPress: onFinish }]
+            );
         }
     };
 
     return {
-        // State
-        currentPlayer,
+        currentPlayerObj,
+        teamName: config.teamName || 'Вільне тренування',
         currentPlayerIndex,
-        totalPlayers: players.length,
+        totalPlayers: playersQueue.length,
+        isDataLoaded: true,
         isRunning,
         isFinished,
         isReady,
@@ -99,8 +118,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         progressPercent,
         activeSensors,
         splitRows,
-
-        // Actions
         startTraining,
         stopTraining,
         resetSession,

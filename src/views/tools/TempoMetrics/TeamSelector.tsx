@@ -5,7 +5,7 @@ import { useTeamSelection } from '../../../hooks/tempoMetrics/useTeamSelection';
 
 interface Props {
     onBack: () => void;
-    onSelect: (teamId: string) => void;
+    onSelect: (teamId: string, teamName: string) => void;
 }
 
 export default function TeamSelector({ onBack, onSelect }: Props) {
@@ -54,7 +54,10 @@ export default function TeamSelector({ onBack, onSelect }: Props) {
 
             {/* Continue Button */}
             <TouchableOpacity
-                onPress={() => selectedId && onSelect(selectedId)}
+                onPress={() => {
+                    const team = teams.find(t => t.id === selectedId);
+                    if (team) onSelect(team.id, team.name);
+                }}
                 disabled={!selectedId}
                 className={`w-full py-5 rounded-2xl items-center mb-8 ${selectedId ? 'bg-slate-800 border border-slate-700' : 'bg-slate-900 opacity-50'}`}
             >

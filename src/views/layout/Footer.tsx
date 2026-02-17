@@ -13,7 +13,7 @@ export const Footer = ({ activeTab, onSwitch }: FooterProps) => {
     const tabs: { id: TabType; label: string; iconName: keyof typeof Ionicons.glyphMap }[] = [
         { id: 'HOME', label: 'Головна', iconName: 'home' },
         { id: 'PLAYERS', label: 'Команди', iconName: 'people' },
-        { id: 'SESSIONS', label: 'Сесії', iconName: 'stats-chart' },
+        { id: 'SESSIONS', label: 'Результати', iconName: 'stats-chart' },
         { id: 'SETTINGS', label: 'Налашт.', iconName: 'settings' },
     ];
 

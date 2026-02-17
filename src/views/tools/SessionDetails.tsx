@@ -16,6 +16,7 @@ export default function SessionDetails({ session, onBack }: Props) {
         rounds,
         filteredAttempts,
         sortedResults,
+        sessionStats,
         handleExport
     } = useSessionDetails(session);
 
@@ -50,11 +51,11 @@ export default function SessionDetails({ session, onBack }: Props) {
                 <View className="flex-row">
                     <View className="mr-8">
                         <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-1">Найкращий</Text>
-                        <Text className="text-yellow-400 text-3xl font-black">{session.bestTime.toFixed(2)} <Text className="text-sm font-bold text-slate-400">с</Text></Text>
+                        <Text className="text-yellow-400 text-3xl font-black">{sessionStats.best.toFixed(2)} <Text className="text-sm font-bold text-slate-400">с</Text></Text>
                     </View>
                     <View>
                         <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-1">Середній</Text>
-                        <Text className="text-white text-3xl font-black">{session.avgTime.toFixed(2)} <Text className="text-sm font-bold text-slate-400">с</Text></Text>
+                        <Text className="text-white text-3xl font-black">{sessionStats.avg.toFixed(2)} <Text className="text-sm font-bold text-slate-400">с</Text></Text>
                     </View>
                 </View>
             </View>

@@ -45,6 +45,57 @@ class TeamService extends BaseService<Team> {
             .eq('coach_id', user.id)
             .order('name');
     }
+    async getMyTeamsWithStatus() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { data: [], error: 'No user' };
+
+        // 🔥 МАГІЯ SUPABASE: Вкладений запит
+        // 1. Беремо команди (teams)
+        // 2. Приєднуємо гравців (players)
+        // 3. У кожного гравця рахуємо кількість результатів (results count)
+        const { data, error } = await supabase
+            .from('teams')
+            .select(`
+                id,
+                name,
+                players (
+                    id,
+                    results (count) 
+                )
+            `)
+            .eq('coach_id', user.id)
+            .order('name');
+
+        if (error) {
+            console.error("Error fetching teams:", error);
+            return { data: [], error };
+        }
+
+        // 🔥 ОБРОБКА ДАНИХ (Mapping)
+        const formatted = data.map((team: any) => {
+            // Рахуємо кількість гравців
+            const playersCount = team.players?.length || 0;
+
+            // Перевіряємо: чи є хоч один гравець, у якого results > 0
+            // team.players - це масив гравців
+            // player.results - це масив об'єктів [{count: 5}] (через select count)
+            const hasAnyResults = team.players?.some((player: any) =>
+                player.results?.[0]?.count > 0
+            );
+
+            return {
+                id: team.id,
+                teamName: team.name,
+                playerCount: playersCount,
+                hasResults: hasAnyResults // true/false для червоної/зеленої плашки
+            };
+        });
+
+        // Сортуємо: спочатку команди з даними, потім пусті
+        formatted.sort((a, b) => Number(b.hasResults) - Number(a.hasResults));
+
+        return { data: formatted, error: null };
+    }
 }
 
 export const teamService = new TeamService();

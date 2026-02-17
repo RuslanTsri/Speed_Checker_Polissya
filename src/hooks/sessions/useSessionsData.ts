@@ -1,10 +1,8 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { teamService } from '../../services/teamService'; // Використовуємо твій teamService
+import { resultsService } from '../../services/resultsService';
 
-// --- ТИПИ (Shared Types) ---
-export interface Attempt { round: number; time: number; }
-export interface PlayerResult { id: string; playerName: string; number: string; bestTime: number; maxSpeed: number; attempts: Attempt[]; }
-export interface TeamSession { id: string; teamName: string; testType: string; date: string; time: string; playerCount: number; bestTime: number; avgTime: number; results: PlayerResult[]; }
-
+// Тип для списку "Загальні" (Останні забіги)
 export interface GeneralSession {
     id: string;
     playerName: string;
@@ -14,53 +12,88 @@ export interface GeneralSession {
     date: string;
 }
 
-// --- MOCK DATA ---
-const DUMMY_TEAM_SESSIONS: TeamSession[] = [
-    {
-        id: 's1', teamName: 'ФК «Динамо» U17', testType: 'Тест 30 м • 2 гейти • Раундів: 2', date: '12.10.2023', time: '10:30', playerCount: 24, bestTime: 4.06, avgTime: 4.69,
-        results: [
-            { id: 'p1', playerName: 'Гравець 21', number: '21', bestTime: 4.06, maxSpeed: 25.1, attempts: [{ round: 1, time: 4.12 }, { round: 2, time: 4.06 }] },
-            { id: 'p2', playerName: 'Гравець 13', number: '13', bestTime: 4.10, maxSpeed: 25.1, attempts: [{ round: 1, time: 4.20 }, { round: 2, time: 4.10 }] },
-            { id: 'p3', playerName: 'Гравець 4', number: '4', bestTime: 4.26, maxSpeed: 24.5, attempts: [{ round: 1, time: 4.26 }, { round: 2, time: 4.30 }] },
-        ]
-    }
-];
-
-const DUMMY_GENERAL_SESSIONS: GeneralSession[] = [
-    { id: '1', playerName: 'Олександр Назаренко', teamName: 'ФК «Полісся»', totalTime: 12.30, avgSplit: 4.10, date: '10:45' },
-    { id: '2', playerName: 'Бені Макуана', teamName: 'ФК «Полісся»', totalTime: 11.95, avgSplit: 3.98, date: '10:42' },
-    { id: '3', playerName: 'Пилип Будківський', teamName: 'ФК «Полісся»', totalTime: 14.10, avgSplit: 4.70, date: '10:38' },
-    { id: '4', playerName: 'Денис Бойко', teamName: 'ФК «Динамо»', totalTime: 13.50, avgSplit: 4.50, date: '10:35' },
-    { id: '5', playerName: 'Артем Шабанов', teamName: 'ФК «Динамо»', totalTime: 13.10, avgSplit: 4.36, date: '10:30' },
-];
+// 🔥 ЗМІНЕНО: Тепер це тип для КОМАНДИ в списку
+export interface TeamSession {
+    id: string; // ID команди
+    teamName: string;
+    playerCount: number;
+    hasResults: boolean; // Чи є дані
+    // Поля нижче необов'язкові для списку команд, але потрібні для сумісності з UI, якщо він їх вимагає
+    testType?: string;
+    date?: string;
+    time?: string;
+}
 
 export const useSessionsData = (searchQuery: string) => {
+    const [teamSessions, setTeamSessions] = useState<TeamSession[]>([]);
+    const [generalSessions, setGeneralSessions] = useState<GeneralSession[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        setIsLoading(true);
+
+        // 1. Завантажуємо КОМАНДИ (використовуємо метод getMyTeamsWithStatus з teamService)
+        // Якщо ти ще не оновив teamService як ми домовлялись, зроби це (код був вище)
+        const { data: teamsData } = await teamService.getMyTeamsWithStatus();
+
+        // 2. Завантажуємо останні забіги для вкладки "Загальні"
+        const { data: resultsData } = await resultsService.getRecentResults();
+
+        if (teamsData) {
+            const mappedTeams: TeamSession[] = teamsData.map((t: any) => ({
+                id: t.id,
+                teamName: t.teamName,
+                playerCount: t.playerCount,
+                hasResults: t.hasResults,
+                testType: t.hasResults ? 'Є результати' : 'Немає даних', // Заглушка для UI
+                date: '', // Не показуємо дату в списку команд
+                time: ''
+            }));
+            setTeamSessions(mappedTeams);
+        }
+
+        if (resultsData) {
+            setGeneralSessions(resultsData);
+        }
+
+        setIsLoading(false);
+    };
+
+    // --- ФІЛЬТРАЦІЯ ---
     const filteredTeamSessions = useMemo(() => {
-        return DUMMY_TEAM_SESSIONS.filter(s =>
-            s.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.date.includes(searchQuery)
+        if (!searchQuery) return teamSessions;
+        return teamSessions.filter(s =>
+            s.teamName.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [searchQuery]);
+    }, [teamSessions, searchQuery]);
 
     const filteredGeneralSessions = useMemo(() => {
-        const sorted = [...DUMMY_GENERAL_SESSIONS].sort((a, b) => a.totalTime - b.totalTime);
-        return sorted.filter(s =>
+        if (!searchQuery) return generalSessions;
+        return generalSessions.filter(s =>
             s.playerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.date.includes(searchQuery)
+            s.teamName.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [searchQuery]);
+    }, [generalSessions, searchQuery]);
 
-    const bestGeneralResult = filteredGeneralSessions.length > 0 ? filteredGeneralSessions[0] : null;
-    const worstGeneralResult = filteredGeneralSessions.length > 0 ? filteredGeneralSessions[filteredGeneralSessions.length - 1] : null;
+    // --- СТАТИСТИКА (Best/Worst для General Tab) ---
+    const stats = useMemo(() => {
+        if (filteredGeneralSessions.length === 0) return { best: null, worst: null };
+        const sorted = [...filteredGeneralSessions].sort((a, b) => a.totalTime - b.totalTime);
+        return {
+            best: sorted[0],
+            worst: sorted[sorted.length - 1]
+        };
+    }, [filteredGeneralSessions]);
 
     return {
-        teamSessions: filteredTeamSessions,
+        teamSessions: filteredTeamSessions, // Це тепер список команд
         generalSessions: filteredGeneralSessions,
-        stats: {
-            best: bestGeneralResult,
-            worst: worstGeneralResult
-        }
+        stats,
+        isLoading,
+        refresh: loadData
     };
 };

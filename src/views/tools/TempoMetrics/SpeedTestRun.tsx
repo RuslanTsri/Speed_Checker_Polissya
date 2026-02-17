@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSpeedTestSession } from '../../../hooks/tempoMetrics/useSpeedTestSession';
 
-// ✅ Стабільний компонент крапки для усунення CssInterop warning
 const SensorDot = React.memo(({ isTriggered, isStart, isFinish }: {
     isTriggered: boolean, isStart: boolean, isFinish: boolean
 }) => {
@@ -60,16 +59,25 @@ export default function SpeedTestRun({ config, onBack, onFinish }: { config: any
             {/* Трек */}
             <View className="mb-12 h-80 relative w-full items-center">
                 <View className="absolute top-0 bottom-0 w-[2px] bg-slate-800" />
-                <View className="absolute top-0 w-[2px] bg-green-500 shadow-lg" style={{ height: `${progressPercent}%` }} />
+                {/* Лінія прогресу з плавним переходом */}
+                <View
+                    className="absolute top-0 w-[2px] bg-green-500 shadow-lg shadow-green-500/50"
+                    style={{ height: `${progressPercent}%` }}
+                />
 
                 {activeSensors.map((sensor, index) => {
                     const triggered = sensor.triggerTime !== undefined && sensor.triggerTime > 0;
-                    const start = index === 0;
-                    const finish = index === activeSensors.length - 1;
+                    const isStart = index === 0;
+                    const isFinish = index === activeSensors.length - 1;
                     const top = (index / (Math.max(1, activeSensors.length - 1))) * 100;
 
+                    // Динамічний лейбл: START, FINISH або GATE X
+                    let label = `GATE ${index}`;
+                    if (isStart) label = "START";
+                    else if (isFinish) label = "FINISH";
+
                     let timeDisplay = "--:--";
-                    if (start && (isRunning || isFinished)) timeDisplay = "00:00.00";
+                    if (isStart && (isRunning || isFinished)) timeDisplay = "00:00.00";
                     else if (sensor.triggerTime) {
                         const t = formatTime(sensor.triggerTime / 1000);
                         timeDisplay = `${t.main}${t.decimal}`;
@@ -77,9 +85,17 @@ export default function SpeedTestRun({ config, onBack, onFinish }: { config: any
 
                     return (
                         <View key={`sensor-${sensor.id}`} className="absolute w-full flex-row items-center justify-center" style={{ top: `${top}%`, marginTop: -12 }}>
-                            <View className="flex-1 items-end pr-6"><Text className="text-xs font-bold text-slate-600 uppercase">{start ? 'START' : finish ? 'FINISH' : `GATE ${sensor.id}`}</Text></View>
-                            <SensorDot isTriggered={triggered || (start && isRunning)} isStart={start} isFinish={finish} />
-                            <View className="flex-1 items-start pl-6"><Text className="font-mono text-xs text-slate-500">{timeDisplay}</Text></View>
+                            <View className="flex-1 items-end pr-6">
+                                <Text className={`text-[10px] font-black uppercase ${triggered || (isStart && isRunning) ? 'text-white' : 'text-slate-600'}`}>
+                                    {label}
+                                </Text>
+                            </View>
+                            <SensorDot isTriggered={triggered || (isStart && isRunning)} isStart={isStart} isFinish={isFinish} />
+                            <View className="flex-1 items-start pl-6">
+                                <Text className={`font-mono text-xs ${triggered || (isStart && isRunning) ? 'text-slate-300' : 'text-slate-600'}`}>
+                                    {timeDisplay}
+                                </Text>
+                            </View>
                         </View>
                     );
                 })}
@@ -88,8 +104,9 @@ export default function SpeedTestRun({ config, onBack, onFinish }: { config: any
             {/* Спліти */}
             {splitRows.length > 0 && (
                 <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-8">
+                    <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-3 px-1">Відрізки</Text>
                     {splitRows.map((row, idx) => (
-                        <View key={idx} className="flex-row justify-between py-2 border-b border-slate-800 last:border-0">
+                        <View key={idx} className="flex-row justify-between py-2 border-b border-slate-800/50 last:border-0">
                             <Text className="text-slate-400 font-bold text-xs">{row.label}</Text>
                             <Text className="text-white font-mono font-bold">{row.time.toFixed(2)} с</Text>
                         </View>

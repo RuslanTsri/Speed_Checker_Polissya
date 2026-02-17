@@ -96,15 +96,14 @@ export const useSessionDetails = (session: TeamSession) => {
     // 🔥 РЕАЛЬНИЙ ЕКСПОРТ
     const handleExport = async () => {
         console.log("=== EXPORT ATTEMPT ===");
-        console.log("Results count:", rawResults.length);
-        console.log("Team:", session.teamName);
 
         if (rawResults.length === 0) {
-            Alert.alert("Увага", "Дані ще завантажуються або відсутні для цієї команди");
+            Alert.alert("Увага", "Дані відсутні");
             return;
         }
 
         try {
+
             await exportResultsToCSV(rawResults, session.teamName);
         } catch (err) {
             console.error("Export handler error:", err);

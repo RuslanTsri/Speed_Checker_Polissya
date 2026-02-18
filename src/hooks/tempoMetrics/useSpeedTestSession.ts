@@ -4,6 +4,12 @@ import { useBle } from '../../context/BleContext';
 import { sessionsService } from '../../services/sessionsService';
 import { resultsService } from '../../services/resultsService';
 
+export interface LocalResult {
+    player: any;
+    fullTime: number;
+    gates: number[];
+}
+
 export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     const {
         state, elapsedTime, sensors,
@@ -12,13 +18,31 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
     const [sessionId, setSessionId] = useState<string | null>(null);
-    const hasSavedResult = useRef(false);
 
+    // 📦 Стан накопичення результатів
+    const [localResults, setLocalResults] = useState<LocalResult[]>([]);
+    const [currentRunResult, setCurrentRunResult] = useState<LocalResult | null>(null);
+
+    // Модалки
+    const [showIndividualModal, setShowIndividualModal] = useState(false);
+    const [showSummaryModal, setShowSummaryModal] = useState(false);
+
+    const [isSaving, setIsSaving] = useState(false);
+    const hasProcessedRun = useRef(false);
+
+    // Стани BLE
     const isRunning = state === 'active';
     const isFinished = state === 'finished';
     const isReady = state === 'armed';
 
-    // 1. Створення сесії в БД
+    const playersQueue = config.selectedPlayers?.length > 0
+        ? config.selectedPlayers
+        : [{ id: 'guest', name: 'Гість', number: '-' }];
+
+    const currentPlayerObj = playersQueue[currentPlayerIndex];
+    const isLastPlayer = currentPlayerIndex === playersQueue.length - 1;
+
+    // 1. Створення сесії при старті
     useEffect(() => {
         const createSession = async () => {
             const { data } = await sessionsService.create({
@@ -32,63 +56,131 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         createSession();
     }, []);
 
-    // 2. Отримання активних сенсорів
-    let activeSensors = sensors
-        .filter(s => s.status === 'active')
-        .sort((a, b) => a.id - b.id);
+    // 2. Логіка ФІНІШУ
+    useEffect(() => {
+        if (isFinished && !hasProcessedRun.current) {
+            handleRunFinish();
+        }
+        if (isReady || isRunning) {
+            hasProcessedRun.current = false;
+        }
+    }, [isFinished, isReady, isRunning]);
 
+    const handleRunFinish = () => {
+        hasProcessedRun.current = true;
+
+        const result: LocalResult = {
+            player: currentPlayerObj,
+            fullTime: Number((elapsedTime / 1000).toFixed(3)),
+            gates: activeSensors
+                .filter(s => s.triggerTime !== undefined && s.id > 1)
+                .map(s => Number((s.triggerTime! / 1000).toFixed(3)))
+        };
+
+        setCurrentRunResult(result);
+        setShowIndividualModal(true);
+    };
+
+    // --- ЛОГІКА МОДАЛКИ ОДНОГО ГРАВЦЯ ---
+    const confirmIndividualRun = () => {
+        if (currentRunResult) {
+            setLocalResults(prev => [...prev, currentRunResult]);
+            setShowIndividualModal(false);
+            setCurrentRunResult(null);
+
+            if (isLastPlayer) {
+                setTimeout(() => setShowSummaryModal(true), 300);
+            } else {
+                nextPlayer();
+            }
+        }
+    };
+
+    const retryIndividualRun = () => {
+        setShowIndividualModal(false);
+        setCurrentRunResult(null);
+        resetSession();
+        hasProcessedRun.current = false;
+    };
+
+    // --- 🔥 ГОЛОВНА ЛОГІКА ЗБЕРЕЖЕННЯ І ОЧИЩЕННЯ ---
+    const saveAllResults = async () => {
+        if (!sessionId) return;
+        setIsSaving(true);
+
+        try {
+            // 1. Відправляємо запити в БД
+            const promises = localResults.map(res => {
+                return resultsService.saveResult({
+                    session_id: sessionId,
+                    player_id: res.player.id !== 'guest' ? res.player.id : null,
+                    full_time: res.fullTime,
+                    gates: res.gates,
+                    is_best: false
+                });
+            });
+
+            await Promise.all(promises);
+
+            // 2. Якщо все пройшло успішно
+            setIsSaving(false);
+            setShowSummaryModal(false);
+
+            // 🧹 ОЧИЩЕННЯ КЕШУ
+            setLocalResults([]);
+            setCurrentPlayerIndex(0);
+
+            Alert.alert("Успіх", "Всі результати збережено!", [
+                {
+                    text: "ОК",
+                    onPress: () => {
+                        // Додаткова гарантія очищення при виході
+                        setLocalResults([]);
+                        onFinish(); // Вихід з екрану
+                    }
+                }
+            ]);
+
+        } catch (error) {
+            console.error(error);
+            setIsSaving(false);
+            // ⚠️ ВАЖЛИВО: При помилці НЕ очищаємо кеш,
+            // щоб тренер міг спробувати натиснути "Зберегти" ще раз (наприклад, якщо зник інтернет)
+            Alert.alert("Помилка", "Не вдалося зберегти дані. Перевірте інтернет та спробуйте ще раз.");
+        }
+    };
+
+    // --- ПОВНЕ СКИДАННЯ (КНОПКА "ЗАНОВО") ---
+    const restartWholeSession = () => {
+        setShowSummaryModal(false);
+        setLocalResults([]); // 🧹 Очищаємо кеш
+        setCurrentPlayerIndex(0); // Повертаємось на початок
+        resetSession();
+        hasProcessedRun.current = false;
+    };
+
+    const nextPlayer = () => {
+        resetSession();
+        if (currentPlayerIndex < playersQueue.length - 1) {
+            setCurrentPlayerIndex(prev => prev + 1);
+        }
+    };
+
+    // --- Helper logic (Sensors & Progress) ---
+    let activeSensors = sensors.filter(s => s.status === 'active').sort((a, b) => a.id - b.id);
     if (isFinished) {
         const lastTriggered = [...activeSensors].reverse().find(s => s.triggerTime !== undefined);
-        if (lastTriggered) {
-            activeSensors = activeSensors.filter(s => s.id <= lastTriggered.id);
-        }
+        if (lastTriggered) activeSensors = activeSensors.filter(s => s.id <= lastTriggered.id);
     }
-
     const totalSensors = activeSensors.length;
-
-    // 3. Розрахунок прогресу (Логіка для 2+ датчиків)
     const lastTriggeredIndex = activeSensors.reduce((lastIdx, sensor, idx) => {
         const triggered = sensor.triggerTime !== undefined && sensor.triggerTime > 0;
-        if (idx === 0 && (isRunning || isFinished)) return 0; // Старт активовано
+        if (idx === 0 && (isRunning || isFinished)) return 0;
         if (triggered) return idx;
         return lastIdx;
     }, -1);
+    const progressPercent = totalSensors > 1 ? (Math.max(0, lastTriggeredIndex) / (totalSensors - 1)) * 100 : 0;
 
-    const progressPercent = totalSensors > 1
-        ? (Math.max(0, lastTriggeredIndex) / (totalSensors - 1)) * 100
-        : 0;
-
-    // 4. Логіка збереження в БД
-    useEffect(() => {
-        if (isFinished && sessionId && !hasSavedResult.current) {
-            saveCurrentRun();
-        }
-        if (isReady || isRunning) {
-            hasSavedResult.current = false;
-        }
-    }, [isFinished, isRunning, isReady, sessionId]);
-
-    const saveCurrentRun = async () => {
-        hasSavedResult.current = true;
-        const player = playersQueue[currentPlayerIndex];
-
-        const splits = activeSensors
-            .filter(s => s.triggerTime !== undefined && s.id > 1)
-            .map(s => Number((s.triggerTime! / 1000).toFixed(3)));
-
-        const resultData = {
-            session_id: sessionId!,
-            player_id: player.id !== 'guest' ? player.id : null,
-            full_time: Number((elapsedTime / 1000).toFixed(3)),
-            gates: splits,
-            is_best: false
-        };
-
-        const { error } = await resultsService.saveResult(resultData);
-        if (error) hasSavedResult.current = false;
-    };
-
-    // 5. Формування таблиці сплітів (Різні назви для 2-х та 3+ датчиків)
     const splitRows = useMemo(() => {
         const rows: { label: string; time: number }[] = [];
         if (totalSensors > 1) {
@@ -97,27 +189,13 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
                 const prev = activeSensors[i - 1];
                 if (current.triggerTime !== undefined && prev.triggerTime !== undefined) {
                     const diff = (current.triggerTime - prev.triggerTime) / 1000;
-
-                    let label = "";
-                    if (totalSensors === 2) {
-                        label = "START ➔ FINISH";
-                    } else {
-                        if (i === 1) label = "START ➔ GATE 1";
-                        else if (i === totalSensors - 1) label = `GATE ${i - 1} ➔ FINISH`;
-                        else label = `GATE ${i - 1} ➔ GATE ${i}`;
-                    }
+                    let label = totalSensors === 2 ? "START ➔ FINISH" : (i === 1 ? "START ➔ GATE 1" : (i === totalSensors - 1 ? `GATE ${i-1} ➔ FINISH` : `GATE ${i-1} ➔ GATE ${i}`));
                     rows.push({ label, time: diff });
                 }
             }
         }
         return rows;
     }, [activeSensors, isFinished]);
-
-    const playersQueue = config.selectedPlayers?.length > 0
-        ? config.selectedPlayers
-        : [{ id: 'guest', name: 'Гість', number: '-' }];
-
-    const currentPlayerObj = playersQueue[currentPlayerIndex];
 
     const formatTime = (totalSeconds: number) => {
         if (!totalSeconds && totalSeconds !== 0) return { main: "00:00", decimal: ".00" };
@@ -130,16 +208,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         };
     };
 
-    const nextPlayer = () => {
-        hasSavedResult.current = false;
-        resetSession();
-        if (currentPlayerIndex < playersQueue.length - 1) {
-            setCurrentPlayerIndex(prev => prev + 1);
-        } else {
-            Alert.alert("Тест завершено", "Всі гравці пройшли тест.", [{ text: "ОК", onPress: onFinish }]);
-        }
-    };
-
     return {
         currentPlayerObj,
         currentPlayerIndex,
@@ -150,6 +218,19 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         progressPercent,
         activeSensors,
         splitRows,
-        startTraining, stopTraining, resetSession, nextPlayer, formatTime
+        startTraining, stopTraining, resetSession, nextPlayer, formatTime,
+
+        currentRunResult,
+        localResults,
+
+        showIndividualModal,
+        confirmIndividualRun,
+        retryIndividualRun,
+
+        showSummaryModal,
+        saveAllResults,
+        restartWholeSession,
+
+        isSaving
     };
 };

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { teamService } from '../../services/teamService';
+import { syncManager } from '../../services/SyncManager'; // 🔥 Додали імпорт
 
 export interface UITeamItem {
     id: string;
@@ -15,31 +16,40 @@ export const useTeamSelection = () => {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        loadTeams();
-    }, []);
-
     const loadTeams = async () => {
         setIsLoading(true);
+        // Сервіс сам дістає з кешу або бази
         const { data, error } = await teamService.getMyTeams();
 
         if (error) {
             Alert.alert("Помилка", "Не вдалося завантажити команди");
         } else {
-            // Мапимо дані з Supabase у формат для UI
             const formattedTeams: UITeamItem[] = (data || []).map((t: any) => ({
                 id: t.id,
                 name: t.name,
-                // Supabase повертає масив об'єктів гравців, беремо довжину
                 players: t.players ? t.players.length : 0,
-                lastSession: 'Немає даних' // Поки заглушка, бо в teamService цього немає
+                lastSession: 'Немає даних'
             }));
             setTeams(formattedTeams);
         }
         setIsLoading(false);
     };
 
-    // Фільтрація пошуку
+    useEffect(() => {
+        loadTeams();
+    }, []);
+
+    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
+    useEffect(() => {
+        const unsubscribe = syncManager.subscribe(() => {
+            if (!syncManager.getIsSyncing()) {
+                console.log("♻️ [useTeamSelection] Синхронізація завершена, оновлюємо команди...");
+                loadTeams();
+            }
+        });
+        return unsubscribe;
+    }, []);
+
     const filteredTeams = useMemo(() => {
         return teams.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
     }, [teams, search]);

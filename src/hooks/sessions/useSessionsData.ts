@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { teamService } from '../../services/teamService'; // Використовуємо твій teamService
+import { teamService } from '../../services/teamService';
 import { resultsService } from '../../services/resultsService';
+import { syncManager } from '../../services/SyncManager'; // 🔥 Додали імпорт
 
-// Тип для списку "Загальні" (Останні забіги)
 export interface GeneralSession {
     id: string;
     playerName: string;
@@ -12,13 +12,11 @@ export interface GeneralSession {
     date: string;
 }
 
-// 🔥 ЗМІНЕНО: Тепер це тип для КОМАНДИ в списку
 export interface TeamSession {
-    id: string; // ID команди
+    id: string;
     teamName: string;
     playerCount: number;
-    hasResults: boolean; // Чи є дані
-    // Поля нижче необов'язкові для списку команд, але потрібні для сумісності з UI, якщо він їх вимагає
+    hasResults: boolean;
     testType?: string;
     date?: string;
     time?: string;
@@ -29,18 +27,11 @@ export const useSessionsData = (searchQuery: string) => {
     const [generalSessions, setGeneralSessions] = useState<GeneralSession[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
     const loadData = async () => {
         setIsLoading(true);
 
-        // 1. Завантажуємо КОМАНДИ (використовуємо метод getMyTeamsWithStatus з teamService)
-        // Якщо ти ще не оновив teamService як ми домовлялись, зроби це (код був вище)
+        // Тягнемо команди та результати (вони автоматично врахують офлайн-чергу)
         const { data: teamsData } = await teamService.getMyTeamsWithStatus();
-
-        // 2. Завантажуємо останні забіги для вкладки "Загальні"
         const { data: resultsData } = await resultsService.getRecentResults();
 
         if (teamsData) {
@@ -49,8 +40,8 @@ export const useSessionsData = (searchQuery: string) => {
                 teamName: t.teamName,
                 playerCount: t.playerCount,
                 hasResults: t.hasResults,
-                testType: t.hasResults ? 'Є результати' : 'Немає даних', // Заглушка для UI
-                date: '', // Не показуємо дату в списку команд
+                testType: t.hasResults ? 'Є результати' : 'Немає даних',
+                date: '',
                 time: ''
             }));
             setTeamSessions(mappedTeams);
@@ -63,7 +54,21 @@ export const useSessionsData = (searchQuery: string) => {
         setIsLoading(false);
     };
 
-    // --- ФІЛЬТРАЦІЯ ---
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
+    useEffect(() => {
+        const unsubscribe = syncManager.subscribe(() => {
+            if (!syncManager.getIsSyncing()) {
+                console.log("♻️ [useSessionsData] Синхронізація завершена, оновлюємо списки...");
+                loadData();
+            }
+        });
+        return unsubscribe;
+    }, []);
+
     const filteredTeamSessions = useMemo(() => {
         if (!searchQuery) return teamSessions;
         return teamSessions.filter(s =>
@@ -79,7 +84,6 @@ export const useSessionsData = (searchQuery: string) => {
         );
     }, [generalSessions, searchQuery]);
 
-    // --- СТАТИСТИКА (Best/Worst для General Tab) ---
     const stats = useMemo(() => {
         if (filteredGeneralSessions.length === 0) return { best: null, worst: null };
         const sorted = [...filteredGeneralSessions].sort((a, b) => a.totalTime - b.totalTime);
@@ -90,7 +94,7 @@ export const useSessionsData = (searchQuery: string) => {
     }, [filteredGeneralSessions]);
 
     return {
-        teamSessions: filteredTeamSessions, // Це тепер список команд
+        teamSessions: filteredTeamSessions,
         generalSessions: filteredGeneralSessions,
         stats,
         isLoading,

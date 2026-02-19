@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { teamService, Team } from '../../services/teamService';
 import { playerService, Player } from '../../services/playerService';
 import { useCSV, CSVPlayer } from '../useCSV';
+import { syncManager } from '../../services/SyncManager'; // 🔥 Додаємо імпорт менеджера
 
 export interface UITeam extends Team {
     lastSessionDate: string;
@@ -38,10 +39,9 @@ export const usePlayersLogic = () => {
     const [isEditPlayerModalVisible, setEditPlayerModalVisible] = useState(false);
     const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
     const [editingPlayerName, setEditingPlayerName] = useState('');
-
-    // 🔥 ВИПРАВЛЕННЯ ТУТ: Обов'язково вказуємо <Player | null>
     const [isDeletePlayerModalVisible, setDeletePlayerModalVisible] = useState(false);
     const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+
     // --- ІМПОРТ ---
     const [isImportVisibleState, setImportVisibleState] = useState(false);
     const [isDropdownVisible, setDropdownVisible] = useState(false);
@@ -74,6 +74,21 @@ export const usePlayersLogic = () => {
 
     useEffect(() => { fetchTeams(); }, [fetchTeams]);
     useEffect(() => { if (selectedTeam?.id) fetchPlayers(selectedTeam.id); else setPlayers([]); }, [selectedTeam, fetchPlayers]);
+
+    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
+    useEffect(() => {
+        const unsubscribe = syncManager.subscribe(() => {
+            // Якщо синхронізація щойно завершилася - оновлюємо списки
+            if (!syncManager.getIsSyncing()) {
+                console.log("♻️ [usePlayersLogic] Синхронізація завершена, оновлюємо UI...");
+                fetchTeams();
+                if (selectedTeam?.id) {
+                    fetchPlayers(selectedTeam.id);
+                }
+            }
+        });
+        return unsubscribe; // Відписуємось при розмонтуванні компонента
+    }, [fetchTeams, fetchPlayers, selectedTeam?.id]);
 
     // ===========================
     // ЛОГІКА КОМАНД
@@ -121,8 +136,6 @@ export const usePlayersLogic = () => {
     // ===========================
     // ЛОГІКА ГРАВЦІВ
     // ===========================
-
-    // 1. Створення
     const handleAddManualPlayer = async () => {
         if (!newPlayerName.trim() || !selectedTeam?.id) return;
         setIsLoading(true);
@@ -137,14 +150,12 @@ export const usePlayersLogic = () => {
         }
     };
 
-    // 2. Підготовка до редагування
     const handleEditPlayer = (player: Player) => {
         setEditingPlayer(player);
         setEditingPlayerName(player.name);
         setEditPlayerModalVisible(true);
     };
 
-    // 3. Збереження змін гравця
     const handleUpdatePlayer = async () => {
         if (!editingPlayer || !editingPlayer.id || !editingPlayerName.trim() || !selectedTeam?.id) return;
 
@@ -161,7 +172,6 @@ export const usePlayersLogic = () => {
         }
     };
 
-    // 4. Видалення гравця
     const handleDeletePlayer = (player: Player) => {
         if (!player.id) return;
         setPlayerToDelete(player);
@@ -202,10 +212,13 @@ export const usePlayersLogic = () => {
     const handleConfirmImport = async () => {
         if (!selectedTeam?.id || importedPlayers.length === 0) return;
         setIsLoading(true); setImportStatus('idle'); let successCount = 0;
+
+        // Оскільки create тепер генерує ID локально, це пролетить миттєво!
         for (const p of importedPlayers) {
             const response = await playerService.create({ name: p.name, team_id: selectedTeam.id });
             if (!response.error) successCount++;
         }
+
         setIsLoading(false);
         if (successCount > 0) {
             setImportStatus('success'); setImportMessage(`Додано: ${successCount}`);
@@ -219,29 +232,18 @@ export const usePlayersLogic = () => {
     const filteredTeams = teams.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return {
-        // Data
         teams, filteredTeams, players, selectedTeam, setSelectedTeam, isLoading,
-        // UI
         searchQuery, setSearchQuery, getInitials,
-        // Team Modals
         isAddTeamModalVisible, setAddTeamModalVisible, newTeamName, setNewTeamName,
         isEditTeamModalVisible, setEditTeamModalVisible, editingTeamName, setEditingTeamName, handleUpdateTeam,
         isDeleteTeamModalVisible, setDeleteTeamModalVisible, handleConfirmDeleteTeam,
-
-        // Player Modals & Actions
         isAddPlayerOptionsVisible, setAddPlayerOptionsVisible, isAddManualVisible, setAddManualVisible, newPlayerName, setNewPlayerName,
-
-        // EXPORTS FOR PLAYERS
         isEditPlayerModalVisible, setEditPlayerModalVisible, editingPlayerName, setEditingPlayerName,
         isDeletePlayerModalVisible, setDeletePlayerModalVisible, playerToDelete,
-
         handleAddManualPlayer, handleEditPlayer, handleUpdatePlayer,
         handleDeletePlayer, handleConfirmDeletePlayer,
-
-        // Common
         isDropdownVisible, setDropdownVisible,
         handleCreateTeam, handleDeleteTeam, handleEditTeam, handleMockImport,
-        // Import
         isImportVisible: isImportVisibleState, setImportVisible: handleSetImportVisible,
         downloadTemplate: downloadPlayersTemplate, importedPlayers, importStatus, importMessage, handleSelectFile, handleConfirmImport
     };

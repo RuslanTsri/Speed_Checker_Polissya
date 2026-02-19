@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import { BaseService } from './BaseService';
 import { supabase } from '../lib/supabase';
+import NetInfo from '@react-native-community/netinfo';
+import { syncManager } from './SyncManager';
 
-// Схема валідації
+
 export const TeamSchema = z.object({
     id: z.string().optional(),
     name: z.string().min(1, "Назва команди обов'язкова"),
@@ -16,85 +18,120 @@ class TeamService extends BaseService<Team> {
         super('teams', TeamSchema);
     }
 
-    // ✅ ВИПРАВЛЕННЯ: Тепер приймаємо об'єкт, щоб співпадало з BaseService
     async create(team: { name: string }) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("User not found");
+        console.log(`🚀 [TeamService] Створення команди: ${team.name}`);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error("User not found");
 
-        // Викликаємо батьківський create, передаючи об'єкт
         return super.create({
             name: team.name,
-            coach_id: user.id
+            coach_id: session.user.id
         });
     }
 
     async getMyTeams() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return { data: [], error: 'No user' };
+        console.log("🔍 [TeamService] Запит getMyTeams...");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return { data: [], error: 'No user' };
 
-        // 🔥 ЗМІНА: Додаємо select('*, players(count)') щоб отримати кількість
-        // Або просто select('*, players(*)') якщо хочемо список
-        // Найпростіше для тебе зараз - взяти всі команди, де ти тренер
+        const state = await NetInfo.fetch();
 
-        return supabase
-            .from('teams')
-            .select(`
-                *,
-                players (id) 
-            `) // Беремо ID гравців, щоб порахувати їх довжину
-            .eq('coach_id', user.id)
-            .order('name');
-    }
-    async getMyTeamsWithStatus() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return { data: [], error: 'No user' };
+        const pendingTeams = syncManager.getPendingItems('teams')
+            .filter((t: any) => t.coach_id === session.user.id);
 
-        // 🔥 МАГІЯ SUPABASE: Вкладений запит
-        // 1. Беремо команди (teams)
-        // 2. Приєднуємо гравців (players)
-        // 3. У кожного гравця рахуємо кількість результатів (results count)
-        const { data, error } = await supabase
-            .from('teams')
-            .select(`
-                id,
-                name,
-                players (
-                    id,
-                    results (count) 
-                )
-            `)
-            .eq('coach_id', user.id)
-            .order('name');
+        let serverTeams: any[] = [];
 
-        if (error) {
-            console.error("Error fetching teams:", error);
-            return { data: [], error };
+        if (state.isConnected) {
+            try {
+                console.log("🌐 [TeamService] Онлайн, тягнемо команди з бази...");
+                const { data, error } = await supabase
+                    .from('teams')
+                    .select(`*, players (id)`)
+                    .eq('coach_id', session.user.id)
+                    .order('name');
+
+                if (!error && data) {
+                    serverTeams = data;
+                    // @ts-ignore
+                    await this.saveToCache('my_teams', data);
+                }
+            } catch (e) {
+                console.log("⚠️ [TeamService] Помилка мережі");
+            }
         }
 
-        // 🔥 ОБРОБКА ДАНИХ (Mapping)
-        const formatted = data.map((team: any) => {
-            // Рахуємо кількість гравців
-            const playersCount = team.players?.length || 0;
+        if (!state.isConnected || serverTeams.length === 0) {
+            console.log("📴 [TeamService] Офлайн, читаємо 'my_teams' з кешу");
+            // @ts-ignore
+            serverTeams = await this.getFromCache('my_teams') || [];
+        }
 
-            // Перевіряємо: чи є хоч один гравець, у якого results > 0
-            // team.players - це масив гравців
-            // player.results - це масив об'єктів [{count: 5}] (через select count)
-            const hasAnyResults = team.players?.some((player: any) =>
-                player.results?.[0]?.count > 0
-            );
+        const deletedIds = syncManager.getDeletedIds('teams');
 
-            return {
-                id: team.id,
-                teamName: team.name,
-                playerCount: playersCount,
-                hasResults: hasAnyResults // true/false для червоної/зеленої плашки
-            };
-        });
+        const combined = [...pendingTeams, ...serverTeams];
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+            .filter(item => !deletedIds.includes(item.id));
 
-        // Сортуємо: спочатку команди з даними, потім пусті
-        formatted.sort((a, b) => Number(b.hasResults) - Number(a.hasResults));
+        return { data: unique, error: null };
+    }
 
-        return { data: formatted, error: null };
+    async getMyTeamsWithStatus() {
+        console.log("🔍 [TeamService] Запит getMyTeamsWithStatus...");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return { data: [], error: 'No user' };
+
+        const state = await NetInfo.fetch();
+
+        // Форматуємо чергу для UI
+        const pendingTeams = syncManager.getPendingItems('teams')
+            .filter((t: any) => t.coach_id === session.user.id)
+            .map((t: any) => ({
+                id: t.id,
+                teamName: t.name,
+                playerCount: 0,
+                hasResults: false
+            }));
+
+        let serverFormatted: any[] = [];
+
+        if (state.isConnected) {
+            try {
+                console.log("🌐 [TeamService] Онлайн, тягнемо статуси...");
+                const { data, error } = await supabase
+                    .from('teams')
+                    .select(`id, name, players (id, results (count))`)
+                    .eq('coach_id', session.user.id)
+                    .order('name');
+
+                if (!error && data) {
+                    serverFormatted = data.map((team: any) => ({
+                        id: team.id,
+                        teamName: team.name,
+                        playerCount: team.players?.length || 0,
+                        hasResults: team.players?.some((player: any) => player.results?.[0]?.count > 0)
+                    }));
+                    serverFormatted.sort((a, b) => Number(b.hasResults) - Number(a.hasResults));
+                    // @ts-ignore
+                    await this.saveToCache('teams_with_status', serverFormatted);
+                }
+            } catch (e) {
+                console.log("⚠️ [TeamService] Помилка мережі");
+            }
+        }
+
+        if (!state.isConnected || serverFormatted.length === 0) {
+            console.log("📴 [TeamService] Офлайн, читаємо статуси з кешу");
+            // @ts-ignore
+            serverFormatted = await this.getFromCache('teams_with_status') || [];
+        }
+
+        const deletedIds = syncManager.getDeletedIds('teams');
+
+        const combined = [...pendingTeams, ...serverFormatted];
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+            .filter(item => !deletedIds.includes(item.id)); // 🔥 Відкидаємо видалені
+
+        return { data: unique, error: null };
     }
 }
 

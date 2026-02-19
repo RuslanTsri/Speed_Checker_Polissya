@@ -4,7 +4,7 @@ import { BaseService, ServiceResponse } from './BaseService';
 
 const ProfileSchema = z.object({
     id: z.string().optional(),
-    full_name: z.any(), // Тимчасово дозволяємо будь-що
+    full_name: z.any(),
     avatar_url: z.any(),
     pin_code: z.any(),
     role: z.any(),
@@ -16,18 +16,11 @@ export type Profile = z.infer<typeof ProfileSchema>;
 class AuthService extends BaseService<Profile> {
 
     constructor() {
-        // Передаємо назву таблиці 'profiles' і схему валідації в батьківський клас
         super('profiles', ProfileSchema);
     }
 
-    // --- АВТОРИЗАЦІЯ (Supabase Auth API) ---
-
-    /**
-     * 1. РЕЄСТРАЦІЯ
-     * Ми не використовуємо метод .create() з BaseService, бо юзера створює Auth API.
-     * Але ми передаємо дані (full_name), щоб SQL-тригер сам створив профіль.
-     */
-    async signUp(email: string, password: string, fullName: string, pinCode: string) { // Додали аргумент pinCode
+    async signUp(email: string, password: string, fullName: string, pinCode: string) {
+        console.log("🚀 [AuthService] Реєстрація нового юзера...");
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -40,10 +33,9 @@ class AuthService extends BaseService<Profile> {
         });
         return { data, error };
     }
-    /**
-     * 2. ВХІД
-     */
+
     async signIn(email: string, password: string) {
+        console.log("🚀 [AuthService] Вхід у систему...");
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -51,58 +43,40 @@ class AuthService extends BaseService<Profile> {
         return { data, error };
     }
 
-    /**
-     * 3. ВИХІД
-     */
     async signOut() {
+        console.log("🚪 [AuthService] Вихід із системи...");
         const { error } = await supabase.auth.signOut();
         return { error };
     }
 
-    /**
-     * 4. ВИДАЛЕННЯ АКАУНТУ
-     * Тут ми викликаємо RPC функцію, бо BaseService.delete() видаляє рядок з таблиці,
-     * а нам треба видалити самого Юзера з системи авторизації.
-     */
     async deleteAccount() {
-        // Викликаємо SQL-функцію, яку ми створили раніше
+        console.log("⚠️ [AuthService] Видалення акаунту...");
         const { error } = await supabase.rpc('delete_own_account');
-
         if (!error) {
-            await this.signOut(); // Розлогінюємо клієнт
+            await this.signOut();
         }
         return { error };
     }
 
-    // --- РОБОТА З ПРОФІЛЕМ (Використовуємо методи BaseService) ---
-
-    /**
-     * Отримати профіль поточного юзера.
-     * Використовує this.getById() з BaseService
-     */
     async getCurrentProfile(): Promise<ServiceResponse<Profile>> {
-        const { data: { user } } = await supabase.auth.getUser();
+        console.log("🔍 [AuthService] Запит профілю...");
+        // 🔥 ВИПРАВЛЕНО: Використовуємо getSession замість getUser
+        const { data: { session } } = await supabase.auth.getSession();
 
-        if (!user) {
+        if (!session?.user) {
             return { data: null, error: new Error("Користувач не авторизований") };
         }
 
-        // Викликаємо батьківський метод getById, який вже вміє ходити в 'profiles'
-        return this.getById(user.id);
+        return this.getById(session.user.id);
     }
 
-    /**
-     * Оновити профіль поточного юзера (напр. змінити ПІН)
-     * Обгортка над this.update()
-     */
     async updateCurrentProfile(updates: Partial<Profile>) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return { data: null, error: new Error("No user") };
+        console.log("🚀 [AuthService] Оновлення профілю...");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return { data: null, error: new Error("No user") };
 
-        // Викликаємо батьківський метод update (він сам перевірить Zod схему!)
-        return this.update(user.id, updates);
+        return this.update(session.user.id, updates);
     }
 }
 
-// Експортуємо готовий екземпляр
 export const authService = new AuthService();

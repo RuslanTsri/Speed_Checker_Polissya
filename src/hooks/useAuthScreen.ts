@@ -1,6 +1,6 @@
 import { useState } from 'react';
-// Alert залишаємо для критичних помилок, але для валідації використовуємо текст
 import { Alert } from 'react-native';
+import NetInfo from '@react-native-community/netinfo'; // 🔥 Додали імпорт
 import { authService } from '../services/authService';
 
 const PIN_SALT = "tempo_metrics_secure_v1";
@@ -8,9 +8,7 @@ const PIN_SALT = "tempo_metrics_secure_v1";
 export const useAuthScreen = (onLogin: () => void) => {
     const [isRegistering, setIsRegistering] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const [showVerifyModal, setShowVerifyModal] = useState(false);
 
     // Дані форми
@@ -18,10 +16,9 @@ export const useAuthScreen = (onLogin: () => void) => {
     const [email, setEmail] = useState('');
     const [pin, setPin] = useState('');
 
-    // Перемикач режимів
     const toggleMode = () => {
         setIsRegistering(!isRegistering);
-        setErrorMessage(null); // Очищаємо помилки при перемиканні
+        setErrorMessage(null);
         setPin('');
     };
 
@@ -32,18 +29,24 @@ export const useAuthScreen = (onLogin: () => void) => {
         setErrorMessage(null);
     };
 
-    // Очищення помилки, коли юзер починає щось вводити (покращує UX)
     const clearError = () => {
         if (errorMessage) setErrorMessage(null);
     };
 
     const handleSubmit = async () => {
-        setErrorMessage(null); // Скидаємо стару помилку
+        setErrorMessage(null);
+
+        // 🔥 ПЕРЕВІРКА ІНТЕРНЕТУ (Авторизація не працює офлайн)
+        const state = await NetInfo.fetch();
+        if (!state.isConnected) {
+            setErrorMessage("Немає підключення до Інтернету. Авторизація неможлива.");
+            return;
+        }
+
         const cleanEmail = email.trim();
         const cleanName = name.trim();
         const securePassword = `${pin}${PIN_SALT}`;
 
-        // --- 1. ВАЛІДАЦІЯ (Тепер пишемо в errorMessage замість Alert) ---
         if (!cleanEmail.includes('@') || cleanEmail.length < 5) {
             setErrorMessage("Введіть коректний Email");
             return;
@@ -61,7 +64,6 @@ export const useAuthScreen = (onLogin: () => void) => {
 
         try {
             if (isRegistering) {
-                // РЕЄСТРАЦІЯ
                 const { error } = await authService.signUp(cleanEmail, securePassword, cleanName, pin);
 
                 if (error) {
@@ -73,7 +75,6 @@ export const useAuthScreen = (onLogin: () => void) => {
                 setShowVerifyModal(true);
 
             } else {
-                // ВХІД
                 const { error } = await authService.signIn(cleanEmail, securePassword);
 
                 if (error) {
@@ -91,7 +92,6 @@ export const useAuthScreen = (onLogin: () => void) => {
 
         } catch (e: any) {
             console.log("❌ Auth Error:", e.message);
-            // Записуємо текст помилки, щоб показати юзеру
             setErrorMessage(e.message || "Сталася невідома помилка");
         } finally {
             setIsLoading(false);
@@ -99,19 +99,11 @@ export const useAuthScreen = (onLogin: () => void) => {
     };
 
     return {
-        isRegistering,
-        isLoading,
-        errorMessage,
-        setErrorMessage,
-        showVerifyModal,
-        handleVerifyConfirmed,
-        name,
-        setName: (text: string) => { setName(text); clearError(); },
-        email,
-        setEmail: (text: string) => { setEmail(text); clearError(); },
-        pin,
-        setPin: (text: string) => { setPin(text); clearError(); },
-        handleSubmit,
-        toggleMode
+        isRegistering, isLoading, errorMessage, setErrorMessage,
+        showVerifyModal, handleVerifyConfirmed,
+        name, setName: (text: string) => { setName(text); clearError(); },
+        email, setEmail: (text: string) => { setEmail(text); clearError(); },
+        pin, setPin: (text: string) => { setPin(text); clearError(); },
+        handleSubmit, toggleMode
     };
 };

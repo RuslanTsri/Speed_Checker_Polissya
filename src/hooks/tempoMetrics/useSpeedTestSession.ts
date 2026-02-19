@@ -110,13 +110,16 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
         try {
             // 1. Відправляємо запити в БД
+            // В методі saveAllResults
             const promises = localResults.map(res => {
                 return resultsService.saveResult({
                     session_id: sessionId,
                     player_id: res.player.id !== 'guest' ? res.player.id : null,
                     full_time: res.fullTime,
                     gates: res.gates,
-                    is_best: false
+                    is_best: false,
+                                       // @ts-ignore
+                    player_name: res.player.name
                 });
             });
 

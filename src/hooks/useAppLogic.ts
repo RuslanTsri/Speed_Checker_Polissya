@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, Keyboard } from 'react-native';
+import NetInfo from '@react-native-community/netinfo'; // 🔥 Додали імпорт
 import { useUser } from '../context/UserContext';
 import { authService } from '../services/authService';
 import { supabase } from '../lib/supabase';
@@ -26,7 +27,6 @@ export const useAppLogic = () => {
 
     const [pinError, setPinError] = useState<string | null>(null);
 
-
     const handleLogout = () => {
         Alert.alert("Вихід", "Ви впевнені, що хочете вийти з акаунту?", [
             { text: "Скасувати", style: "cancel" },
@@ -51,43 +51,43 @@ export const useAppLogic = () => {
     };
 
     // --- PIN ACTIONS ---
-
     const handleOpenPinModal = () => {
         setOldPin('');
         setNewPin('');
         setConfirmPin('');
-        setPinError(null); // Очищаємо старі помилки при відкритті
+        setPinError(null);
         setPinModalVisible(true);
     };
 
-    // Допоміжна функція: очищає помилку, коли юзер щось вводить
     const clearPinError = () => {
         if (pinError) setPinError(null);
     };
 
     const handleSubmitPinChange = async () => {
-        setPinError(null); // Скидаємо перед перевіркою
+        setPinError(null);
 
-        // 1. Валідація заповнення
+        // 🔥 ПЕРЕВІРКА ІНТЕРНЕТУ (Зміна пароля не працює офлайн!)
+        const state = await NetInfo.fetch();
+        if (!state.isConnected) {
+            setPinError("Зміна PIN-коду потребує підключення до Інтернету");
+            return;
+        }
+
         if (oldPin.length !== 4 || newPin.length !== 4 || confirmPin.length !== 4) {
             setPinError("Всі поля мають містити 4 цифри");
             return;
         }
 
-        // 2. Перевірка старого PIN (порівнюємо з тим, що прийшло з бази в профілі)
-        // Якщо в профілі ще немає піна (null), пропускаємо цей крок
         if (profile?.pin_code && oldPin !== profile.pin_code) {
             setPinError("Поточний PIN-код введено невірно");
             return;
         }
 
-        // 3. Перевірка ідентичності нових значень
         if (newPin !== confirmPin) {
             setPinError("Нові PIN-коди не співпадають");
             return;
         }
 
-        // 4. Заборона ставити той самий пін
         if (oldPin === newPin) {
             setPinError("Новий PIN має відрізнятися від старого");
             return;
@@ -96,14 +96,14 @@ export const useAppLogic = () => {
         setIsPinLoading(true);
 
         try {
-            // 1. Оновлюємо ПАРОЛЬ в системі аутентифікації Supabase (для входу)
+            // 1. Оновлюємо ПАРОЛЬ в системі аутентифікації Supabase
             const { error: authError } = await supabase.auth.updateUser({
                 password: `${newPin}${PIN_SALT}`
             });
 
             if (authError) throw authError;
 
-            // 2. Оновлюємо ПІН у таблиці профілів (для перевірки всередині додатка)
+            // 2. Оновлюємо ПІН у таблиці профілів
             const { error: profileError } = await authService.updateCurrentProfile({
                 pin_code: newPin
             });
@@ -111,7 +111,7 @@ export const useAppLogic = () => {
             if (profileError) throw profileError;
 
             console.log("✅ PIN та Пароль оновлено успішно");
-            await refreshProfile(); // Оновлюємо глобальний контекст
+            await refreshProfile();
 
             Keyboard.dismiss();
             setPinModalVisible(false);
@@ -119,7 +119,6 @@ export const useAppLogic = () => {
 
         } catch (e: any) {
             console.error("❌ PIN Update Error:", e.message);
-            // Виводимо помилку в червоний блок
             setPinError(e.message || "Не вдалося змінити PIN");
         } finally {
             setIsPinLoading(false);
@@ -127,26 +126,12 @@ export const useAppLogic = () => {
     };
 
     return {
-        // State
-        currentTab,
-        sessionsInitialTab,
-
-        // Pin State
+        currentTab, sessionsInitialTab,
         isPinModalVisible, setPinModalVisible,
-        oldPin,
-        setOldPin: (text: string) => { setOldPin(text); clearPinError(); }, // 🔥 Авто-очищення помилки
-        newPin,
-        setNewPin: (text: string) => { setNewPin(text); clearPinError(); },
-        confirmPin,
-        setConfirmPin: (text: string) => { setConfirmPin(text); clearPinError(); },
-
-        isPinLoading,
-        pinError, // 👈 Експортуємо помилку в UI
-
-        // Handlers
-        handleLogout,
-        handleNavigate,
-        handleOpenPinModal,
-        handleSubmitPinChange
+        oldPin, setOldPin: (text: string) => { setOldPin(text); clearPinError(); },
+        newPin, setNewPin: (text: string) => { setNewPin(text); clearPinError(); },
+        confirmPin, setConfirmPin: (text: string) => { setConfirmPin(text); clearPinError(); },
+        isPinLoading, pinError,
+        handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange
     };
 };

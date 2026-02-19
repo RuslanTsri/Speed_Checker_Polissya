@@ -1,12 +1,14 @@
 import { z } from 'zod';
 import { BaseService } from './BaseService';
 import { supabase } from '../lib/supabase';
+import NetInfo from '@react-native-community/netinfo';
+import { syncManager } from './SyncManager';
 
-// Схема валідації (прибираємо coach_id, бо його немає в таблиці players)
+// Замінили .uuid() на .string(), щоб уникнути Zod-помилок, хоча наша ліба і так генерує UUID
 export const PlayerSchema = z.object({
     id: z.string().optional(),
     name: z.string().min(1, "Ім'я гравця обов'язкове"),
-    team_id: z.string().uuid()
+    team_id: z.string()
 }).passthrough();
 
 export type Player = z.infer<typeof PlayerSchema>;
@@ -16,28 +18,63 @@ class PlayerService extends BaseService<Player> {
         super('players', PlayerSchema);
     }
 
-    // Створення гравця
     async create(player: { name: string, team_id: string }) {
-        // Нам не треба перевіряти user тут, якщо ми не пишемо його ID в базу
-        // Але перевірка сесії не завадить
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("User not found");
+        console.log(`🚀 [PlayerService] Створення гравця: ${player.name}`);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error("User not found");
 
-        // 🔥 ВИПРАВЛЕНО: Ми передаємо тільки те, що є в таблиці players
         return super.create({
             name: player.name,
             team_id: player.team_id
-            // coach_id: user.id ❌ ВИДАЛИ ЦЕЙ РЯДОК, якщо він був
         });
     }
 
-    // Отримати гравців конкретної команди
     async getByTeam(teamId: string) {
-        return supabase
-            .from('players')
-            .select('*')
-            .eq('team_id', teamId)
-            .order('name');
+        console.log(`🔍 [PlayerService] Запит гравців команди: ${teamId}`);
+        const state = await NetInfo.fetch();
+        const cacheKey = `players_team_${teamId}`;
+
+        // 1. Беремо офлайн-гравців з черги
+        const pendingPlayers = syncManager.getPendingItems('players')
+            .filter((p: any) => p.team_id === teamId);
+
+        let serverPlayers: any[] = [];
+
+        // 2. Онлайн запит
+        if (state.isConnected) {
+            try {
+                console.log("🌐 [PlayerService] Онлайн, тягнемо з бази...");
+                const { data, error } = await supabase
+                    .from('players')
+                    .select('*')
+                    .eq('team_id', teamId)
+                    .order('name');
+
+                if (!error && data) {
+                    serverPlayers = data;
+                    // @ts-ignore
+                    await this.saveToCache(cacheKey, data);
+                }
+            } catch (e) {
+                console.log("⚠️ [PlayerService] Помилка мережі");
+            }
+        }
+
+        // 3. Офлайн запит з кешу
+        if (!state.isConnected || serverPlayers.length === 0) {
+            console.log("📴 [PlayerService] Офлайн, читаємо з кешу");
+            // @ts-ignore
+            serverPlayers = await this.getFromCache(cacheKey) || [];
+        }
+
+        // 4. Злиття без дублікатів
+         const deletedIds = syncManager.getDeletedIds('players');
+
+        const combined = [...pendingPlayers, ...serverPlayers];
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+            .filter(item => !deletedIds.includes(item.id)); // 🔥 Відкидаємо видалених
+
+        return { data: unique, error: null };
     }
 }
 

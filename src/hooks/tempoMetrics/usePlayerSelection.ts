@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { playerService, Player } from '../../services/playerService';
+import { syncManager } from '../../services/SyncManager'; // 🔥 Додали імпорт
 
 export const usePlayerSelection = (teamId: string) => {
     const [allPlayers, setAllPlayers] = useState<Player[]>([]);
@@ -8,8 +9,20 @@ export const usePlayerSelection = (teamId: string) => {
     const [search, setSearch] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Для модалок додавання (якщо список пустий)
     const [isAddModalVisible, setAddModalVisible] = useState(false);
+
+    const loadPlayers = async () => {
+        setIsLoading(true);
+        // Запит до сервісу (він сам розбереться з офлайн/онлайн)
+        const { data, error } = await playerService.getByTeam(teamId);
+
+        if (error) {
+            Alert.alert("Помилка", "Не вдалося завантажити гравців");
+        } else {
+            setAllPlayers(data || []);
+        }
+        setIsLoading(false);
+    };
 
     useEffect(() => {
         if (teamId) {
@@ -17,27 +30,23 @@ export const usePlayerSelection = (teamId: string) => {
         }
     }, [teamId]);
 
-    const loadPlayers = async () => {
-        setIsLoading(true);
-        const { data, error } = await playerService.getByTeam(teamId);
+    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
+    useEffect(() => {
+        const unsubscribe = syncManager.subscribe(() => {
+            if (!syncManager.getIsSyncing() && teamId) {
+                console.log("♻️ [usePlayerSelection] Синхронізація завершена, оновлюємо гравців...");
+                loadPlayers();
+            }
+        });
+        return unsubscribe;
+    }, [teamId]);
 
-        if (error) {
-            Alert.alert("Помилка", "Не вдалося завантажити гравців");
-        } else {
-            // Сортуємо за іменем
-            setAllPlayers(data || []);
-        }
-        setIsLoading(false);
-    };
-
-    // Фільтрація
     const filteredPlayers = useMemo(() => {
         return allPlayers.filter(p =>
             p.name.toLowerCase().includes(search.toLowerCase())
         );
     }, [allPlayers, search]);
 
-    // Логіка вибору (Toggle Selection)
     const toggleSelection = (id: string) => {
         setSelectedIds(prev => {
             if (prev.includes(id)) {
@@ -48,12 +57,11 @@ export const usePlayerSelection = (teamId: string) => {
         });
     };
 
-    // Обрати всіх / Зняти вибір з усіх
     const toggleAll = () => {
         if (selectedIds.length === allPlayers.length) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(allPlayers.map(p => p.id || '')); // id optional у типі, але в базі точно є
+            setSelectedIds(allPlayers.map(p => p.id || ''));
         }
     };
 
@@ -70,7 +78,6 @@ export const usePlayerSelection = (teamId: string) => {
         toggleAll,
         isEmpty: allPlayers.length === 0 && !isLoading,
         isLoading,
-        // Для Empty State
         setAddModalVisible,
         handleImport
     };

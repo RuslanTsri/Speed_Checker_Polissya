@@ -9,7 +9,7 @@ export const TeamSchema = z.object({
     id: z.string().optional(),
     name: z.string().min(1, "Назва команди обов'язкова"),
     coach_id: z.string().optional()
-}).passthrough();
+});
 
 export type Team = z.infer<typeof TeamSchema>;
 

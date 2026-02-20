@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { TeamSession } from './useSessionsData';
 import { useCSV } from '../useCSV';
 import { Alert } from "react-native";
-import { resultsService } from '../../services/resultsService'; // 🔥 Використовуємо сервіс
-import { syncManager } from '../../services/SyncManager'; // 🔥 Слухаємо офлайн-чергу
+import { resultsService } from '../../services/resultsService';
+import { syncManager } from '../../services/SyncManager';
 
 interface PlayerStats {
     id: string;
@@ -20,45 +20,43 @@ export const useSessionDetails = (session: TeamSession) => {
     const [rawResults, setRawResults] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // 🔥 Фіксовані дистанції та стан
+    const predefinedDistances = [30, 60, 100];
+    const [selectedDistance, setSelectedDistance] = useState<number>(30); // За замовчуванням 30м
+
     const { exportResultsToCSV } = useCSV();
 
     const loadTeamResults = async () => {
         if (!session?.id) return;
         setIsLoading(true);
-
-        // 🔥 Використовуємо наш сервіс, який сам дістане і з кешу, і з бази, і з черги
         const { data, error } = await resultsService.getByTeam(session.id);
-        if (!error && data) {
-            // Дані вже відформатовані сервісом, просто зберігаємо
-            setRawResults(data);
-        } else {
-            setRawResults([]);
-        }
+        if (!error && data) setRawResults(data);
+        else setRawResults([]);
         setIsLoading(false);
     };
 
-    useEffect(() => {
-        loadTeamResults();
-    }, [session.id]);
-
-    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
+    useEffect(() => { loadTeamResults(); }, [session.id]);
     useEffect(() => {
         const unsubscribe = syncManager.subscribe(() => {
-            if (!syncManager.getIsSyncing()) {
-                console.log("♻️ [useSessionDetails] Синхронізація завершена, оновлюємо...");
-                loadTeamResults();
-            }
+            if (!syncManager.getIsSyncing()) loadTeamResults();
         });
         return unsubscribe;
     }, [session.id]);
 
+    // 🔥 Фільтруємо результати по обраній дистанції (ТІЛЬКИ ДЛЯ BEST)
+    const resultsFilteredByDistance = useMemo(() => {
+        return rawResults.filter(r => r.distance === selectedDistance);
+    }, [rawResults, selectedDistance]);
+
+    // Лідерборд (базується на відфільтрованих дистанціях)
     const groupedPlayers = useMemo(() => {
         const playersMap = new Map<string, PlayerStats>();
 
-        rawResults.forEach((res) => {
-            // Сервіс віддає 'playerName' і 'time', підлаштовуємось під це
-            if (!playersMap.has(res.id)) { // Використовуємо id запису як ключ, якщо немає playerId
-                playersMap.set(res.id, {
+        resultsFilteredByDistance.forEach((res) => {
+            const key = res.playerId || res.playerName;
+
+            if (!playersMap.has(key)) {
+                playersMap.set(key, {
                     id: res.id,
                     playerName: res.playerName,
                     number: res.playerNumber || '-',
@@ -67,43 +65,41 @@ export const useSessionDetails = (session: TeamSession) => {
                     attemptsCount: 1
                 });
             } else {
-                const player = playersMap.get(res.id)!;
+                const player = playersMap.get(key)!;
                 player.attemptsCount += 1;
                 if (res.time < player.bestTime) {
                     player.bestTime = res.time;
+                    player.id = res.id;
                 }
             }
         });
-
         return Array.from(playersMap.values()).sort((a, b) => a.bestTime - b.bestTime);
-    }, [rawResults]);
+    }, [resultsFilteredByDistance]);
 
     const sessionStats = useMemo(() => {
-        if (rawResults.length === 0) return { best: 0, avg: 0 };
-        const times = rawResults.map(r => r.time);
+        if (resultsFilteredByDistance.length === 0) return { best: 0, avg: 0 };
+        const times = resultsFilteredByDistance.map(r => r.time);
         const best = Math.min(...times);
         const avg = times.reduce((a, b) => a + b, 0) / times.length;
         return { best, avg };
-    }, [rawResults]);
+    }, [resultsFilteredByDistance]);
 
     const handleExport = async () => {
-        console.log("=== EXPORT ATTEMPT ===");
         if (rawResults.length === 0) {
-            Alert.alert("Увага", "Дані відсутні");
-            return;
+            Alert.alert("Увага", "Дані відсутні"); return;
         }
         try {
+            // Експортуємо ВСІ результати, щоб нічого не втратити
             await exportResultsToCSV(rawResults, session.teamName);
-        } catch (err) {
-            console.error("Export handler error:", err);
-        }
+        } catch (err) { console.error("Export handler error:", err); }
     };
 
     return {
         subTab, setSubTab,
         roundFilter, setRoundFilter,
+        selectedDistance, setSelectedDistance, predefinedDistances, // 🔥 Експортуємо для UI
         rounds: [],
-        filteredAttempts: rawResults,
+        filteredAttempts: rawResults, // 🔥 Всі спроби віддають ВСІ результати без фільтрації по дистанції!
         sortedResults: groupedPlayers,
         handleExport,
         sessionStats,

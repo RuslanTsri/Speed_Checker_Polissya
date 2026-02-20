@@ -6,7 +6,6 @@ import TimerTool from '../tools/TimerTool';
 import BluetoothTool from '../tools/BluetoothTool';
 import SpeedCheckerTool from '../tools/SpeedCheckerTool';
 
-// 🔥 Новий хук
 import { useHomeScreen, TabType } from '../../hooks/useHomeScreen';
 
 interface HomeScreenProps {
@@ -14,30 +13,20 @@ interface HomeScreenProps {
 }
 
 export default function HomeScreen({ onNavigate }: HomeScreenProps) {
-    // Вся логіка схована тут
     const {
-        currentTool,
-        connected,
-        pingProgress,
-        status,
-        openTimer,
-        openBluetooth,
-        openSpeedCheck,
-        closeTool,
-        goToPlayers,
-        goToSessions
+        currentTool, connected, pingProgress, status, recentActivity,
+        openTimer, openBluetooth, openSpeedCheck, closeTool,
+        goToPlayers, goToSessions, openRecentActivity
     } = useHomeScreen(onNavigate);
 
-    // --- РЕНДЕР ІНСТРУМЕНТІВ ---
     if (currentTool === 'TIMER') return <TimerTool onBack={closeTool} />;
     if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={closeTool} />;
     if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={closeTool} />;
 
-    // --- ГОЛОВНЕ МЕНЮ ---
     return (
         <ScrollView className="flex-1 bg-slate-950 pt-4">
 
-            {/* 1. БЛОК СТАТУСУ ПІДКЛЮЧЕННЯ (ЖИВИЙ) */}
+            {/* 1. БЛОК СТАТУСУ ПІДКЛЮЧЕННЯ */}
             <View className={`mx-4 mt-2 bg-slate-900 rounded-3xl p-6 items-center border ${status.border}`}>
                 <View className={`w-12 h-12 rounded-full items-center justify-center mb-4 border border-slate-700 ${status.bgIcon}`}>
                     {pingProgress ? (
@@ -54,7 +43,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
                     {status.desc}
                 </Text>
 
-                {/* Кнопка Підключити */}
                 <TouchableOpacity
                     onPress={openBluetooth}
                     className={`w-full py-4 rounded-xl items-center border mb-3 active:bg-slate-700 ${status.btnClass}`}
@@ -64,7 +52,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
                     </Text>
                 </TouchableOpacity>
 
-                {/* КНОПКА: СЕКУНДОМІР */}
                 <TouchableOpacity
                     onPress={openTimer}
                     className="bg-slate-900 w-full py-4 rounded-xl items-center border border-slate-800 active:bg-slate-800"
@@ -80,7 +67,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
             <View className="mx-4 mt-8 mb-2">
                 <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4">швидкі дії</Text>
 
-                {/* Швидкий тест */}
                 <TouchableOpacity
                     onPress={openSpeedCheck}
                     className="bg-slate-900 border border-slate-800 p-5 rounded-3xl flex-row items-center mb-4 shadow-sm active:bg-slate-800"
@@ -94,12 +80,8 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
                     </View>
                 </TouchableOpacity>
 
-                {/* Два квадрати (Команди і Результати) */}
                 <View className="flex-row justify-between">
-                    <TouchableOpacity
-                        onPress={goToPlayers}
-                        className="bg-slate-900 border border-slate-800 p-5 rounded-3xl w-[48%] h-36 justify-between active:bg-slate-800"
-                    >
+                    <TouchableOpacity onPress={goToPlayers} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl w-[48%] h-36 justify-between active:bg-slate-800">
                         <View className="w-10 h-10 bg-slate-800 rounded-xl items-center justify-center border border-slate-700">
                             <Feather name="users" size={20} color="#94a3b8" />
                         </View>
@@ -109,10 +91,7 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
                         </View>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                        onPress={goToSessions}
-                        className="bg-slate-900 border border-slate-800 p-5 rounded-3xl w-[48%] h-36 justify-between active:bg-slate-800"
-                    >
+                    <TouchableOpacity onPress={goToSessions} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl w-[48%] h-36 justify-between active:bg-slate-800">
                         <View className="w-10 h-10 bg-slate-800 rounded-xl items-center justify-center border border-slate-700">
                             <Feather name="bar-chart-2" size={20} color="#94a3b8" />
                         </View>
@@ -124,24 +103,30 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
                 </View>
             </View>
 
-            {/* 3. ОСТАННЯ АКТИВНІСТЬ (Заглушка) */}
+            {/* 🔥 3. ОСТАННЯ АКТИВНІСТЬ (Динамічна) */}
             <View className="mx-4 mt-6 mb-10">
                 <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4">ОСТАННЯ АКТИВНІСТЬ</Text>
 
-                <View className="bg-slate-900 border border-slate-800 p-4 rounded-3xl flex-row items-center">
-                    <View className="w-12 h-12 bg-slate-800 rounded-full items-center justify-center mr-4 border border-slate-700">
-                        <Feather name="activity" size={20} color="#94a3b8" />
+                {recentActivity ? (
+                    <View className="bg-slate-900 border border-slate-800 p-4 rounded-3xl flex-row items-center">
+                        <View className="w-12 h-12 bg-slate-800 rounded-full items-center justify-center mr-4 border border-slate-700">
+                            <Feather name="activity" size={20} color="#94a3b8" />
+                        </View>
+                        <View className="flex-1 mr-2">
+                            <Text className="text-white text-base font-bold" numberOfLines={1}>{recentActivity.teamName}</Text>
+                            <Text className="text-slate-500 text-xs mt-0.5">{recentActivity.date} • {recentActivity.time}</Text>
+                        </View>
+                        <TouchableOpacity onPress={openRecentActivity} className="bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 active:bg-slate-700">
+                            <Text className="text-slate-300 text-xs font-bold uppercase">Відкрити</Text>
+                        </TouchableOpacity>
                     </View>
-                    <View className="flex-1">
-                        <Text className="text-white text-base font-bold">ФК «Динамо» U17</Text>
-                        <Text className="text-slate-500 text-xs">12.10.2023 • 10:30</Text>
+                ) : (
+                    <View className="bg-slate-900 border border-slate-800 p-6 rounded-3xl items-center justify-center">
+                        <Feather name="inbox" size={24} color="#475569" className="mb-2" />
+                        <Text className="text-slate-500 font-medium text-sm">Тут з'явиться останнє тренування</Text>
                     </View>
-                    <TouchableOpacity className="bg-slate-800 px-4 py-2 rounded-xl border border-slate-700">
-                        <Text className="text-slate-300 text-xs font-bold uppercase">Відкрити</Text>
-                    </TouchableOpacity>
-                </View>
+                )}
             </View>
-
         </ScrollView>
     );
 }

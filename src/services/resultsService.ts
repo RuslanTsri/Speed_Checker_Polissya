@@ -58,7 +58,7 @@ class ResultsService extends BaseService<Result> {
                     rawData = data;
                     serverFormatted = data.map((item: any, index: number) => ({
                         id: item.id,
-                        playerName: item.players?.name || 'Гість',
+                        playerId: item.player_id || 'guest',
                         playerNumber: '-',
                         time: Number(item.full_time),
                         splits: item.gates,
@@ -132,70 +132,82 @@ class ResultsService extends BaseService<Result> {
         return { data: serverFormatted, error: null };
     }
     async getByTeam(teamId: string) {
-        console.log(`🔍 [ResultsService] Запит результатів для команди ${teamId}...`);
+        console.log(`🔍 [ResultsService] Запит результатів команди ${teamId}...`);
         const state = await NetInfo.fetch();
         const cacheKey = `results_team_${teamId}`;
 
-        // 🔥 1. Отримуємо результати з черги SyncManager, які належать цій команді
-        // Оскільки в результатах немає team_id, нам треба знайти ID сесій цієї команди в черзі
-        const pendingSessions = syncManager.getPendingItems('sessions')
-            .filter((s: any) => s.team_id === teamId)
-            .map((s: any) => s.id);
-
-        // Тепер беремо результати, які посилаються на ці сесії
-        const pendingResults = syncManager.getPendingItems('results')
-            .filter((r: any) => pendingSessions.includes(r.session_id))
-            .map((item: any) => ({
-                id: item.id,
-                playerName: item.player_name || 'Синхронізація...', // Додайте ім'я в payload при створенні
-                playerNumber: '-',
-                time: Number(item.full_time),
-                splits: item.gates,
-                round: 0,
-                date: new Date().toLocaleTimeString(),
-                isPending: true // Мітка для UI
-            }));
-
         let serverFormatted: any[] = [];
+        let rawData: any[] = [];
 
         if (state.isConnected) {
             try {
+                // JOIN: Тягнемо результати + імена гравців + дистанцію з сесії
                 const { data, error } = await supabase
-                    .from('results')
+                    .from(this.tableName)
                     .select(`
-                    *,
-                    players (name),
-                    sessions!inner (team_id)
-                `)
+                        id, full_time, gates, created_at, player_id,
+                        players (name),
+                        sessions!inner (id, team_id, test_type, total_distance)
+                    `)
                     .eq('sessions.team_id', teamId)
                     .order('created_at', { ascending: false });
 
                 if (!error && data) {
+                    rawData = data;
                     serverFormatted = data.map((item: any) => ({
                         id: item.id,
+                        playerId: item.player_id || 'guest',
                         playerName: item.players?.name || 'Гість',
                         playerNumber: '-',
                         time: Number(item.full_time),
                         splits: item.gates,
-                        round: 0,
-                        date: new Date(item.created_at).toLocaleTimeString()
+                        testType: item.sessions?.test_type || 'STATIC',
+                        distance: item.sessions?.total_distance || 30, // 🔥 ДОДАЛИ ДИСТАНЦІЮ
+                        date: new Date(item.created_at).toLocaleDateString(),
+                        round: 0
                     }));
-                    await this.saveToCache(cacheKey, serverFormatted);
+                    // @ts-ignore
+                    await this.saveToCache(cacheKey, { formatted: serverFormatted, raw: data });
                 }
-            } catch (e) {
-                console.log("⚠️ [ResultsService] Помилка мережі");
-            }
+            } catch (e) { console.log("⚠️ Помилка мережі"); }
         }
 
         if (!state.isConnected || serverFormatted.length === 0) {
-            serverFormatted = await this.getFromCache(cacheKey) || [];
+            // @ts-ignore
+            const cached = await this.getFromCache(cacheKey);
+            if (cached) {
+                serverFormatted = cached.formatted;
+                rawData = cached.raw;
+            }
         }
 
-        // 🔥 2. ЗЛИВАЄМО ДАНІ: Офлайн черга + Кеш/Сервер
-        const combined = [...pendingResults, ...serverFormatted];
-        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+        // Беремо результати з черги SyncManager (офлайн)
+        const pendingSessions = syncManager.getPendingItems('sessions').filter((s: any) => s.team_id === teamId);
+        const pendingSessionIds = pendingSessions.map((s: any) => s.id);
+        const pendingResults = syncManager.getPendingItems('results')
+            .filter((r: any) => pendingSessionIds.includes(r.session_id))
+            .map((item: any) => {
+                const session = pendingSessions.find((s: any) => s.id === item.session_id);
+                return {
+                    id: item.id,
+                    playerId: item.player_id || 'guest',
+                    playerName: 'Синхронізація...',
+                    playerNumber: '-',
+                    time: Number(item.full_time),
+                    splits: item.gates,
+                    testType: session?.test_type || 'STATIC',
+                    distance: session?.total_distance || 30, // 🔥 З черги теж беремо дистанцію
+                    date: new Date(item.created_at || Date.now()).toLocaleDateString(),
+                    round: 0
+                };
+            });
 
-        return { data: unique, error: null };
+        const deletedIds = syncManager.getDeletedIds('results');
+        const combined = [...pendingResults, ...serverFormatted];
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+            .filter(item => !deletedIds.includes(item.id));
+
+        return { data: unique, rawData, error: null };
     }
 }
 

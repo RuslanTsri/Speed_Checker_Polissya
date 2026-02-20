@@ -9,7 +9,7 @@ const ProfileSchema = z.object({
     pin_code: z.any(),
     role: z.any(),
     updated_at: z.any(),
-}).passthrough();
+});
 
 export type Profile = z.infer<typeof ProfileSchema>;
 

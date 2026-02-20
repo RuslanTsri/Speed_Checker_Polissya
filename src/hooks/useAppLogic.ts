@@ -24,7 +24,7 @@ export const useAppLogic = () => {
     const [newPin, setNewPin] = useState('');
     const [confirmPin, setConfirmPin] = useState('');
     const [isPinLoading, setIsPinLoading] = useState(false);
-
+    const [navParams, setNavParams] = useState<any>(null);
     const [pinError, setPinError] = useState<string | null>(null);
 
     const handleLogout = () => {
@@ -44,8 +44,10 @@ export const useAppLogic = () => {
     const handleNavigate = (tab: AppTab, params?: any) => {
         if (tab === 'SESSIONS') {
             setSessionsInitialTab(params?.subTab);
+            setNavParams(params);
         } else {
             setSessionsInitialTab(undefined);
+            setNavParams(null);
         }
         setCurrentTab(tab);
     };
@@ -131,7 +133,7 @@ export const useAppLogic = () => {
         oldPin, setOldPin: (text: string) => { setOldPin(text); clearPinError(); },
         newPin, setNewPin: (text: string) => { setNewPin(text); clearPinError(); },
         confirmPin, setConfirmPin: (text: string) => { setConfirmPin(text); clearPinError(); },
-        isPinLoading, pinError,
+        isPinLoading, pinError, navParams,
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange
     };
 };

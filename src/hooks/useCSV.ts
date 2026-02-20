@@ -37,18 +37,23 @@ export const useCSV = () => {
                 return;
             }
 
-            // Заголовки (англійською для економії байтів та універсальності)
-            let csvContent = "Team,Player,Date,Type,Time,Splits\n";
+            // 🔥 ДОДАЛИ КОЛОНКУ Distance(m)
+            let csvContent = "Team,Player,Date,Type,Distance(m),Time(s),Splits\n";
 
             results.forEach((res) => {
                 const timeStr = res.time.toFixed(2);
-                const splitsStr = res.splits ? `"${res.splits.join(',')}"` : '""';
+                const splitsStr = res.splits && res.splits.length > 0 ? `"${res.splits.join(',')}"` : '""';
                 const dateStr = res.date || '-';
                 const typeStr = res.testType || 'Sprint';
 
-                csvContent += `${teamName},${res.playerName},${dateStr},${typeStr},${timeStr},${splitsStr}\n`;
+                // Витягуємо дистанцію (якщо раптом її немає, ставимо прочерк)
+                const distanceStr = res.distance ? res.distance.toString() : '-';
+
+                // 🔥 Додаємо distanceStr у рядок
+                csvContent += `${teamName},${res.playerName},${dateStr},${typeStr},${distanceStr},${timeStr},${splitsStr}\n`;
             });
 
+            // Назва файлу
             const fileName = `Results_${teamName.replace(/\s+/g, '_')}_${Date.now()}.csv`;
 
             if (Platform.OS === 'web') {

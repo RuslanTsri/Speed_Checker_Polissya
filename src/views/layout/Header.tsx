@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Pressable, Modal, Image } from 'react-native';
 import { Feather } from "@expo/vector-icons";
-import NetInfo from '@react-native-community/netinfo'; // 🔥 Додали імпорт NetInfo
+import NetInfo from '@react-native-community/netinfo';
 import { useUser } from '../../context/UserContext';
 
 interface HeaderProps {
@@ -14,17 +14,14 @@ export const Header = ({ onGoHome, onLogout, onChangePin }: HeaderProps) => {
     const { profile } = useUser();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    // 🔥 Стан для відслідковування Інтернету
+    // Стан для відслідковування Інтернету
     const [isOnline, setIsOnline] = useState(true);
 
-    // 🔥 Підписуємось на зміни мережі
+    // Підписуємось на зміни мережі
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
-            // Перевіряємо, чи є підключення до інтернету
             setIsOnline(!!state.isConnected && !!state.isInternetReachable);
         });
-
-        // Відписуємось при розмонтуванні
         return () => unsubscribe();
     }, []);
 
@@ -40,23 +37,37 @@ export const Header = ({ onGoHome, onLogout, onChangePin }: HeaderProps) => {
     }, [profile?.full_name]);
 
     return (
-        <View className="bg-slate-900 py-4 px-6 border-b border-slate-800 flex-row justify-between items-center z-50">
+        <View className="z-50 bg-slate-900 py-4 px-6 border-b border-slate-800 flex-row justify-between items-center">
 
-            <TouchableOpacity onPress={onGoHome} activeOpacity={0.6}>
+            {/* 🔥 ЛОГОТИП + PREVIEW */}
+            <TouchableOpacity onPress={onGoHome} activeOpacity={0.6} className="justify-center">
                 <Text className="text-yellow-400 text-lg font-black tracking-[0.2em] uppercase italic">
                     Tempo Metrics
                 </Text>
+                {/* Напис Preview для презентацій */}
+                <Text className="text-slate-500 text-[9px] font-black tracking-[0.3em] uppercase mt-0.5 ml-0.5">
+                    Preview Version
+                </Text>
             </TouchableOpacity>
 
-            {/* 🔥 Контейнер для статусу та аватарки */}
+            {/* Контейнер для статусу та аватарки */}
             <View className="flex-row items-center relative">
 
-                {/* 🔥 Плашка статусу Інтернету */}
-                <View className="flex-row items-center px-2 py-1 bg-slate-800 rounded-full border border-slate-700 mr-3">
-                    <View className={`w-2 h-2 rounded-full mr-1.5 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <Text className="text-xs text-slate-300 font-medium">
-                        {isOnline ? 'Онлайн' : 'Офлайн'}
-                    </Text>
+                {/* 🔥 СТАТУС ІНТЕРНЕТУ + ПОПЕРЕДЖЕННЯ ПРО BETA */}
+                <View className="items-end justify-center mr-3">
+                    <View className="flex-row items-center px-2 py-1 bg-slate-800 rounded-full border border-slate-700">
+                        <View className={`w-2 h-2 rounded-full mr-1.5 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <Text className="text-xs text-slate-300 font-medium">
+                            {isOnline ? 'Онлайн' : 'Офлайн'}
+                        </Text>
+                    </View>
+
+                    {/* Текст з'являється ТІЛЬКИ в офлайні прямо під плашкою */}
+                    {!isOnline && (
+                        <Text className="text-orange-400 text-[7px] font-bold uppercase tracking-wider mt-1 text-right w-24">
+                            Beta: можливі помилки
+                        </Text>
+                    )}
                 </View>
 
                 {/* Аватарка / Меню */}

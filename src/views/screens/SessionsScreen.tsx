@@ -7,12 +7,14 @@ import SessionsTeam from '../tools/SessionsTeam';
 import SessionDetails from '../tools/SessionDetails';
 
 import { useSessionsManager, SessionTabType } from '../../hooks/sessions/useSessionsManager';
+import { TeamSession } from '../../hooks/sessions/useSessionsData'; // 🔥 Імпортували тип
 
 interface SessionsScreenProps {
     initialTab?: SessionTabType;
+    openSession?: TeamSession | null; // 🔥 ДОДАЛИ НОВИЙ ПРОП
 }
 
-export default function SessionsScreen({ initialTab }: SessionsScreenProps) {
+export default function SessionsScreen({ initialTab, openSession }: SessionsScreenProps) {
     const {
         activeTab, setActiveTab,
         searchQuery, setSearchQuery,
@@ -25,6 +27,15 @@ export default function SessionsScreen({ initialTab }: SessionsScreenProps) {
         if (initialTab) setActiveTab(initialTab);
     }, [initialTab]);
 
+    // 🔥 ДОДАЛИ ЦЕЙ БЛОК: Ловимо команду з головного екрана
+    useEffect(() => {
+        if (openSession) {
+            setSelectedTeamSession(openSession);
+            setActiveTab('TEAM'); // На всякий випадок перемикаємо таб
+        }
+    }, [openSession]);
+
+    // Якщо є вибрана сесія — показуємо деталі
     if (selectedTeamSession) {
         return (
             <SessionDetails

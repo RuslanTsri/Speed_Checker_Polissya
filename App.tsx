@@ -30,6 +30,7 @@ const AppContent = () => {
     const {
         currentTab,
         sessionsInitialTab,
+        navParams,
 
         // Pin Modal State
         isPinModalVisible, setPinModalVisible,
@@ -69,7 +70,7 @@ const AppContent = () => {
             case 'PLAYERS':
                 return <PlayersScreen />;
             case 'SESSIONS':
-                return <SessionsScreen key={sessionsInitialTab} initialTab={sessionsInitialTab} />;
+                return <SessionsScreen key={sessionsInitialTab} initialTab={sessionsInitialTab} openSession={navParams?.openSession}  />;
             case 'TOOLS':
                 return <BluetoothTool onBack={() => handleNavigate('SETTINGS')} />;
             case 'SETTINGS':

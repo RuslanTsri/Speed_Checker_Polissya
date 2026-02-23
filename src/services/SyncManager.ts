@@ -29,13 +29,18 @@ class SyncManager {
     private async loadQueue() {
         try {
             const json = await storage.getItem('offline_queue');
-            if (json) { this.queue = JSON.parse(json); this.notifyListeners(); }
+            if (json) {
+                this.queue = JSON.parse(json);
+                this.notifyListeners();
+            }
         } catch (e) {}
     }
 
     private async persistQueue() {
-        try { await storage.setItem('offline_queue', JSON.stringify(this.queue)); this.notifyListeners(); }
-        catch (e) {}
+        try {
+            await storage.setItem('offline_queue', JSON.stringify(this.queue));
+            this.notifyListeners();
+        } catch (e) {}
     }
 
     async enqueue(type: SyncActionType, tableName: string, payload: any) {
@@ -46,6 +51,8 @@ class SyncManager {
         this.queue.push(job);
         await this.persistQueue();
         console.log(`📥 [SyncManager] Queued ${type} for ${tableName} (ID: ${payload.id})`);
+
+        // Викликаємо без await, щоб не блокувати UI
         this.processQueue();
         return job;
     }
@@ -59,29 +66,35 @@ class SyncManager {
     }
 
     async processQueue() {
+        // 🔥 КРОК 1: Миттєва перевірка без асинхронних пауз
         if (this.isSyncing || this.queue.length === 0) return;
 
-        const state = await NetInfo.fetch();
-        if (!state.isConnected) return;
-
-        this.isSyncing = true;
-        console.log(`🔄 [SyncManager] Syncing started... (${this.queue.length} jobs)`);
-
-        const jobsToProcess = [...this.queue];
-        const processedJobIds: string[] = [];
+        this.isSyncing = true; // Закриваємо замок відразу
+        this.notifyListeners();
 
         try {
-            jobsToProcess.sort((a, b) => a.createdAt - b.createdAt);
+            // Перевіряємо інтернет
+            const state = await NetInfo.fetch();
+            if (!state.isConnected) {
+                this.isSyncing = false;
+                this.notifyListeners();
+                return;
+            }
 
-            for (const job of jobsToProcess) {
+            console.log(`🔄 [SyncManager] Syncing started... (${this.queue.length} jobs)`);
+
+            // 🔥 КРОК 2: Обробляємо чергу по одному елементу, поки вона не стане порожньою
+            // Це набагато надійніше за копіювання масиву
+            while (this.queue.length > 0) {
+                // Беремо найперше завдання (FIFO)
+                const job = this.queue[0];
+
                 try {
-                    let res;
                     const query = supabase.from(job.tableName);
-
                     let payloadToSend = { ...job.payload };
-                    // Жорстко вирізаємо created_at, бо воно генерується БД
                     delete payloadToSend.created_at;
 
+                    let res;
                     if (job.type === 'INSERT') {
                         res = await query.insert(payloadToSend);
                     } else if (job.type === 'UPDATE') {
@@ -93,43 +106,32 @@ class SyncManager {
 
                     if (res?.error) {
                         const code = res.error.code;
-
-                        if (code === '23505') {
-                            // Дублікат -> Ігноруємо
-                            processedJobIds.push(job.id);
-                        } else if (code === '42501') {
-                            // Порушення RLS
-                            console.log(`⚠️ RLS Помилка. Завдання видалено.`);
-                            processedJobIds.push(job.id);
-                        } else if (code === '23503') {
-                            // 🔥 БАТЬКА ВИДАЛЕНО (напр. команда вже видалена). Викидаємо завдання.
-                            console.log(`⚠️ FK Violation: Батьківський запис не існує. Завдання видалено.`);
-                            processedJobIds.push(job.id);
-                        } else if (code === 'PGRST204') {
-                            // 🔥 ЗАЙВА КОЛОНКА (якої немає в БД). Викидаємо завдання.
-                            console.log(`⚠️ PGRST204: Зайве поле в запиті. Завдання видалено.`);
-                            processedJobIds.push(job.id);
+                        // 23505 - Duplicate key (вже є в базі)
+                        if (code === '23505' || code === '42501' || code === '23503' || code === 'PGRST204') {
+                            console.log(`⚠️ [SyncManager] Job ${job.id} skipped due to error code: ${code}`);
+                            this.queue.shift(); // Видаляємо з черги як "оброблене"
                         } else {
-                            throw res.error; // Інші помилки (напр. відпав інет) -> лишаємо в черзі
+                            // Серйозна помилка (мережева) - зупиняємо цикл, спробуємо пізніше
+                            console.log(`❌ [SyncManager] Network/Server error, stopping. Code: ${code}`);
+                            break;
                         }
                     } else {
                         console.log(`✅ [SyncManager] Success: ${job.type} -> ${job.tableName}`);
-                        processedJobIds.push(job.id);
+                        this.queue.shift(); // Успішно відправлено - видаляємо
                     }
                 } catch (err) {
-                    console.error(`❌ [SyncManager] Job failed:`, err);
+                    console.error(`❌ [SyncManager] Fatal job error:`, err);
+                    break; // Перериваємо цикл при невідомій помилці
                 }
-            }
 
-            if (processedJobIds.length > 0) {
-                this.queue = this.queue.filter(j => !processedJobIds.includes(j.id));
+                // Зберігаємо стан черги після кожного успішного кроку
                 await this.persistQueue();
-                console.log(`✅ [SyncManager] Sync done. Remaining: ${this.queue.length}`);
-                this.notifyListeners();
             }
 
         } finally {
             this.isSyncing = false;
+            this.notifyListeners();
+            console.log(`🏁 [SyncManager] Sync cycle finished. Remaining: ${this.queue.length}`);
         }
     }
 

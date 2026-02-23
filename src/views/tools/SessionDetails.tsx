@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { TeamSession } from '../../hooks/sessions/useSessionsData';
 import { useSessionDetails } from '../../hooks/sessions/useSessionDetails';
+import { useTheme } from '../../context/ThemeContext';
 
 interface Props {
     session: TeamSession;
@@ -10,82 +11,97 @@ interface Props {
 }
 
 export default function SessionDetails({ session, onBack }: Props) {
+    const { isDark } = useTheme();
     const {
         subTab, setSubTab,
-        roundFilter, setRoundFilter,
         selectedDistance, setSelectedDistance, predefinedDistances,
-        rounds,
-        filteredAttempts,
-        sortedResults,
-        sessionStats,
-        handleExport
+        filteredAttempts, sortedResults, sessionStats, handleExport
     } = useSessionDetails(session);
 
+    // 🎨 КОЛЬОРИ ЧЕРЕЗ JS (100% захист від зависань NativeWind)
+    const colors = {
+        bgMain: isDark ? '#020617' : '#f8fafc', // slate-950 : slate-50
+        bgCard: isDark ? '#0f172a' : '#ffffff', // slate-900 : white
+        border: isDark ? '#1e293b' : '#e2e8f0', // slate-800 : slate-200
+        textMain: isDark ? '#ffffff' : '#0f172a', // white : slate-900
+        textSub: isDark ? '#64748b' : '#64748b',  // slate-500
+        yellow: isDark ? '#facc15' : '#eab308',
+        tabActiveBg: isDark ? '#1e293b' : '#ffffff', // slate-800 : white
+        tabInactiveBg: 'transparent',
+    };
+
     return (
-        <View className="flex-1 bg-slate-950 pt-4">
+        <View className="flex-1 pt-4" style={{ backgroundColor: colors.bgMain }}>
             {/* --- HEADER --- */}
             <View className="flex-row items-center justify-between px-4 mb-4">
                 <TouchableOpacity onPress={onBack} className="p-2 -ml-2">
-                    <Feather name="chevron-left" size={24} color="white" />
+                    <Feather name="chevron-left" size={24} color={colors.textMain} />
                 </TouchableOpacity>
                 <View className="items-center">
-                    <Text className="text-white text-lg font-bold">Результати</Text>
-                    {/* Показуємо обрану дистанцію в хедері тільки для BEST */}
-                    <Text className="text-slate-500 text-xs">
+                    <Text className="text-lg font-bold" style={{ color: colors.textMain }}>Результати</Text>
+                    <Text className="text-xs" style={{ color: colors.textSub }}>
                         {session.testType} {subTab === 'BEST' ? `(${selectedDistance}м)` : ''}
                     </Text>
                 </View>
                 <TouchableOpacity onPress={handleExport} className="p-2 -mr-2">
-                    <Feather name="upload" size={20} color="#facc15" />
+                    <Feather name="upload" size={20} color={colors.yellow} />
                 </TouchableOpacity>
             </View>
 
-            {/* --- INFO CARD (Оновлюється залежно від дистанції, якщо ми в BEST) --- */}
-            <View className="bg-slate-900 mx-4 rounded-3xl p-4 border border-slate-800 mb-4 shadow-md">
+            {/* --- INFO CARD --- */}
+            <View className="mx-4 rounded-3xl p-4 border mb-4 shadow-sm" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
                 <View className="flex-row justify-between mb-4">
                     <View>
-                        <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-1">Команда</Text>
-                        <Text className="text-white text-lg font-bold">{session.teamName}</Text>
+                        <Text className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: colors.textSub }}>Команда</Text>
+                        <Text className="text-lg font-bold" style={{ color: colors.textMain }}>{session.teamName}</Text>
                     </View>
                     <View className="items-end">
-                        <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-1">Гравців у ТОПі</Text>
-                        <Text className="text-white text-lg font-bold">{subTab === 'BEST' ? sortedResults.length : '-'}</Text>
+                        <Text className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: colors.textSub }}>Гравців у ТОПі</Text>
+                        <Text className="text-lg font-bold" style={{ color: colors.textMain }}>{subTab === 'BEST' ? sortedResults.length : '-'}</Text>
                     </View>
                 </View>
                 <View className="flex-row">
                     <View className="mr-8">
-                        <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-1">Найкращий</Text>
-                        <Text className="text-yellow-400 text-3xl font-black">{sessionStats.best > 0 ? sessionStats.best.toFixed(2) : '--'} <Text className="text-sm font-bold text-slate-400">с</Text></Text>
+                        <Text className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: colors.textSub }}>Найкращий</Text>
+                        <Text className="text-3xl font-black" style={{ color: colors.yellow }}>{sessionStats.best > 0 ? sessionStats.best.toFixed(2) : '--'} <Text className="text-sm font-bold" style={{ color: colors.textSub }}>с</Text></Text>
                     </View>
                     <View>
-                        <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-1">Середній</Text>
-                        <Text className="text-white text-3xl font-black">{sessionStats.avg > 0 ? sessionStats.avg.toFixed(2) : '--'} <Text className="text-sm font-bold text-slate-400">с</Text></Text>
+                        <Text className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: colors.textSub }}>Середній</Text>
+                        <Text className="text-3xl font-black" style={{ color: colors.textMain }}>{sessionStats.avg > 0 ? sessionStats.avg.toFixed(2) : '--'} <Text className="text-sm font-bold" style={{ color: colors.textSub }}>с</Text></Text>
                     </View>
                 </View>
             </View>
 
             {/* --- TABS --- */}
-            <View className="flex-row mx-4 bg-slate-900 p-1 rounded-xl mb-3 border border-slate-800">
-                <TouchableOpacity onPress={() => setSubTab('BEST')} className={`flex-1 py-2 rounded-lg items-center ${subTab === 'BEST' ? 'bg-slate-800 border border-slate-700' : ''}`}>
-                    <Text className={`font-bold text-sm ${subTab === 'BEST' ? 'text-white' : 'text-slate-500'}`}>Підсумок (Best)</Text>
+            <View className="flex-row mx-4 p-1 rounded-xl mb-3 border" style={{ backgroundColor: isDark ? '#0f172a' : '#e2e8f0', borderColor: isDark ? '#1e293b' : '#cbd5e1' }}>
+                <TouchableOpacity onPress={() => setSubTab('BEST')} className="flex-1 py-2 rounded-lg items-center shadow-sm" style={{ backgroundColor: subTab === 'BEST' ? colors.tabActiveBg : colors.tabInactiveBg, borderColor: subTab === 'BEST' ? colors.border : 'transparent', borderWidth: subTab === 'BEST' ? 1 : 0 }}>
+                    <Text className="font-bold text-sm" style={{ color: subTab === 'BEST' ? colors.textMain : colors.textSub }}>Підсумок (Best)</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setSubTab('ALL')} className={`flex-1 py-2 rounded-lg items-center ${subTab === 'ALL' ? 'bg-slate-800 border border-slate-700' : ''}`}>
-                    <Text className={`font-bold text-sm ${subTab === 'ALL' ? 'text-white' : 'text-slate-500'}`}>Усі спроби</Text>
+                <TouchableOpacity onPress={() => setSubTab('ALL')} className="flex-1 py-2 rounded-lg items-center shadow-sm" style={{ backgroundColor: subTab === 'ALL' ? colors.tabActiveBg : colors.tabInactiveBg, borderColor: subTab === 'ALL' ? colors.border : 'transparent', borderWidth: subTab === 'ALL' ? 1 : 0 }}>
+                    <Text className="font-bold text-sm" style={{ color: subTab === 'ALL' ? colors.textMain : colors.textSub }}>Усі спроби</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* 🔥 ТАБИ ДИСТАНЦІЙ (Відображаються ТІЛЬКИ в Підсумках) */}
+            {/* 🔥 ТАБИ ДИСТАНЦІЙ */}
             {subTab === 'BEST' && (
                 <View className="px-4 mb-3 flex-row justify-center">
-                    {predefinedDistances.map(dist => (
-                        <TouchableOpacity
-                            key={dist}
-                            onPress={() => setSelectedDistance(dist)}
-                            className={`mx-2 px-6 py-1.5 rounded-full border ${selectedDistance === dist ? 'bg-yellow-500/20 border-yellow-500/50' : 'bg-transparent border-slate-800'}`}
-                        >
-                            <Text className={`font-bold text-xs ${selectedDistance === dist ? 'text-yellow-400' : 'text-slate-500'}`}>{dist} м</Text>
-                        </TouchableOpacity>
-                    ))}
+                    {predefinedDistances.map(dist => {
+                        const isSelected = selectedDistance === dist;
+                        const distBg = isSelected ? (isDark ? 'rgba(234, 179, 8, 0.2)' : '#fefce8') : 'transparent';
+                        const distBorder = isSelected ? (isDark ? 'rgba(234, 179, 8, 0.5)' : '#fde047') : colors.border;
+                        const distText = isSelected ? colors.yellow : colors.textSub;
+
+                        return (
+                            <TouchableOpacity
+                                key={dist}
+                                onPress={() => setSelectedDistance(dist)}
+                                className="mx-2 px-6 py-1.5 rounded-full border"
+                                style={{ backgroundColor: distBg, borderColor: distBorder }}
+                            >
+                                <Text className="font-bold text-xs" style={{ color: distText }}>{dist} м</Text>
+                            </TouchableOpacity>
+                        )
+                    })}
                 </View>
             )}
 
@@ -102,41 +118,35 @@ export default function SessionDetails({ session, onBack }: Props) {
                         showsVerticalScrollIndicator={false}
                         ListEmptyComponent={() => (
                             <View className="py-10 items-center">
-                                <Text className="text-slate-500 font-medium">Немає результатів на {selectedDistance}м</Text>
+                                <Text className="font-medium" style={{ color: colors.textSub }}>Немає результатів на {selectedDistance}м</Text>
                             </View>
                         )}
                         renderItem={({ item, index }) => {
-                            let rankColor = "bg-slate-800/50 border-r border-slate-700";
-                            let rankTextColor = "text-slate-400";
-                            let cardBg = "bg-slate-900 border-slate-800";
+                            let rankColor = isDark ? "rgba(30, 41, 59, 0.5)" : "#f8fafc";
+                            let rankBorder = colors.border;
+                            let rankTextColor = colors.textSub;
+                            let itemCardBg = colors.bgCard;
+                            let itemBorder = colors.border;
 
                             if (index === 0) {
-                                rankColor = "bg-yellow-500/20 border-r border-yellow-500/50";
-                                rankTextColor = "text-yellow-400";
-                                cardBg = "bg-slate-900 border-yellow-500/30";
-                            }
-                            else if (index === 1) {
-                                rankColor = "bg-slate-300/20 border-r border-slate-300/50";
-                                rankTextColor = "text-slate-300";
-                            }
-                            else if (index === 2) {
-                                rankColor = "bg-orange-500/20 border-r border-orange-500/50";
-                                rankTextColor = "text-orange-400";
+                                rankColor = isDark ? "rgba(234, 179, 8, 0.2)" : "#fefce8";
+                                rankBorder = isDark ? "rgba(234, 179, 8, 0.5)" : "#fde047";
+                                rankTextColor = colors.yellow;
+                                itemCardBg = isDark ? "#0f172a" : "#ffffff";
+                                itemBorder = isDark ? "rgba(234, 179, 8, 0.3)" : "#facc15";
                             }
 
                             return (
-                                <View className={`rounded-xl mb-2 flex-row items-center border overflow-hidden pr-4 ${cardBg}`}>
-                                    <View className={`w-10 py-3 items-center justify-center ${rankColor}`}>
-                                        <Text className={`font-black text-lg ${rankTextColor}`}>{index + 1}</Text>
+                                <View className="rounded-xl mb-2 flex-row items-center border overflow-hidden pr-4" style={{ backgroundColor: itemCardBg, borderColor: itemBorder }}>
+                                    <View className="w-10 py-3 items-center justify-center border-r" style={{ backgroundColor: rankColor, borderColor: rankBorder }}>
+                                        <Text className="font-black text-lg" style={{ color: rankTextColor }}>{index + 1}</Text>
                                     </View>
-
                                     <View className="flex-1 pl-3 py-2">
-                                        <Text className="text-white font-bold text-base" numberOfLines={1}>{item.playerName}</Text>
-                                        <Text className="text-slate-500 text-[10px] font-bold mt-0.5">Спроб: {item.attemptsCount}</Text>
+                                        <Text className="font-bold text-base" style={{ color: colors.textMain }} numberOfLines={1}>{item.playerName}</Text>
+                                        <Text className="text-[10px] font-bold mt-0.5" style={{ color: colors.textSub }}>Спроб: {item.attemptsCount}</Text>
                                     </View>
-
                                     <View className="items-end py-2">
-                                        <Text className="text-white font-black text-xl">{item.bestTime.toFixed(2)}<Text className="text-xs text-slate-500 font-bold ml-0.5">s</Text></Text>
+                                        <Text className="font-black text-xl" style={{ color: colors.textMain }}>{item.bestTime.toFixed(2)}<Text className="text-xs font-bold ml-0.5" style={{ color: colors.textSub }}>s</Text></Text>
                                     </View>
                                 </View>
                             );
@@ -147,9 +157,9 @@ export default function SessionDetails({ session, onBack }: Props) {
                 {/* LIST: ALL ATTEMPTS (Всі спроби) */}
                 {subTab === 'ALL' && (
                     <View className="flex-1">
-                        <View className="flex-row px-6 pb-2 border-b border-slate-800 mb-2 mt-2">
-                            <Text className="flex-1 text-slate-500 text-[10px] font-bold tracking-widest uppercase">Гравець</Text>
-                            <Text className="w-16 text-right text-slate-500 text-[10px] font-bold tracking-widest uppercase">Час</Text>
+                        <View className="flex-row px-6 pb-2 border-b mb-2 mt-2" style={{ borderColor: colors.border }}>
+                            <Text className="flex-1 text-[10px] font-bold tracking-widest uppercase" style={{ color: colors.textSub }}>Гравець</Text>
+                            <Text className="w-16 text-right text-[10px] font-bold tracking-widest uppercase" style={{ color: colors.textSub }}>Час</Text>
                         </View>
 
                         <FlatList
@@ -159,13 +169,12 @@ export default function SessionDetails({ session, onBack }: Props) {
                             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}
                             showsVerticalScrollIndicator={false}
                             renderItem={({ item }) => (
-                                <View className="flex-row items-center py-3 border-b border-slate-800/40">
-                                    <Text className="flex-1 text-slate-300 font-medium text-sm">
+                                <View className="flex-row items-center py-3 border-b" style={{ borderColor: isDark ? 'rgba(30, 41, 59, 0.4)' : '#e2e8f0' }}>
+                                    <Text className="flex-1 font-medium text-sm" style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
                                         {item.playerName}{' '}
-                                        {/* 🔥 ДОДАЛИ ДИСТАНЦІЮ В ДУЖКАХ */}
-                                        <Text className="text-slate-500 text-[10px]">({item.distance}м)</Text>
+                                        <Text className="text-[10px]" style={{ color: colors.textSub }}>({item.distance}м)</Text>
                                     </Text>
-                                    <Text className="w-16 text-right text-white font-bold font-mono">{item.time.toFixed(2)}</Text>
+                                    <Text className="w-16 text-right font-bold font-mono" style={{ color: colors.textMain }}>{item.time.toFixed(2)}</Text>
                                 </View>
                             )}
                         />

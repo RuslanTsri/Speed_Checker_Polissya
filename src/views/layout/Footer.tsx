@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext'; // 🔥 Імпортуємо наш контекст
 
 export type TabType = 'HOME' | 'PLAYERS' | 'SESSIONS' | 'SETTINGS';
 
@@ -10,6 +11,9 @@ interface FooterProps {
 }
 
 export const Footer = ({ activeTab, onSwitch }: FooterProps) => {
+    // 🔥 Беремо стан теми
+    const { isDark } = useTheme();
+
     const tabs: { id: TabType; label: string; iconName: keyof typeof Ionicons.glyphMap }[] = [
         { id: 'HOME', label: 'Головна', iconName: 'home' },
         { id: 'PLAYERS', label: 'Команди', iconName: 'people' },
@@ -18,11 +22,16 @@ export const Footer = ({ activeTab, onSwitch }: FooterProps) => {
     ];
 
     return (
-        <View className="bg-slate-900 border-t border-slate-800 flex-row justify-around py-4 pb-2">
+        <View className={`flex-row justify-around py-4 pb-2 border-t ${
+            isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        }`}>
             {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
 
-                const iconColor = isActive ? '#facc15' : '#64748b';
+                // Колір іконки залежить від теми та активності
+                const iconColor = isActive
+                    ? (isDark ? '#facc15' : '#eab308') // Жовтий (світліший для dark)
+                    : (isDark ? '#64748b' : '#94a3b8'); // Сірий
 
                 return (
                     <TouchableOpacity
@@ -32,13 +41,17 @@ export const Footer = ({ activeTab, onSwitch }: FooterProps) => {
                         activeOpacity={0.7}
                     >
                         <Ionicons
-                            name={isActive ? tab.iconName : `${tab.iconName}-outline` as any} // (Опціонально) Заповнена іконка для активного, контурна для пасивного
+                            name={isActive ? tab.iconName : `${tab.iconName}-outline` as any}
                             size={24}
                             color={iconColor}
                             style={{ marginBottom: 4 }}
                         />
 
-                        <Text className={`text-[10px] font-bold uppercase ${isActive ? 'text-yellow-400' : 'text-slate-500'}`}>
+                        <Text className={`text-[10px] font-bold uppercase ${
+                            isActive
+                                ? (isDark ? 'text-yellow-400' : 'text-yellow-600')
+                                : (isDark ? 'text-slate-500' : 'text-slate-400')
+                        }`}>
                             {tab.label}
                         </Text>
                     </TouchableOpacity>

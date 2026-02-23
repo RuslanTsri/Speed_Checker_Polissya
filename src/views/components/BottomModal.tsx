@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../context/ThemeContext'; // 🔥 Імпорт теми
 
 interface BottomModalProps {
     visible: boolean;
@@ -12,8 +12,8 @@ interface BottomModalProps {
 }
 
 export const BottomModal = ({ visible, onClose, title, children }: BottomModalProps) => {
-
     const insets = useSafeAreaInsets();
+    const { isDark } = useTheme(); // 🔥 Беремо тему
 
     return (
         <Modal
@@ -23,16 +23,15 @@ export const BottomModal = ({ visible, onClose, title, children }: BottomModalPr
             onRequestClose={onClose}
         >
             <Pressable className="flex-1 justify-end bg-black/80" onPress={onClose}>
-
                 <Pressable
-                    className="bg-slate-900 rounded-t-3xl p-6 border-t border-slate-700"
+                    className={`rounded-t-3xl p-6 border-t ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
                     style={{ paddingBottom: insets.bottom + 24 }}
                     onPress={(e) => e.stopPropagation()}
                 >
                     <View className="flex-row justify-between items-center mb-6">
-                        <Text className="text-white text-xl font-bold">{title}</Text>
+                        <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</Text>
                         <TouchableOpacity onPress={onClose} className="p-1">
-                            <Feather name="x" size={24} color="#94a3b8" />
+                            <Feather name="x" size={24} color={isDark ? "#94a3b8" : "#64748b"} />
                         </TouchableOpacity>
                     </View>
 

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Pressable, Modal, Image } from 'react-nat
 import { Feather } from "@expo/vector-icons";
 import NetInfo from '@react-native-community/netinfo';
 import { useUser } from '../../context/UserContext';
+import { useTheme } from '../../context/ThemeContext'; // 🔥 Імпортуємо наш контекст
 
 interface HeaderProps {
     onGoHome: () => void;
@@ -12,12 +13,11 @@ interface HeaderProps {
 
 export const Header = ({ onGoHome, onLogout, onChangePin }: HeaderProps) => {
     const { profile } = useUser();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { isDark } = useTheme(); // 🔥 Беремо стан теми
 
-    // Стан для відслідковування Інтернету
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(true);
 
-    // Підписуємось на зміни мережі
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
             setIsOnline(!!state.isConnected && !!state.isInternetReachable);
@@ -37,15 +37,20 @@ export const Header = ({ onGoHome, onLogout, onChangePin }: HeaderProps) => {
     }, [profile?.full_name]);
 
     return (
-        <View className="z-50 bg-slate-900 py-4 px-6 border-b border-slate-800 flex-row justify-between items-center">
+        <View className={`z-50 py-4 px-6 border-b flex-row justify-between items-center ${
+            isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        }`}>
 
             {/* 🔥 ЛОГОТИП + PREVIEW */}
             <TouchableOpacity onPress={onGoHome} activeOpacity={0.6} className="justify-center">
-                <Text className="text-yellow-400 text-lg font-black tracking-[0.2em] uppercase italic">
+                <Text className={`text-lg font-black tracking-[0.2em] uppercase italic ${
+                    isDark ? 'text-yellow-400' : 'text-yellow-500'
+                }`}>
                     Tempo Metrics
                 </Text>
-                {/* Напис Preview для презентацій */}
-                <Text className="text-slate-500 text-[9px] font-black tracking-[0.3em] uppercase mt-0.5 ml-0.5">
+                <Text className={`text-[9px] font-black tracking-[0.3em] uppercase mt-0.5 ml-0.5 ${
+                    isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}>
                     Preview Version
                 </Text>
             </TouchableOpacity>
@@ -53,16 +58,17 @@ export const Header = ({ onGoHome, onLogout, onChangePin }: HeaderProps) => {
             {/* Контейнер для статусу та аватарки */}
             <View className="flex-row items-center relative">
 
-                {/* 🔥 СТАТУС ІНТЕРНЕТУ + ПОПЕРЕДЖЕННЯ ПРО BETA */}
+                {/* СТАТУС ІНТЕРНЕТУ */}
                 <View className="items-end justify-center mr-3">
-                    <View className="flex-row items-center px-2 py-1 bg-slate-800 rounded-full border border-slate-700">
+                    <View className={`flex-row items-center px-2 py-1 rounded-full border ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'
+                    }`}>
                         <View className={`w-2 h-2 rounded-full mr-1.5 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <Text className="text-xs text-slate-300 font-medium">
+                        <Text className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                             {isOnline ? 'Онлайн' : 'Офлайн'}
                         </Text>
                     </View>
 
-                    {/* Текст з'являється ТІЛЬКИ в офлайні прямо під плашкою */}
                     {!isOnline && (
                         <Text className="text-orange-400 text-[7px] font-bold uppercase tracking-wider mt-1 text-right w-24">
                             Beta: можливі помилки
@@ -76,13 +82,17 @@ export const Header = ({ onGoHome, onLogout, onChangePin }: HeaderProps) => {
                         onPress={() => setIsMenuOpen(true)}
                         activeOpacity={0.8}
                         className={`w-10 h-10 rounded-full items-center justify-center border overflow-hidden transition-colors ${
-                            isMenuOpen ? 'border-yellow-400' : 'border-slate-700 bg-slate-800'
+                            isMenuOpen
+                                ? (isDark ? 'border-yellow-400 bg-slate-800' : 'border-yellow-500 bg-slate-100')
+                                : (isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-100')
                         }`}
                     >
                         {profile?.avatar_url && profile.avatar_url.includes('http') ? (
                             <Image source={{ uri: profile.avatar_url }} className="w-full h-full" resizeMode="cover" />
                         ) : (
-                            <Text className={`font-bold text-xs ${isMenuOpen ? 'text-yellow-400' : 'text-yellow-400'}`}>
+                            <Text className={`font-bold text-xs ${
+                                isDark ? 'text-yellow-400' : 'text-yellow-600'
+                            }`}>
                                 {userInitials}
                             </Text>
                         )}
@@ -96,35 +106,36 @@ export const Header = ({ onGoHome, onLogout, onChangePin }: HeaderProps) => {
                     >
                         <Pressable className="flex-1" onPress={closeMenu}>
                             <Pressable
-                                className="absolute top-[60px] right-4 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-48 overflow-hidden py-1"
+                                className={`absolute top-[60px] right-4 border rounded-xl shadow-2xl w-48 overflow-hidden py-1 ${
+                                    isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                                }`}
                                 onPress={(e) => e.stopPropagation()}
                             >
-                                <View className="px-4 py-2 border-b border-slate-700/50 mb-1">
-                                    <Text className="text-slate-300 font-bold text-sm truncate" numberOfLines={1}>
+                                <View className={`px-4 py-2 border-b mb-1 ${isDark ? 'border-slate-700/50' : 'border-slate-100'}`}>
+                                    <Text className={`font-bold text-sm truncate ${isDark ? 'text-slate-300' : 'text-slate-900'}`} numberOfLines={1}>
                                         {profile?.full_name || "Користувач"}
                                     </Text>
-                                    <Text className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">
+                                    <Text className={`text-[10px] uppercase font-bold tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                                         {profile?.role || "COACH"}
                                     </Text>
                                 </View>
 
                                 <TouchableOpacity
                                     onPress={() => { closeMenu(); onChangePin?.(); }}
-                                    className="flex-row items-center px-4 py-3 active:bg-slate-700"
+                                    className={`flex-row items-center px-4 py-3 ${isDark ? 'active:bg-slate-700' : 'active:bg-slate-50'}`}
                                 >
-                                    <Feather name="lock" size={16} color="#94a3b8" />
-                                    <Text className="text-white ml-3 font-medium text-sm">Зміна PIN</Text>
+                                    <Feather name="lock" size={16} color={isDark ? "#94a3b8" : "#64748b"} />
+                                    <Text className={`ml-3 font-medium text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Зміна PIN</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    onPress={() => {
-                                        closeMenu();
-                                        if (onLogout) onLogout();
-                                    }}
-                                    className="flex-row items-center px-4 py-3 active:bg-red-900/20 border-t border-slate-700/50 mt-1"
+                                    onPress={() => { closeMenu(); if (onLogout) onLogout(); }}
+                                    className={`flex-row items-center px-4 py-3 border-t mt-1 ${
+                                        isDark ? 'active:bg-red-900/20 border-slate-700/50' : 'active:bg-red-50 border-slate-100'
+                                    }`}
                                 >
                                     <Feather name="log-out" size={16} color="#ef4444" />
-                                    <Text className="text-red-400 ml-3 font-medium text-sm">Вихід</Text>
+                                    <Text className="text-red-500 ml-3 font-medium text-sm">Вихід</Text>
                                 </TouchableOpacity>
                             </Pressable>
                         </Pressable>

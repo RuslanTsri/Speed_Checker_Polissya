@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useUser } from '../context/UserContext';
 import { authService } from '../services/authService';
+import { storage } from '../lib/storage';
+import { useTheme } from '../context/ThemeContext'; // 🔥 Наш надійний хук
 
 interface UseSettingsProps {
     onOpenPinChange: () => void;
@@ -12,54 +14,55 @@ export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSetti
     const { profile, refreshProfile } = useUser();
     const [isLoading, setIsLoading] = useState(false);
 
-    // Modal State
-    const [isEditModalVisible, setEditModalVisible] = useState(false);
+    // 🔥 Беремо тему та функцію перемикання з нашого контексту
+    const { isDark, toggleTheme } = useTheme();
 
-    // Тимчасові стани для редагування
+    const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [tempName, setTempName] = useState('');
     const [tempAvatar, setTempAvatar] = useState('');
 
-    // Налаштування системи (локальні)
+    // Додали стейт для сповіщень, якого не вистачало раніше
     const [isNotifEnabled, setIsNotifEnabled] = useState(true);
-    const [isDarkMode, setIsDarkMode] = useState(true);
 
-    // Відкриття модалки
+    useEffect(() => {
+        const loadSettings = async () => {
+            const savedNotif = await storage.getItem('app_notifications');
+            if (savedNotif !== null) {
+                setIsNotifEnabled(savedNotif === 'true');
+            }
+        };
+        loadSettings();
+    }, []);
+
+    const handleToggleNotif = async (newValue: boolean) => {
+        setIsNotifEnabled(newValue);
+        await storage.setItem('app_notifications', String(newValue));
+    };
+
     const openEditModal = () => {
         setTempName(profile?.full_name || '');
         setTempAvatar(profile?.avatar_url || '');
         setEditModalVisible(true);
     };
 
-    // --- ЄДИНА ФУНКЦІЯ ЗБЕРЕЖЕННЯ ---
     const handleSaveProfile = async () => {
         const cleanName = tempName.trim();
-
         if (cleanName.length < 2) {
             Alert.alert("Помилка", "Ім'я занадто коротке");
             return;
         }
 
         setIsLoading(true);
-        console.log("💾 [Settings] Saving profile...");
-
         try {
-            // Оновлюємо тільки ім'я та аватар (роль не чіпаємо)
             const { error } = await authService.updateCurrentProfile({
                 full_name: cleanName,
                 avatar_url: tempAvatar
             });
 
             if (error) throw error;
-
-            console.log("✅ [Settings] Saved to Supabase");
-
-            // Важливо: оновлюємо глобальний контекст
             await refreshProfile();
-
             setEditModalVisible(false);
-            // Alert.alert("Успіх", "Профіль оновлено! 🚀"); // Можна прибрати, щоб не дратувати юзера
         } catch (e: any) {
-            console.error("❌ [Settings] Save Error:", e.message);
             Alert.alert("Помилка", e.message || "Не вдалося зберегти зміни");
         } finally {
             setIsLoading(false);
@@ -74,9 +77,9 @@ export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSetti
             avatar: profile?.avatar_url || 'https://img.icons8.com/color/480/coach.png'
         },
         isNotifEnabled,
-        isDarkMode,
-        setIsDarkMode,
-        toggleNotif: () => setIsNotifEnabled(!isNotifEnabled),
+        toggleNotif: handleToggleNotif,
+        isDark, // 🔥 Віддаємо поточну тему UI
+        setIsDarkMode: toggleTheme, // 🔥 Віддаємо функцію зміни теми
         isEditModalVisible,
         setEditModalVisible,
         tempName, setTempName,

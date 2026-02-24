@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import NetInfo from '@react-native-community/netinfo'; // 🔥 Додали імпорт
+import NetInfo from '@react-native-community/netinfo';
 import { authService } from '../services/authService';
+import { useTranslation } from 'react-i18next';
 
 const PIN_SALT = "tempo_metrics_secure_v1";
 
 export const useAuthScreen = (onLogin: () => void) => {
+    const { t } = useTranslation();
     const [isRegistering, setIsRegistering] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -36,10 +38,10 @@ export const useAuthScreen = (onLogin: () => void) => {
     const handleSubmit = async () => {
         setErrorMessage(null);
 
-        // 🔥 ПЕРЕВІРКА ІНТЕРНЕТУ (Авторизація не працює офлайн)
+        // ПЕРЕВІРКА ІНТЕРНЕТУ
         const state = await NetInfo.fetch();
         if (!state.isConnected) {
-            setErrorMessage("Немає підключення до Інтернету. Авторизація неможлива.");
+            setErrorMessage(t('screens.auth.error_no_internet') as string);
             return;
         }
 
@@ -48,15 +50,15 @@ export const useAuthScreen = (onLogin: () => void) => {
         const securePassword = `${pin}${PIN_SALT}`;
 
         if (!cleanEmail.includes('@') || cleanEmail.length < 5) {
-            setErrorMessage("Введіть коректний Email");
+            setErrorMessage(t('screens.auth.error_invalid_email') as string);
             return;
         }
         if (pin.length !== 4) {
-            setErrorMessage("PIN має складатись рівно з 4 цифр");
+            setErrorMessage(t('screens.auth.error_invalid_pin') as string);
             return;
         }
         if (isRegistering && cleanName.length < 2) {
-            setErrorMessage("Введіть повне ім'я (мінімум 2 літери)");
+            setErrorMessage(t('screens.auth.error_invalid_name') as string);
             return;
         }
 
@@ -68,7 +70,7 @@ export const useAuthScreen = (onLogin: () => void) => {
 
                 if (error) {
                     if (error.message.includes("already registered") || error.status === 400) {
-                        throw new Error("Ця пошта вже зареєстрована. Увійдіть.");
+                        throw new Error(t('screens.auth.error_already_registered') as string);
                     }
                     throw error;
                 }
@@ -83,7 +85,7 @@ export const useAuthScreen = (onLogin: () => void) => {
                         return;
                     }
                     if (error.message.includes("Invalid login")) {
-                        throw new Error("Невірний Email або PIN-код");
+                        throw new Error(t('screens.auth.error_invalid_login') as string);
                     }
                     throw error;
                 }
@@ -92,7 +94,7 @@ export const useAuthScreen = (onLogin: () => void) => {
 
         } catch (e: any) {
             console.log("❌ Auth Error:", e.message);
-            setErrorMessage(e.message || "Сталася невідома помилка");
+            setErrorMessage(e.message || (t('screens.auth.error_unknown') as string));
         } finally {
             setIsLoading(false);
         }

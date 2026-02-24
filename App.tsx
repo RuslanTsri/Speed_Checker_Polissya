@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { MainLayout } from './src/views/layout/MainLayout';
 import { BottomModal } from './src/views/components/BottomModal';
@@ -18,14 +19,17 @@ import BluetoothTool from './src/views/tools/BluetoothTool';
 // Context & Logic
 import { BleProvider } from './src/context/BleContext';
 import { UserProvider, useUser } from './src/context/UserContext';
-import { ThemeProvider, useTheme } from './src/context/ThemeContext'; // 🔥 ДОДАЛИ СЮДИ
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { useAppLogic } from './src/hooks/useAppLogic';
 import { Feather } from "@expo/vector-icons";
+import './src/lib/i18n';
+import {LanguageProvider, useLanguage} from "./src/context/LanguageContext";
 
-// Виносимо логіку в окремий компонент, щоб мати доступ до useTheme
 const AppContentWrapper = () => {
+    const { t } = useTranslation();
     const { user, isLoading } = useUser();
-    const { isDark } = useTheme(); // 🔥 Беремо тему
+    const { isDark } = useTheme();
+    const { isLangLoading } = useLanguage();
 
     const {
         currentTab, sessionsInitialTab, navParams,
@@ -35,7 +39,7 @@ const AppContentWrapper = () => {
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange
     } = useAppLogic();
 
-    if (isLoading) {
+    if (isLoading || isLangLoading) {
         return (
             <View className={`flex-1 justify-center items-center ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
                 <ActivityIndicator size="large" color="#facc15" />
@@ -66,7 +70,6 @@ const AppContentWrapper = () => {
     return (
         <SafeAreaProvider>
             <BleProvider>
-                {/* Динамічний статус-бар */}
                 <StatusBar style={isDark ? "light" : "dark"} />
 
                 <MainLayout
@@ -79,10 +82,12 @@ const AppContentWrapper = () => {
                 </MainLayout>
 
                 {/* PIN Change Modal */}
-                <BottomModal visible={isPinModalVisible} onClose={() => !isPinLoading && setPinModalVisible(false)} title="Безпека">
+                <BottomModal visible={isPinModalVisible} onClose={() => !isPinLoading && setPinModalVisible(false)} title={t('screens.app.pin_modal_title') as string}>
                     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                         <View className="p-1">
-                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">Поточний PIN</Text>
+                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">
+                                {t('screens.app.old_pin_label') as string}
+                            </Text>
                             <TextInput
                                 value={oldPin} onChangeText={setOldPin}
                                 keyboardType="numeric" secureTextEntry maxLength={4}
@@ -92,7 +97,9 @@ const AppContentWrapper = () => {
                                     ${pinError ? 'border-red-500/50' : (isDark ? 'border-slate-800' : 'border-slate-200')}`}
                             />
 
-                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">Новий PIN</Text>
+                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">
+                                {t('screens.app.new_pin_label') as string}
+                            </Text>
                             <TextInput
                                 value={newPin} onChangeText={setNewPin}
                                 keyboardType="numeric" secureTextEntry maxLength={4}
@@ -101,7 +108,9 @@ const AppContentWrapper = () => {
                                     ${isDark ? 'bg-slate-950 text-white border-slate-800' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
                             />
 
-                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">Повторіть новий PIN</Text>
+                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">
+                                {t('screens.app.confirm_pin_label') as string}
+                            </Text>
                             <TextInput
                                 value={confirmPin} onChangeText={setConfirmPin}
                                 keyboardType="numeric" secureTextEntry maxLength={4}
@@ -110,6 +119,7 @@ const AppContentWrapper = () => {
                                     ${isDark ? 'bg-slate-950 text-white border-slate-800' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
                             />
 
+                            {/* Помилка з useAppLogic (якщо є). Бажано також локалізувати самі помилки всередині хука */}
                             {pinError && (
                                 <View className="bg-red-500/10 border border-red-500/50 p-3 rounded-xl mb-6 flex-row items-center justify-center">
                                     <Feather name="alert-circle" size={16} color="#ef4444" style={{ marginRight: 8 }} />
@@ -125,7 +135,9 @@ const AppContentWrapper = () => {
                                 {isPinLoading ? (
                                     <ActivityIndicator color="#0f172a" />
                                 ) : (
-                                    <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">Зберегти новий PIN</Text>
+                                    <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">
+                                        {t('screens.app.btn_save_pin') as string}
+                                    </Text>
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -136,13 +148,14 @@ const AppContentWrapper = () => {
     );
 };
 
-// ГОЛОВНИЙ ЕКСПОРТ (Тут ми додаємо ThemeProvider)
 export default function App() {
     return (
-        <ThemeProvider>
-            <UserProvider>
-                <AppContentWrapper />
-            </UserProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+            <ThemeProvider>
+                <UserProvider>
+                    <AppContentWrapper />
+                </UserProvider>
+            </ThemeProvider>
+        </LanguageProvider>
     );
 }

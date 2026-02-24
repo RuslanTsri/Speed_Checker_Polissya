@@ -6,7 +6,7 @@ import TeamSelector from './TempoMetrics/TeamSelector';
 import PlayerSelector from './TempoMetrics/PlayerSelector';
 import SpeedTestRun from './TempoMetrics/SpeedTestRun';
 import { useSpeedCheckerRouter } from '../../hooks/tools/useSpeedCheckerRouter';
-import { useTheme } from '../../context/ThemeContext'; // 🔥 Тема
+import { useTheme } from '../../context/ThemeContext';
 
 // Динамічний контейнер
 const ScreenContainer = ({ children, isDark }: { children: React.ReactNode, isDark: boolean }) => (
@@ -14,7 +14,7 @@ const ScreenContainer = ({ children, isDark }: { children: React.ReactNode, isDa
 );
 
 export default function SpeedCheckerTool({ onBack }: { onBack: () => void }) {
-    const { isDark } = useTheme(); // 🔥 Стейт
+    const { isDark } = useTheme();
     const {
         currentScreen, testConfig, handleModeSelect, handleTeamSelect,
         handlePlayersSelect, handleStartTest, handleBackFromConfig,

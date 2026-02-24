@@ -1,12 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ScrollView, Animated, Easing } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSessionsData } from '../../hooks/sessions/useSessionsData';
-import { useTheme } from '../../context/ThemeContext'; // 🔥 Тема
+import { useTheme } from '../../context/ThemeContext';
 
-interface Props {
-    searchQuery: string;
-}
+interface Props { searchQuery: string; }
 
 const AutoMarqueeId = ({ id, isDark }: { id: string, isDark: boolean }) => {
     const scrollRef = useRef<ScrollView>(null);
@@ -17,41 +16,32 @@ const AutoMarqueeId = ({ id, isDark }: { id: string, isDark: boolean }) => {
         const interval = setInterval(() => {
             if (scrollRef.current) {
                 scrollX.current += 1;
-                if (scrollX.current > maxScroll) {
-                    scrollX.current = -50;
-                }
+                if (scrollX.current > maxScroll) scrollX.current = -50;
                 scrollRef.current.scrollTo({ x: scrollX.current, animated: false });
             }
         }, 50);
-
         return () => clearInterval(interval);
     }, []);
 
     return (
         <View className={`ml-3 flex-1 rounded-lg border overflow-hidden ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-            <ScrollView
-                ref={scrollRef} horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 6, paddingVertical: 2 }}
-            >
-                <Text className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    ID: <Text className={isDark ? 'text-slate-400' : 'text-slate-500'}>{id}</Text>
-                </Text>
+            <ScrollView ref={scrollRef} horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 6, paddingVertical: 2 }}>
+                <Text className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>ID: <Text className={isDark ? 'text-slate-400' : 'text-slate-500'}>{id}</Text></Text>
             </ScrollView>
         </View>
     );
 };
 
 export default function SessionsGeneral({ searchQuery }: Props) {
-    const { isDark } = useTheme(); // 🔥 Стейт
+    const { t } = useTranslation();
+    const { isDark } = useTheme();
     const { generalSessions, stats } = useSessionsData(searchQuery);
     const { best, worst } = stats;
 
     return (
         <FlatList
-            data={generalSessions}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
-            showsVerticalScrollIndicator={false}
+            data={generalSessions} keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}
             ListHeaderComponent={() => (
                 <View className="mb-6">
                     <View className="flex-row justify-between mb-6">
@@ -59,10 +49,10 @@ export default function SessionsGeneral({ searchQuery }: Props) {
                         <View className={`w-[48%] border p-4 rounded-2xl relative overflow-hidden shadow-sm ${isDark ? 'bg-green-900/20 border-green-500/30' : 'bg-green-50 border-green-300'}`}>
                             <View className="flex-row items-center mb-1">
                                 <Feather name="trending-up" size={16} color={isDark ? "#4ade80" : "#16a34a"} />
-                                <Text className={`text-xs font-bold uppercase ml-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>Найкращий</Text>
+                                <Text className={`text-xs font-bold uppercase ml-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>{t('tools.sessions.best') as string}</Text>
                             </View>
                             <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{best?.totalTime.toFixed(2) || '--'}s</Text>
-                            <Text className={`text-sm mt-1 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`} numberOfLines={1}>{best?.playerName || 'N/A'}</Text>
+                            <Text className={`text-sm mt-1 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`} numberOfLines={1}>{best?.playerName || (t('tools.sessions.not_available') as string)}</Text>
                             <Text className={`text-[10px] font-bold mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} numberOfLines={1}>{best?.teamName}</Text>
                             <View className="absolute -right-2 -bottom-2 opacity-20"><MaterialCommunityIcons name="lightning-bolt" size={60} color={isDark ? "#4ade80" : "#16a34a"} /></View>
                         </View>
@@ -71,14 +61,14 @@ export default function SessionsGeneral({ searchQuery }: Props) {
                         <View className={`w-[48%] border p-4 rounded-2xl relative overflow-hidden shadow-sm ${isDark ? 'bg-red-900/20 border-red-500/30' : 'bg-red-50 border-red-300'}`}>
                             <View className="flex-row items-center mb-1">
                                 <Feather name="trending-down" size={16} color={isDark ? "#f87171" : "#dc2626"} />
-                                <Text className={`text-xs font-bold uppercase ml-1 ${isDark ? 'text-red-400' : 'text-red-600'}`}>Найгірший</Text>
+                                <Text className={`text-xs font-bold uppercase ml-1 ${isDark ? 'text-red-400' : 'text-red-600'}`}>{t('tools.sessions.worst') as string}</Text>
                             </View>
                             <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{worst?.totalTime.toFixed(2) || '--'}s</Text>
-                            <Text className={`text-sm mt-1 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`} numberOfLines={1}>{worst?.playerName || 'N/A'}</Text>
+                            <Text className={`text-sm mt-1 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`} numberOfLines={1}>{worst?.playerName || (t('tools.sessions.not_available') as string)}</Text>
                             <Text className={`text-[10px] font-bold mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} numberOfLines={1}>{worst?.teamName}</Text>
                         </View>
                     </View>
-                    <Text className={`font-bold px-2 uppercase text-xs tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Останні забіги</Text>
+                    <Text className={`font-bold px-2 uppercase text-xs tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{t('tools.sessions.latest_runs') as string}</Text>
                 </View>
             )}
             renderItem={({ item }) => (
@@ -101,7 +91,7 @@ export default function SessionsGeneral({ searchQuery }: Props) {
                         </Text>
                         <View className="flex-row items-center mt-1">
                             <MaterialCommunityIcons name="timer-sand" size={12} color={isDark ? "#94a3b8" : "#cbd5e1"} />
-                            <Text className={`text-[11px] ml-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>спліт: {item.avgSplit.toFixed(2)}s</Text>
+                            <Text className={`text-[11px] ml-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('tools.sessions.split', { time: item.avgSplit.toFixed(2) }) as string}</Text>
                         </View>
                     </View>
                 </TouchableOpacity>

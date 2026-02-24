@@ -1,16 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { teamService } from '../../services/teamService';
-import { syncManager } from '../../services/SyncManager'; // 🔥 Додали імпорт
+import { syncManager } from '../../services/SyncManager';
 
-export interface UITeamItem {
-    id: string;
-    name: string;
-    players: number;
-    lastSession: string;
-}
+export interface UITeamItem { id: string; name: string; players: number; lastSession: string; }
 
 export const useTeamSelection = () => {
+    const { t } = useTranslation();
     const [teams, setTeams] = useState<UITeamItem[]>([]);
     const [search, setSearch] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -18,48 +15,24 @@ export const useTeamSelection = () => {
 
     const loadTeams = async () => {
         setIsLoading(true);
-        // Сервіс сам дістає з кешу або бази
         const { data, error } = await teamService.getMyTeams();
-
-        if (error) {
-            Alert.alert("Помилка", "Не вдалося завантажити команди");
-        } else {
-            const formattedTeams: UITeamItem[] = (data || []).map((t: any) => ({
-                id: t.id,
-                name: t.name,
-                players: t.players ? t.players.length : 0,
-                lastSession: 'Немає даних'
+        if (error) { Alert.alert(t('tools.speed_checker.alert_error') as string, t('tools.speed_checker.error_load_teams') as string); }
+        else {
+            const formattedTeams: UITeamItem[] = (data || []).map((team: any) => ({
+                id: team.id, name: team.name, players: team.players ? team.players.length : 0, lastSession: t('tools.speed_checker.no_data') as string // 🔥
             }));
             setTeams(formattedTeams);
         }
         setIsLoading(false);
     };
 
+    useEffect(() => { loadTeams(); }, []);
     useEffect(() => {
-        loadTeams();
-    }, []);
-
-    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
-    useEffect(() => {
-        const unsubscribe = syncManager.subscribe(() => {
-            if (!syncManager.getIsSyncing()) {
-                console.log("♻️ [useTeamSelection] Синхронізація завершена, оновлюємо команди...");
-                loadTeams();
-            }
-        });
+        const unsubscribe = syncManager.subscribe(() => { if (!syncManager.getIsSyncing()) loadTeams(); });
         return unsubscribe;
     }, []);
 
-    const filteredTeams = useMemo(() => {
-        return teams.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
-    }, [teams, search]);
+    const filteredTeams = useMemo(() => teams.filter(team => team.name.toLowerCase().includes(search.toLowerCase())), [teams, search]);
 
-    return {
-        teams: filteredTeams,
-        search,
-        setSearch,
-        selectedId,
-        setSelectedId,
-        isLoading
-    };
+    return { teams: filteredTeams, search, setSearch, selectedId, setSelectedId, isLoading };
 };

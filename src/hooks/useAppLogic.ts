@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, Keyboard } from 'react-native';
-import NetInfo from '@react-native-community/netinfo'; // 🔥 Додали імпорт
+import NetInfo from '@react-native-community/netinfo';
 import { useUser } from '../context/UserContext';
 import { authService } from '../services/authService';
 import { supabase } from '../lib/supabase';

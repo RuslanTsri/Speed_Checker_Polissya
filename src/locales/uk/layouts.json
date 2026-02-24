@@ -1,0 +1,17 @@
+{
+  "footer": {
+    "tab_home": "Головна",
+    "tab_players": "Команди",
+    "tab_sessions": "Результати",
+    "tab_settings": "Налашт."
+  },
+  "header": {
+    "preview_version": "Preview Version",
+    "status_online": "Онлайн",
+    "status_offline": "Офлайн",
+    "status_beta_warning": "Beta: можливі помилки",
+    "default_user": "Користувач",
+    "menu_change_pin": "Зміна PIN",
+    "menu_logout": "Вихід"
+  }
+}

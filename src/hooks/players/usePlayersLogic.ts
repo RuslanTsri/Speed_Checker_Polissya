@@ -3,7 +3,8 @@ import { Alert } from 'react-native';
 import { teamService, Team } from '../../services/teamService';
 import { playerService, Player } from '../../services/playerService';
 import { useCSV, CSVPlayer } from '../useCSV';
-import { syncManager } from '../../services/SyncManager'; // 🔥 Додаємо імпорт менеджера
+import { syncManager } from '../../services/SyncManager';
+import { useTranslation } from 'react-i18next';
 
 export interface UITeam extends Team {
     lastSessionDate: string;
@@ -12,6 +13,7 @@ export interface UITeam extends Team {
 }
 
 export const usePlayersLogic = () => {
+    const { t } = useTranslation();
     // --- ДАНІ ---
     const [teams, setTeams] = useState<UITeam[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
@@ -55,15 +57,19 @@ export const usePlayersLogic = () => {
     const fetchTeams = useCallback(async () => {
         setIsLoading(true);
         const { data, error } = await teamService.getMyTeams();
-        if (error) Alert.alert("Помилка", "Не вдалося завантажити команди");
+        if (error) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_load_teams') as string);
         else {
-            setTeams((data || []).map((t: any) => ({
-                id: t.id, name: t.name, coach_id: t.coach_id,
-                playerCount: t.players ? t.players.length : 0, isMyTeam: true, lastSessionDate: 'Немає даних'
+            setTeams((data || []).map((teamData: any) => ({
+                id: teamData.id,
+                name: teamData.name,
+                coach_id: teamData.coach_id,
+                playerCount: teamData.players ? teamData.players.length : 0,
+                isMyTeam: true,
+                lastSessionDate: t('screens.players.no_data') as string
             })));
         }
         setIsLoading(false);
-    }, []);
+    }, [t]);
 
     const fetchPlayers = useCallback(async (teamId: string) => {
         setIsLoading(true);
@@ -75,19 +81,16 @@ export const usePlayersLogic = () => {
     useEffect(() => { fetchTeams(); }, [fetchTeams]);
     useEffect(() => { if (selectedTeam?.id) fetchPlayers(selectedTeam.id); else setPlayers([]); }, [selectedTeam, fetchPlayers]);
 
-    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
     useEffect(() => {
         const unsubscribe = syncManager.subscribe(() => {
-            // Якщо синхронізація щойно завершилася - оновлюємо списки
             if (!syncManager.getIsSyncing()) {
-                console.log("♻️ [usePlayersLogic] Синхронізація завершена, оновлюємо UI...");
                 fetchTeams();
                 if (selectedTeam?.id) {
                     fetchPlayers(selectedTeam.id);
                 }
             }
         });
-        return unsubscribe; // Відписуємось при розмонтуванні компонента
+        return unsubscribe;
     }, [fetchTeams, fetchPlayers, selectedTeam?.id]);
 
     // ===========================
@@ -98,7 +101,7 @@ export const usePlayersLogic = () => {
         setIsLoading(true);
         const { error } = await teamService.create({ name: newTeamName.trim() });
         setIsLoading(false);
-        if (error) Alert.alert("Помилка", error.message);
+        if (error) Alert.alert(t('screens.players.error_title') as string, error.message);
         else { setNewTeamName(''); setAddTeamModalVisible(false); fetchTeams(); }
     };
 
@@ -109,7 +112,7 @@ export const usePlayersLogic = () => {
         setIsLoading(true);
         const { error } = await teamService.delete(selectedTeam.id);
         setIsLoading(false);
-        if (error) Alert.alert("Помилка", "Не вдалося видалити команду");
+        if (error) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_delete_team') as string);
         else { setDeleteTeamModalVisible(false); setSelectedTeam(null); fetchTeams(); }
     };
 
@@ -125,7 +128,7 @@ export const usePlayersLogic = () => {
         setIsLoading(true);
         const { error } = await teamService.update(selectedTeam.id, { name: editingTeamName.trim() });
         setIsLoading(false);
-        if (error) Alert.alert("Помилка", "Не вдалося оновити назву");
+        if (error) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_update_team') as string);
         else {
             setSelectedTeam({ ...selectedTeam, name: editingTeamName.trim() });
             fetchTeams();
@@ -141,7 +144,7 @@ export const usePlayersLogic = () => {
         setIsLoading(true);
         const { error } = await playerService.create({ name: newPlayerName.trim(), team_id: selectedTeam.id });
         setIsLoading(false);
-        if (error) Alert.alert("Помилка", error.message);
+        if (error) Alert.alert(t('screens.players.error_title') as string, error.message);
         else {
             setNewPlayerName('');
             setAddManualVisible(false);
@@ -164,7 +167,7 @@ export const usePlayersLogic = () => {
         setIsLoading(false);
 
         if (error) {
-            Alert.alert("Помилка", "Не вдалося оновити гравця");
+            Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_update_player') as string);
         } else {
             fetchPlayers(selectedTeam.id);
             setEditPlayerModalVisible(false);
@@ -186,7 +189,7 @@ export const usePlayersLogic = () => {
         setIsLoading(false);
 
         if (error) {
-            Alert.alert("Помилка", "Не вдалося видалити гравця");
+            Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_delete_player') as string);
         } else {
             fetchPlayers(selectedTeam.id);
             fetchTeams();
@@ -213,7 +216,6 @@ export const usePlayersLogic = () => {
         if (!selectedTeam?.id || importedPlayers.length === 0) return;
         setIsLoading(true); setImportStatus('idle'); let successCount = 0;
 
-        // Оскільки create тепер генерує ID локально, це пролетить миттєво!
         for (const p of importedPlayers) {
             const response = await playerService.create({ name: p.name, team_id: selectedTeam.id });
             if (!response.error) successCount++;
@@ -221,10 +223,10 @@ export const usePlayersLogic = () => {
 
         setIsLoading(false);
         if (successCount > 0) {
-            setImportStatus('success'); setImportMessage(`Додано: ${successCount}`);
+            setImportStatus('success'); setImportMessage(t('screens.players.import_success_count', { count: successCount }) as string);
             fetchPlayers(selectedTeam.id); fetchTeams();
             setTimeout(() => handleSetImportVisible(false), 1500);
-        } else { setImportStatus('error'); setImportMessage("Помилка додавання"); }
+        } else { setImportStatus('error'); setImportMessage(t('screens.players.error_import_add') as string); }
     };
 
     const handleMockImport = () => { handleSetImportVisible(true); };

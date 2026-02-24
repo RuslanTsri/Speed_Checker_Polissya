@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../context/ThemeContext'; // 🔥 Імпорт теми
+import { useTheme } from '../../context/ThemeContext';
 
 interface BottomModalProps {
     visible: boolean;
@@ -13,7 +13,7 @@ interface BottomModalProps {
 
 export const BottomModal = ({ visible, onClose, title, children }: BottomModalProps) => {
     const insets = useSafeAreaInsets();
-    const { isDark } = useTheme(); // 🔥 Беремо тему
+    const { isDark } = useTheme();
 
     return (
         <Modal

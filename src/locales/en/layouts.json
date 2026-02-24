@@ -1,0 +1,17 @@
+{
+  "footer": {
+    "tab_home": "Home",
+    "tab_players": "Teams",
+    "tab_sessions": "Results",
+    "tab_settings": "Settings"
+  },
+  "header": {
+    "preview_version": "Preview Version",
+    "status_online": "Online",
+    "status_offline": "Offline",
+    "status_beta_warning": "Beta: expect bugs",
+    "default_user": "User",
+    "menu_change_pin": "Change PIN",
+    "menu_logout": "Logout"
+  }
+}

@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useStopwatch } from '../../hooks/tools/useStopwatch';
-import { useTheme } from '../../context/ThemeContext'; // 🔥 Тема
+import { useTheme } from '../../context/ThemeContext';
 
 export default function TimerTool({ onBack }: { onBack: () => void }) {
-    const { isDark } = useTheme(); // 🔥 Стейт
+    const { t } = useTranslation();
+    const { isDark } = useTheme();
     const { timeObj, isActive, toggle, reset } = useStopwatch();
 
     return (
@@ -23,7 +25,9 @@ export default function TimerTool({ onBack }: { onBack: () => void }) {
                     <View className={`absolute w-64 h-64 rounded-full ${isDark ? 'bg-slate-800/50' : 'bg-slate-100/50'}`} />
                     <View className={`absolute w-48 h-48 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`} />
                     <View className="items-center z-10">
-                        <Text className={`text-xs font-bold tracking-[0.3em] uppercase mb-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Секундомір</Text>
+                        <Text className={`text-xs font-bold tracking-[0.3em] uppercase mb-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {t('tools.timer.title') as string}
+                        </Text>
                         <View className="flex-row items-baseline">
                             <Text className={`text-7xl font-black font-mono tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>{timeObj.main}</Text>
                             <Text className={`text-4xl font-black font-mono mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}>{timeObj.decimal}</Text>
@@ -39,7 +43,9 @@ export default function TimerTool({ onBack }: { onBack: () => void }) {
 
                     <TouchableOpacity onPress={toggle} className={`h-20 flex-1 mx-6 rounded-2xl items-center justify-center shadow-lg flex-row ${isActive ? 'bg-red-500 shadow-red-500/20' : (isDark ? 'bg-green-500 shadow-green-500/20' : 'bg-green-500 shadow-green-400/30')}`}>
                         <Feather name={isActive ? "pause" : "play"} size={24} color={isActive ? "white" : "#0f172a"} style={{marginRight: 8}} />
-                        <Text className={`font-black text-xl uppercase tracking-widest ${isActive ? 'text-white' : 'text-slate-900'}`}>{isActive ? 'Стоп' : 'Старт'}</Text>
+                        <Text className={`font-black text-xl uppercase tracking-widest ${isActive ? 'text-white' : 'text-slate-900'}`}>
+                            {isActive ? (t('tools.timer.stop') as string) : (t('tools.timer.start') as string)}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>

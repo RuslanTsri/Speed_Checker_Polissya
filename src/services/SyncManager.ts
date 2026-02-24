@@ -66,7 +66,6 @@ class SyncManager {
     }
 
     async processQueue() {
-        // 🔥 КРОК 1: Миттєва перевірка без асинхронних пауз
         if (this.isSyncing || this.queue.length === 0) return;
 
         this.isSyncing = true; // Закриваємо замок відразу
@@ -83,7 +82,6 @@ class SyncManager {
 
             console.log(`🔄 [SyncManager] Syncing started... (${this.queue.length} jobs)`);
 
-            // 🔥 КРОК 2: Обробляємо чергу по одному елементу, поки вона не стане порожньою
             // Це набагато надійніше за копіювання масиву
             while (this.queue.length > 0) {
                 // Беремо найперше завдання (FIFO)

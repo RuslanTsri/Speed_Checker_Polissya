@@ -1,19 +1,20 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Alert, Platform } from 'react-native';
 import { Buffer } from 'buffer';
+import { useTranslation } from 'react-i18next';
 import { SensorInfo, TrainingState, CommandType } from '../types/telemetry';
 import { BLE_CONFIG } from '../constants/bleConfig';
 
 const TAG = '[BLE-DEBUG]';
 
 export const useTrainingBle = () => {
+    const { t } = useTranslation();
     const [connected, setConnected] = useState(false);
     const [device, setDevice] = useState<any>(null);
     const [state, setState] = useState<TrainingState>('idle');
     const [elapsedTime, setElapsedTime] = useState(0);
     const [scannedDevices, setScannedDevices] = useState<any[]>([]);
 
-    // Master завжди Gate 0
     const [sensors, setSensors] = useState<SensorInfo[]>([
         { id: 0, status: 'active', physicalId: 'MASTER' }
     ]);
@@ -22,7 +23,6 @@ export const useTrainingBle = () => {
     const subscriptionRef = useRef<any>(null);
     const isConnecting = useRef(false);
 
-    // --- ФУНКЦІЯ ВІДПРАВКИ КОМАНД ---
     const sendCommand = async (command: CommandType) => {
         if (!device || !connected || Platform.OS === 'web') return;
         try {
@@ -43,11 +43,7 @@ export const useTrainingBle = () => {
                 if (prev.find(s => s.physicalId === physId)) return prev;
                 if (prev.length >= 6) return prev;
 
-                const newGate: SensorInfo = {
-                    id: prev.length,
-                    physicalId: physId,
-                    status: 'active'
-                };
+                const newGate: SensorInfo = { id: prev.length, physicalId: physId, status: 'active' };
                 return [...prev, newGate];
             });
             return;
@@ -93,7 +89,7 @@ export const useTrainingBle = () => {
 
     const finishInitialization = () => {
         if (sensors.length < 2) {
-            Alert.alert("Помилка", "Додайте хоча б один додатковий датчик (крім Мастера)");
+            Alert.alert(t('tools.bluetooth.error_title') as string, t('tools.bluetooth.error_min_sensors') as string); // 🔥
             return;
         }
         sendCommand({ type: 23, sensors: sensors.length - 1 });
@@ -101,8 +97,7 @@ export const useTrainingBle = () => {
     };
 
     return {
-        connected, state, sensors, elapsedTime, scannedDevices,
-        canFinish: sensors.length >= 2,
+        connected, state, sensors, elapsedTime, scannedDevices, canFinish: sensors.length >= 2,
         startDiscovery: () => {
             if (Platform.OS === 'web') {
                 setScannedDevices([{ id: 'W1', name: 'STM32BLE-ALPHA' }]);
@@ -126,11 +121,7 @@ export const useTrainingBle = () => {
         finishInitialization,
         startTraining: () => sendCommand({ type: 20 }),
         stopTraining: () => sendCommand({ type: 21 }),
-        resetSession: () => {
-            sendCommand({ type: 24 });
-            setElapsedTime(0);
-            setState('ready');
-        },
+        resetSession: () => { sendCommand({ type: 24 }); setElapsedTime(0); setState('ready'); },
         simulateWebTrigger: () => handleMasterResponse({ type: 30, sensor: Math.random() })
     };
 };

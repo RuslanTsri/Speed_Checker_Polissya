@@ -60,7 +60,6 @@ export class BaseService<T extends { id?: string }> {
     async update(id: string, updates: Partial<T>): Promise<ServiceResponse<T>> {
         let validData = updates;
 
-        // 🔥 Очищаємо дані перед апдейтом теж (.partial робить всі поля необов'язковими для апдейту)
         if (this.schema) {
             const result = this.schema.partial().safeParse(updates);
             if (!result.success) return { data: null, error: new Error(result.error.issues[0].message) };

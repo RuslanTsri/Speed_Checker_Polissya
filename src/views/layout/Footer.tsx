@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../context/ThemeContext'; // 🔥 Імпортуємо наш контекст
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../context/ThemeContext';
 
 export type TabType = 'HOME' | 'PLAYERS' | 'SESSIONS' | 'SETTINGS';
 
@@ -11,14 +12,14 @@ interface FooterProps {
 }
 
 export const Footer = ({ activeTab, onSwitch }: FooterProps) => {
-    // 🔥 Беремо стан теми
+    const { t } = useTranslation();
     const { isDark } = useTheme();
 
     const tabs: { id: TabType; label: string; iconName: keyof typeof Ionicons.glyphMap }[] = [
-        { id: 'HOME', label: 'Головна', iconName: 'home' },
-        { id: 'PLAYERS', label: 'Команди', iconName: 'people' },
-        { id: 'SESSIONS', label: 'Результати', iconName: 'stats-chart' },
-        { id: 'SETTINGS', label: 'Налашт.', iconName: 'settings' },
+        { id: 'HOME', label: t('layouts.footer.tab_home') as string, iconName: 'home' },
+        { id: 'PLAYERS', label: t('layouts.footer.tab_players') as string, iconName: 'people' },
+        { id: 'SESSIONS', label: t('layouts.footer.tab_sessions') as string, iconName: 'stats-chart' },
+        { id: 'SETTINGS', label: t('layouts.footer.tab_settings') as string, iconName: 'settings' },
     ];
 
     return (
@@ -28,10 +29,9 @@ export const Footer = ({ activeTab, onSwitch }: FooterProps) => {
             {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
 
-                // Колір іконки залежить від теми та активності
                 const iconColor = isActive
-                    ? (isDark ? '#facc15' : '#eab308') // Жовтий (світліший для dark)
-                    : (isDark ? '#64748b' : '#94a3b8'); // Сірий
+                    ? (isDark ? '#facc15' : '#eab308')
+                    : (isDark ? '#64748b' : '#94a3b8');
 
                 return (
                     <TouchableOpacity

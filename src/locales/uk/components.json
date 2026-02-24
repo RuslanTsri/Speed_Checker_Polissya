@@ -1,0 +1,14 @@
+{
+  "sensor_card": {
+    "status_waiting": "ОЧІКУВАННЯ",
+    "status_active": "АКТИВНИЙ",
+    "status_lost": "ВТРАЧЕНО",
+    "master_node": "Master Node",
+    "sensor_id": "Сенсор {{id}}",
+    "signal": "Сигнал:"
+  },
+  "edit_screen": {
+    "title": "Відкрийте код цього екрана:",
+    "desc": "Змініть будь-який текст, збережіть файл, і додаток автоматично оновиться."
+  }
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { teamService } from '../../services/teamService';
-import { syncManager } from '../../services/SyncManager'; // 🔥 Додали імпорт
+import { syncManager } from '../../services/SyncManager';
 
 export interface TeamCardData {
     id: string;

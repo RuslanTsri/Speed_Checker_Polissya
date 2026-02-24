@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../context/ThemeContext'; // 🔥 Імпорт теми
+import { useTheme } from '../../context/ThemeContext';
 
 type ModalType = 'bottom' | 'center' | 'fullscreen';
 
@@ -16,7 +16,7 @@ interface AppModalProps {
 
 export const AppModal = ({ visible, onClose, title, children, type = 'bottom' }: AppModalProps) => {
     const insets = useSafeAreaInsets();
-    const { isDark } = useTheme(); // 🔥 Беремо тему
+    const { isDark } = useTheme();
 
     // 1. Стилі для зовнішнього фону (затемнення)
     const getBackdropClass = () => {

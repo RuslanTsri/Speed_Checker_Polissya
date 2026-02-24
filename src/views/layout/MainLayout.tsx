@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from './Header';
 import { Footer, TabType } from './Footer';
-import { useTheme } from '../../context/ThemeContext'; // 🔥 Імпортуємо наш хук
+import { useTheme } from '../../context/ThemeContext';
 
 interface MainLayoutProps {
     children: React.ReactNode;
@@ -20,7 +20,6 @@ export const MainLayout = ({
                                onLogout,
                                onOpenPinChange
                            }: MainLayoutProps) => {
-    // 🔥 Беремо стан теми
     const { isDark } = useTheme();
 
     return (

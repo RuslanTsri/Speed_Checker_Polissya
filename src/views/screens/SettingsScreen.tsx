@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Image, ActivityIndicator } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { BottomModal } from '../components/BottomModal';
 import { useSettingsScreen } from '../../hooks/useSettingsScreen';
 
@@ -21,10 +22,11 @@ interface SettingsScreenProps {
 }
 
 export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBluetooth }: SettingsScreenProps) {
+    const { t, i18n } = useTranslation();
     const {
         isLoading, userProfile, isNotifEnabled, isDark, setIsDarkMode, toggleNotif,
-        isEditModalVisible, setEditModalVisible, tempName, setTempName, tempAvatar, setTempAvatar,
-        openEditModal, handleSaveProfile, handleConnectionPress, handleFAQ, handleExport
+        isEditModalVisible, setEditModalVisible, tempName, setTempName, tempAvatar, setTempAvatar,currentLang,
+        openEditModal, handleSaveProfile, handleConnectionPress, handleFAQ, handleExport, toggleLanguage
     } = useSettingsScreen({ onOpenPinChange, onOpenBluetooth });
 
     if (isLoading) {
@@ -38,7 +40,9 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
     return (
         <View className={`flex-1 pt-4 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
             <View className="px-4 mb-6">
-                <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Налаштування</Text>
+                <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    {t('screens.settings.title')}
+                </Text>
             </View>
 
             <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
@@ -62,12 +66,14 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 </TouchableOpacity>
 
                 {/* 2. ОБЛАДНАННЯ */}
-                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">Обладнання</Text>
+                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">
+                    {t('screens.settings.section_equipment')}
+                </Text>
                 <View className={`rounded-3xl px-5 py-2 border mb-8 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <SettingItem
                         icon={<Feather name="bluetooth" size={20} color="#facc15" />}
-                        title="З'єднання (BLE)"
-                        value="Сканувати"
+                        title={t('screens.settings.item_ble')}
+                        value={t('screens.settings.item_ble_val')}
                         valueColor={isDark ? "text-yellow-400" : "text-yellow-600"}
                         onPress={handleConnectionPress}
                         isDark={isDark}
@@ -75,47 +81,60 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 </View>
 
                 {/* 3. СИСТЕМА */}
-                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">Система</Text>
+                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">
+                    {t('screens.settings.section_system')}
+                </Text>
                 <View className={`rounded-3xl px-5 py-2 border mb-8 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <SettingItem
                         icon={<Feather name="bell" size={20} color="#94a3b8" />}
-                        title="Сповіщення"
+                        title={t('screens.settings.item_notif')}
                         isSwitch switchValue={isNotifEnabled} onSwitchChange={toggleNotif} isDark={isDark}
                     />
                     <SettingItem
                         icon={<Feather name={isDark ? "moon" : "sun"} size={20} color="#94a3b8" />}
-                        title="Темна тема"
+                        title={t('screens.settings.item_theme')}
                         isSwitch switchValue={isDark} onSwitchChange={setIsDarkMode} isDark={isDark}
                     />
                     <SettingItem
+                        icon={<Ionicons name="language" size={20} color="#60a5fa" />}
+                        title={t('screens.settings.item_lang')}
+                        value={currentLang === 'uk' ? 'UA' : 'EN'}
+                        onPress={toggleLanguage}
+                        isDark={isDark}
+                    />
+                    <SettingItem
                         icon={<Feather name="help-circle" size={20} color="#60a5fa" />}
-                        title="FAQ та Допомога" onPress={handleFAQ} isDark={isDark}
+                        title={t('screens.settings.item_faq')} onPress={handleFAQ} isDark={isDark}
                     />
                 </View>
 
                 {/* 4. ІНШЕ */}
-                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">Інше</Text>
+                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">
+                    {t('screens.settings.section_other')}
+                </Text>
                 <View className={`rounded-3xl px-5 py-2 border mb-10 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <SettingItem
                         icon={<Feather name="file-text" size={20} color="#94a3b8" />}
-                        title="Експорт усіх даних (PDF)" onPress={handleExport} isDark={isDark}
+                        title={t('screens.settings.item_export')} onPress={handleExport} isDark={isDark}
                     />
                     <SettingItem
                         icon={<Feather name="log-out" size={20} color="#ef4444" />}
-                        title="Вийти з акаунту" destructive onPress={onLogout} isDark={isDark}
+                        title={t('screens.settings.item_logout')} destructive onPress={onLogout} isDark={isDark}
                     />
                 </View>
             </ScrollView>
 
             {/* МОДАЛКА РЕДАГУВАННЯ */}
-            <BottomModal visible={isEditModalVisible} onClose={() => setEditModalVisible(false)} title="Редагування">
+            <BottomModal visible={isEditModalVisible} onClose={() => setEditModalVisible(false)} title={t('screens.settings.edit_modal_title')}>
                 <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
                     <View className="items-center mb-6 px-4">
                         <View className={`w-24 h-24 rounded-full border-2 border-yellow-400 items-center justify-center overflow-hidden mb-6 shadow-xl ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
                             <Image source={{ uri: tempAvatar || userProfile.avatar }} className="w-full h-full" key={tempAvatar} />
                         </View>
 
-                        <Text className="text-slate-500 text-[10px] uppercase font-bold mb-4 tracking-widest text-center">Оберіть аватар</Text>
+                        <Text className="text-slate-500 text-[10px] uppercase font-bold mb-4 tracking-widest text-center">
+                            {t('screens.settings.edit_avatar')}
+                        </Text>
 
                         <View className="flex-row flex-wrap justify-center mb-6 w-full" style={{ minHeight: 120 }}>
                             {PRESET_AVATARS.map((avatarUrl, index) => (
@@ -132,7 +151,9 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
 
                         <View className="w-full space-y-4">
                             <View>
-                                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-2 ml-1">ПІБ Тренера</Text>
+                                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-2 ml-1">
+                                    {t('screens.settings.edit_name_label')}
+                                </Text>
                                 <TextInput
                                     value={tempName} onChangeText={setTempName}
                                     placeholderTextColor={isDark ? "#334155" : "#94a3b8"}
@@ -141,7 +162,9 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                             </View>
 
                             <View className="opacity-60 mb-2 mt-4">
-                                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-2 ml-1">Ваша Роль (ID)</Text>
+                                <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-2 ml-1">
+                                    {t('screens.settings.edit_role_label')}
+                                </Text>
                                 <View className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
                                     <Text className={`font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{userProfile.role}</Text>
                                 </View>
@@ -151,7 +174,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                                 onPress={handleSaveProfile} disabled={isLoading} activeOpacity={0.8}
                                 className={`bg-yellow-400 p-5 rounded-2xl items-center mt-4 shadow-lg shadow-yellow-400/20 ${isLoading ? 'opacity-50' : ''}`}
                             >
-                                {isLoading ? <ActivityIndicator color="#0f172a" /> : <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">Зберегти зміни</Text>}
+                                {isLoading ? <ActivityIndicator color="#0f172a" /> : <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">{t('screens.settings.edit_btn_save')}</Text>}
                             </TouchableOpacity>
                         </View>
                     </View>

@@ -1,84 +1,36 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { playerService, Player } from '../../services/playerService';
-import { syncManager } from '../../services/SyncManager'; // 🔥 Додали імпорт
+import { syncManager } from '../../services/SyncManager';
 
 export const usePlayerSelection = (teamId: string) => {
+    const { t } = useTranslation();
     const [allPlayers, setAllPlayers] = useState<Player[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [search, setSearch] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
     const [isAddModalVisible, setAddModalVisible] = useState(false);
 
     const loadPlayers = async () => {
         setIsLoading(true);
-        // Запит до сервісу (він сам розбереться з офлайн/онлайн)
         const { data, error } = await playerService.getByTeam(teamId);
-
-        if (error) {
-            Alert.alert("Помилка", "Не вдалося завантажити гравців");
-        } else {
-            setAllPlayers(data || []);
-        }
+        if (error) Alert.alert(t('tools.speed_checker.alert_error') as string, t('tools.speed_checker.error_load_players') as string); // 🔥
+        else setAllPlayers(data || []);
         setIsLoading(false);
     };
 
+    useEffect(() => { if (teamId) loadPlayers(); }, [teamId]);
     useEffect(() => {
-        if (teamId) {
-            loadPlayers();
-        }
-    }, [teamId]);
-
-    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
-    useEffect(() => {
-        const unsubscribe = syncManager.subscribe(() => {
-            if (!syncManager.getIsSyncing() && teamId) {
-                console.log("♻️ [usePlayerSelection] Синхронізація завершена, оновлюємо гравців...");
-                loadPlayers();
-            }
-        });
+        const unsubscribe = syncManager.subscribe(() => { if (!syncManager.getIsSyncing() && teamId) loadPlayers(); });
         return unsubscribe;
     }, [teamId]);
 
-    const filteredPlayers = useMemo(() => {
-        return allPlayers.filter(p =>
-            p.name.toLowerCase().includes(search.toLowerCase())
-        );
-    }, [allPlayers, search]);
+    const filteredPlayers = useMemo(() => allPlayers.filter(p => p.name.toLowerCase().includes(search.toLowerCase())), [allPlayers, search]);
 
-    const toggleSelection = (id: string) => {
-        setSelectedIds(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(item => item !== id);
-            } else {
-                return [...prev, id];
-            }
-        });
-    };
+    const toggleSelection = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+    const toggleAll = () => setSelectedIds(selectedIds.length === allPlayers.length ? [] : allPlayers.map(p => p.id || ''));
+    const handleImport = () => Alert.alert("Інфо", "Тут відкриється імпорт CSV");
 
-    const toggleAll = () => {
-        if (selectedIds.length === allPlayers.length) {
-            setSelectedIds([]);
-        } else {
-            setSelectedIds(allPlayers.map(p => p.id || ''));
-        }
-    };
-
-    const handleImport = () => {
-        Alert.alert("Інфо", "Тут відкриється імпорт CSV (використайте логіку з PlayersScreen)");
-    };
-
-    return {
-        players: filteredPlayers,
-        selectedIds,
-        search,
-        setSearch,
-        toggleSelection,
-        toggleAll,
-        isEmpty: allPlayers.length === 0 && !isLoading,
-        isLoading,
-        setAddModalVisible,
-        handleImport
-    };
+    return { players: filteredPlayers, selectedIds, search, setSearch, toggleSelection, toggleAll, isEmpty: allPlayers.length === 0 && !isLoading, isLoading, setAddModalVisible, handleImport };
 };

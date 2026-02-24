@@ -37,7 +37,6 @@ export const useCSV = () => {
                 return;
             }
 
-            // 🔥 ДОДАЛИ КОЛОНКУ Distance(m)
             let csvContent = "Team,Player,Date,Type,Distance(m),Time(s),Splits\n";
 
             results.forEach((res) => {
@@ -49,7 +48,6 @@ export const useCSV = () => {
                 // Витягуємо дистанцію (якщо раптом її немає, ставимо прочерк)
                 const distanceStr = res.distance ? res.distance.toString() : '-';
 
-                // 🔥 Додаємо distanceStr у рядок
                 csvContent += `${teamName},${res.playerName},${dateStr},${typeStr},${distanceStr},${timeStr},${splitsStr}\n`;
             });
 
@@ -93,13 +91,11 @@ export const useCSV = () => {
             const csvContent = `\uFEFF${header}\n${example1}\n${example2}\n${example3}`;
             const fileName = 'tempo_players_simple.csv';
 
-            // 🔥 WEB LOGIC
             if (Platform.OS === 'web') {
                 saveFileOnWeb(csvContent, fileName);
                 return;
             }
 
-            // 🔥 MOBILE LOGIC
             const fileUri = `${baseDir}${fileName}`;
             await FileSystem.writeAsStringAsync(fileUri, csvContent, {
                 encoding: FileSystem.EncodingType.UTF8
@@ -133,12 +129,10 @@ export const useCSV = () => {
             const fileUri = result.assets[0].uri;
             let content = '';
 
-            // 🔥 WEB LOGIC: Читаємо через fetch, бо FileSystem немає
             if (Platform.OS === 'web') {
                 const response = await fetch(fileUri);
                 content = await response.text();
             } else {
-                // 🔥 MOBILE LOGIC
                 content = await FileSystem.readAsStringAsync(fileUri, {
                     encoding: FileSystem.EncodingType.UTF8
                 });

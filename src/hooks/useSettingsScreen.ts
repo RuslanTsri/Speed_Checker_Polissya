@@ -3,7 +3,9 @@ import { Alert } from 'react-native';
 import { useUser } from '../context/UserContext';
 import { authService } from '../services/authService';
 import { storage } from '../lib/storage';
-import { useTheme } from '../context/ThemeContext'; // 🔥 Наш надійний хук
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import i18n from "i18next";
 
 interface UseSettingsProps {
     onOpenPinChange: () => void;
@@ -16,7 +18,7 @@ export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSetti
 
     // 🔥 Беремо тему та функцію перемикання з нашого контексту
     const { isDark, toggleTheme } = useTheme();
-
+    const { language, changeLanguage } = useLanguage();
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [tempName, setTempName] = useState('');
     const [tempAvatar, setTempAvatar] = useState('');
@@ -38,7 +40,10 @@ export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSetti
         setIsNotifEnabled(newValue);
         await storage.setItem('app_notifications', String(newValue));
     };
-
+    const toggleLanguage = () => {
+        const nextLang = language === 'uk' ? 'en' : 'uk';
+        changeLanguage(nextLang);
+    };
     const openEditModal = () => {
         setTempName(profile?.full_name || '');
         setTempAvatar(profile?.avatar_url || '');
@@ -78,14 +83,16 @@ export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSetti
         },
         isNotifEnabled,
         toggleNotif: handleToggleNotif,
-        isDark, // 🔥 Віддаємо поточну тему UI
-        setIsDarkMode: toggleTheme, // 🔥 Віддаємо функцію зміни теми
+        isDark,
+        setIsDarkMode: toggleTheme,
         isEditModalVisible,
         setEditModalVisible,
         tempName, setTempName,
         tempAvatar, setTempAvatar,
         openEditModal,
+        toggleLanguage,
         handleSaveProfile,
+        currentLang: language,
         handleConnectionPress: onOpenBluetooth,
         startPinChange: onOpenPinChange,
         handleFAQ: () => Alert.alert("FAQ", "Розділ у розробці"),

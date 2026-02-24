@@ -46,14 +46,18 @@ export default function SpeedCheckerModeSelector({ onBack, onSelect }: Props) {
 
             {/* Mode Switcher */}
             <View className={`p-1 rounded-2xl flex-row mb-8 border shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-200 border-slate-300'}`}>
-                <TouchableOpacity onPress={() => setMode('DEVICE')} className={`flex-1 py-3 rounded-xl flex-row justify-center items-center ${mode === 'DEVICE' ? (isDark ? 'bg-yellow-400' : 'bg-white shadow-sm') : ''}`}>
-                    <Feather name="wifi" size={16} color={mode === 'DEVICE' ? (isDark ? '#0f172a' : '#1e293b') : (isDark ? '#64748b' : '#94a3b8')} style={{ marginRight: 8 }} />
-                    <Text className={`font-bold ${mode === 'DEVICE' ? (isDark ? 'text-slate-900' : 'text-slate-900') : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>З пристроєм</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setMode('MANUAL')} className={`flex-1 py-3 rounded-xl flex-row justify-center items-center ${mode === 'MANUAL' ? (isDark ? 'bg-yellow-400' : 'bg-white shadow-sm') : ''}`}>
-                    <Feather name="clock" size={16} color={mode === 'MANUAL' ? (isDark ? '#0f172a' : '#1e293b') : (isDark ? '#64748b' : '#94a3b8')} style={{ marginRight: 8 }} />
-                    <Text className={`font-bold ${mode === 'MANUAL' ? (isDark ? 'text-slate-900' : 'text-slate-900') : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>Ручний</Text>
-                </TouchableOpacity>
+                {/* Тепер це просто View, а не TouchableOpacity */}
+                <View className={`flex-1 py-3 rounded-xl flex-row justify-center items-center ${mode === 'DEVICE' ? (isDark ? 'bg-yellow-400' : 'bg-white shadow-sm') : ''}`}>
+                    <Feather
+                        name="wifi"
+                        size={16}
+                        color={mode === 'DEVICE' ? (isDark ? '#0f172a' : '#1e293b') : (isDark ? '#64748b' : '#94a3b8')}
+                        style={{ marginRight: 8 }}
+                    />
+                    <Text className={`font-bold ${mode === 'DEVICE' ? (isDark ? 'text-slate-900' : 'text-slate-900') : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>
+                        Тестування з пристроєм
+                    </Text>
+                </View>
             </View>
 
             {/* Action Cards */}

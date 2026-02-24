@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // 🔥 Додали хуки
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Platform } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useTrainingBle } from '../../hooks/useTrainingBle';
+import { useBle } from '../../context/BleContext';
 import { SensorCard } from '../components/SensorCard';
 import { AppModal } from '../components/AppModal';
 import { useTheme } from '../../context/ThemeContext';
@@ -15,9 +15,25 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
         connected, state, sensors, elapsedTime, scannedDevices, canFinish,
         startDiscovery, stopScanning, connectToDevice, disconnect,
         finishInitialization, startTraining, stopTraining, resetSession, simulateWebTrigger
-    } = useTrainingBle();
+    } = useBle();
 
+    // 🔥 ТАЙМЕР ПІДКЛЮЧЕННЯ (15 секунд)
+    const [connectionTimer, setConnectionTimer] = useState(15);
     const isScanning = state === 'discovering';
+    const isConnecting = state === 'connecting'; // Переконайся, що в хуку setState('connecting')
+
+    // Логіка відліку для модалки
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isConnecting && connectionTimer > 0) {
+            interval = setInterval(() => {
+                setConnectionTimer(prev => prev - 1);
+            }, 1000);
+        } else if (!isConnecting) {
+            setConnectionTimer(15); // Скидаємо таймер, коли підключення завершено/перервано
+        }
+        return () => clearInterval(interval);
+    }, [isConnecting, connectionTimer]);
 
     const renderHeader = () => (
         <View className="px-4 pt-2">
@@ -39,7 +55,7 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                 <View className="mb-6 p-6 bg-blue-500/10 border border-blue-500/30 rounded-3xl items-center">
                     <MaterialCommunityIcons name="gesture-double-tap" size={40} color="#3b82f6" className="mb-2" />
                     <Text className="text-blue-400 font-black text-xl text-center uppercase">
-                        {t('tools.bluetooth.activate_sensor', { count: sensors.length }) as string}
+                        {t('tools.bluetooth.activate_sensor', { id: sensors.length }) as string}
                     </Text>
                     <Text className="text-slate-500 text-center mt-1 text-xs mb-4 px-6">
                         {t('tools.bluetooth.sensor_requirement', { count: sensors.length }) as string}
@@ -100,20 +116,65 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                 )}
             </View>
 
-            <AppModal visible={isScanning} onClose={stopScanning} title={t('tools.bluetooth.select_master') as string} type="bottom">
-                <View className="min-h-[300px]">
-                    <FlatList
-                        data={scannedDevices} keyExtractor={item => item.id}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity onPress={() => connectToDevice(item)} className={`p-5 mb-3 rounded-2xl border flex-row justify-between items-center ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200 shadow-sm'}`}>
-                                <View><Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.name}</Text><Text className="text-slate-500 text-xs">{item.id}</Text></View>
-                                <Feather name="plus-circle" size={24} color="#facc15" />
-                            </TouchableOpacity>
-                        )}
-                        ListEmptyComponent={() => (
-                            <View className="py-12 items-center"><ActivityIndicator color="#facc15" size="large" /><Text className="text-slate-500 mt-4">{t('tools.bluetooth.searching') as string}</Text></View>
-                        )}
-                    />
+            {/* 🔥 ОНОВЛЕНА МОДАЛКА: ПОШУК + ПІДКЛЮЧЕННЯ */}
+            <AppModal
+                visible={isScanning || isConnecting}
+                onClose={isConnecting ? () => {} : stopScanning} // Блокуємо закриття при підключенні
+                title={isConnecting ? t('tools.bluetooth.connecting_title') : t('tools.bluetooth.select_master')}
+                type="bottom"
+            >
+                <View className="min-h-[320px] pb-6">
+                    {isConnecting ? (
+                        /* --- СТАН ПІДКЛЮЧЕННЯ (ТАЙМЕР) --- */
+                        <View className="items-center justify-center py-10">
+                            <View className="relative items-center justify-center">
+                                {/* Великий лоадер */}
+                                <ActivityIndicator size={120} color="#facc15" style={{ transform: [{ scale: 2.5 }] }} />
+                                {/* Таймер по центру */}
+                                <View className="absolute">
+                                    <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                        {connectionTimer}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Text className={`text-xl font-bold mt-12 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                                {t('tools.bluetooth.establishing')}
+                            </Text>
+                            <Text className="text-slate-500 text-center mt-2 px-10">
+                                {t('tools.bluetooth.stay_close')}
+                            </Text>
+                        </View>
+                    ) : (
+                        /* --- СТАН ПОШУКУ (СПИСОК) --- */
+                        <View className="flex-1">
+                            <View className="flex-row items-center justify-center py-4 mb-2">
+                                <ActivityIndicator size="small" color="#facc15" className="mr-3" />
+                                <Text className="text-slate-500 font-medium">{t('tools.bluetooth.searching')}</Text>
+                            </View>
+                            <FlatList
+                                data={scannedDevices}
+                                keyExtractor={item => item.id}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        onPress={() => connectToDevice(item)}
+                                        className={`p-5 mb-3 rounded-2xl border flex-row justify-between items-center ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
+                                    >
+                                        <View>
+                                            <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.name}</Text>
+                                            <Text className="text-slate-500 text-xs">{item.id}</Text>
+                                        </View>
+                                        <Feather name="plus-circle" size={24} color="#facc15" />
+                                    </TouchableOpacity>
+                                )}
+                                ListEmptyComponent={() => (
+                                    <View className="py-16 items-center">
+                                        <MaterialCommunityIcons name="radar" size={50} color={isDark ? "#334155" : "#cbd5e1"} />
+                                        <Text className="text-slate-500 mt-4">{t('tools.bluetooth.no_devices')}</Text>
+                                    </View>
+                                )}
+                            />
+                        </View>
+                    )}
                 </View>
             </AppModal>
         </View>

@@ -1,21 +1,28 @@
+export type TrainingState = 'idle' | 'discovering' | 'connecting' | 'initializing_sensors' | 'ready' | 'armed' | 'active' | 'finished';
+
 export interface SensorInfo {
-    id: number; // Порядковий номер (0, 1, 2...)
-    status: 'active' | 'timeout' | 'unknown';
-    physicalId?: string | number; // Унікальний ID заліза
+    id: number;
+    physicalId?: string;
+    status: 'active' | 'unknown' | 'timeout';
+    rssi?: number;
+    snr?: number;
     triggerTime?: number;
+    splitTime?: number;
 }
 
-export type TrainingState =
-    | 'idle'
-    | 'discovering'
-    | 'connecting'
-    | 'initializing_sensors'
-    | 'ready'
-    | 'armed'
-    | 'active'
-    | 'finished';
+
+export interface TrainingSession {
+    startTime: number;
+    triggers: {
+        sensorId: number;
+        time: number;  // Час у мілісекундах від старту
+        split: number; // Час від попереднього датчика
+    }[];
+    totalTime?: number;
+}
 
 export interface CommandType {
     type: number;
-    sensors?: number; // Для команди 23 (SET_COUNT)
+    sensors?: number;
+    status?: string;
 }

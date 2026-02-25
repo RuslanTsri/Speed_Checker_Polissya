@@ -5,6 +5,8 @@ import { useBle } from '../../context/BleContext';
 import { sessionsService } from '../../services/sessionsService';
 import { resultsService } from '../../services/resultsService';
 
+const TAG = '[SESSION-DEBUG] 🟠';
+
 export interface LocalResult { player: any; fullTime: number; gates: number[]; }
 
 // Master (ID=0) is always the START gate.
@@ -45,6 +47,9 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
     // --- Створення сесії при маунті ---
     useEffect(() => {
+        // 🔥 1. Скидаємо блютуз при вході, щоб прибрати залишки старих забігів
+        resetSession();
+
         const createSession = async () => {
             const { data } = await sessionsService.create({
                 team_id: config.teamId || null,
@@ -55,45 +60,48 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
             if (data?.id) setSessionId(data.id);
         };
         createSession();
+
+        // 🔥 2. Скидаємо блютуз при виході зі сторінки (натискання "Назад")
+        return () => {
+            resetSession();
+        };
     }, []);
 
     // --- ОБРОБКА ФІНІШУ ---
-    // FIX: приймаємо sensors-знімок (snapshot) явно, щоб уникнути stale closure.
-    // FIX: startSensorId завжди = MASTER_SENSOR_ID (0), не шукаємо Math.min.
     const handleRunFinish = useCallback((finalTime: number, sensorSnapshot: typeof sensors) => {
         hasProcessedRun.current = true;
 
         const result: LocalResult = {
             player: currentPlayerObj,
             fullTime: Number((finalTime / 1000).toFixed(3)),
-            // Ворота — всі датчики КРІМ мастера (ID 0), у яких є час тригера
             gates: sensorSnapshot
                 .filter(s => s.id !== MASTER_SENSOR_ID && s.triggerTime !== undefined)
                 .sort((a, b) => a.id - b.id)
                 .map(s => Number((s.triggerTime! / 1000).toFixed(3))),
         };
 
+        console.log(`${TAG} 📊 Зберігаємо результат пробігу для модалки:`, result);
         setCurrentRunResult(result);
         setShowIndividualModal(true);
     }, [currentPlayerObj]);
 
     // --- ЕФЕКТ СТАНУ: відстежуємо перехід у 'finished' ---
-    // FIX: sensors та elapsedTime додані до залежностей → немає stale closure.
-    // FIX: час фінішу беремо з triggerTime останнього датчика (надійніше за elapsedTime).
     useEffect(() => {
+        if (isFinished) {
+            console.log(`${TAG} Ефект зловив isFinished=true. hasProcessedRun=${hasProcessedRun.current}`);
+        }
+
         if (isFinished && !hasProcessedRun.current) {
-            // Знімок активних датчиків у момент фінішу
+            console.log(`${TAG} 🏁 ОБРОБКА ФІНІШУ (Заморожуємо час)`);
             const sensorSnapshot = sensors
                 .filter(s => s.status === 'active')
                 .sort((a, b) => a.id - b.id);
 
-            // Шукаємо час останнього спрацьованого датчика (slave з максимальним ID)
             const slaveSensors = sensorSnapshot.filter(s => s.id !== MASTER_SENSOR_ID);
             const finishSensor = [...slaveSensors]
                 .reverse()
                 .find(s => s.triggerTime !== undefined);
 
-            // Фінішний час: з датчика (найточніше) або з elapsedTime як fallback
             const finalTime = finishSensor?.triggerTime ?? elapsedTime;
 
             setFrozenTime(finalTime);
@@ -102,6 +110,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
         // Скидаємо прапор при поверненні в активний чи очікування
         if (isReady || isRunning) {
+            if (hasProcessedRun.current) console.log(`${TAG} 🔄 Скидаємо запобіжник фінішу (Новий забіг)`);
             hasProcessedRun.current = false;
             setFrozenTime(null);
         }
@@ -109,6 +118,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
     // --- ДІЇ ПІСЛЯ ФІНІШУ ---
     const confirmIndividualRun = () => {
+        console.log(`${TAG} Юзер натиснув 'Зарахувати'`);
         if (currentRunResult) {
             setLocalResults(prev => [...prev, currentRunResult]);
             setShowIndividualModal(false);
@@ -122,6 +132,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     };
 
     const retryIndividualRun = () => {
+        console.log(`${TAG} Юзер натиснув 'Перебігти'`);
         setShowIndividualModal(false);
         setCurrentRunResult(null);
         resetSession();
@@ -150,7 +161,11 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
                 t('tools.speed_checker.success_save') as string,
                 [{
                     text: t('tools.speed_checker.alert_ok') as string,
-                    onPress: () => { setLocalResults([]); onFinish(); },
+                    onPress: () => {
+                        setLocalResults([]);
+                        resetSession(); // 🔥 3. Примусово скидаємо після збереження
+                        onFinish();
+                    },
                 }]
             );
         } catch (error) {
@@ -179,12 +194,10 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     };
 
     // --- РОЗРАХУНОК АКТИВНИХ ДАТЧИКІВ ДЛЯ ВІДОБРАЖЕННЯ ---
-    // Сортуємо: 0 (master/start) → 1, 2, ... → max (finish)
     let activeSensors = sensors
         .filter(s => s.status === 'active')
         .sort((a, b) => a.id - b.id);
 
-    // Якщо фінішували — обрізаємо до останнього спрацьованого
     if (isFinished) {
         const lastTriggered = [...activeSensors]
             .reverse()
@@ -196,7 +209,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
 
     const totalSensors = activeSensors.length;
 
-    // Індекс останнього спрацьованого датчика (для прогрес-бару)
     const lastTriggeredIndex = activeSensors.reduce((lastIdx, sensor, idx) => {
         const isStartAndRunning = idx === 0 && (isRunning || isFinished);
         const hasTriggered = sensor.triggerTime !== undefined && sensor.triggerTime > 0;
@@ -247,34 +259,15 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         };
     };
 
-    // Показуємо заморожений час на фініші, інакше — живий
     const displayTime = frozenTime !== null ? frozenTime : elapsedTime;
 
     return {
-        currentPlayerObj,
-        currentPlayerIndex,
-        totalPlayers: playersQueue.length,
+        currentPlayerObj, currentPlayerIndex, totalPlayers: playersQueue.length,
         teamName: config.teamName || (t('tools.speed_checker.free_training') as string),
-        isRunning,
-        isFinished,
-        isReady,
-        timeObj: formatTime(displayTime / 1000),
-        progressPercent,
-        activeSensors,
-        splitRows,
-        startTraining,
-        stopTraining,
-        resetSession,
-        nextPlayer,
-        formatTime,
-        currentRunResult,
-        localResults,
-        showIndividualModal,
-        confirmIndividualRun,
-        retryIndividualRun,
-        showSummaryModal,
-        saveAllResults,
-        restartWholeSession,
-        isSaving,
+        isRunning, isFinished, isReady, timeObj: formatTime(displayTime / 1000),
+        progressPercent, activeSensors, splitRows,
+        startTraining, stopTraining, resetSession, nextPlayer, formatTime,
+        currentRunResult, localResults, showIndividualModal, confirmIndividualRun,
+        retryIndividualRun, showSummaryModal, saveAllResults, restartWholeSession, isSaving,
     };
 };

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { SensorInfo, TrainingState, CommandType, TrainingSession } from '../types/telemetry';
 import { BLE_CONFIG } from '../constants/bleConfig';
 
-const TAG = '[BLE-DEBUG]';
+const TAG = '[BLE-DEBUG] 🔵';
 
 export const useTrainingBle = () => {
     const { t } = useTranslation();
@@ -35,7 +35,11 @@ export const useTrainingBle = () => {
     const stateRef = useRef<TrainingState>('idle');
     const sensorsRef = useRef<SensorInfo[]>([]);
 
-    useEffect(() => { stateRef.current = state; }, [state]);
+    useEffect(() => {
+        console.log(`${TAG} Зміна стейту хука: ${stateRef.current} -> ${state}`);
+        stateRef.current = state;
+    }, [state]);
+
     useEffect(() => { sensorsRef.current = sensors; }, [sensors]);
 
     // --- ІНІЦІАЛІЗАЦІЯ ТА ОЧИЩЕННЯ ---
@@ -61,9 +65,9 @@ export const useTrainingBle = () => {
             await currentDevice.writeCharacteristicWithResponseForService(
                 BLE_CONFIG.SERVICE_UUID, BLE_CONFIG.TX_CHARACTERISTIC_UUID, base64Data
             );
-            console.log(`${TAG} 📤 SENT: ${jsonStr}`);
+            console.log(`${TAG} 📤 ВІДПРАВЛЕНО НА ПЛАТУ: ${jsonStr}`);
         } catch (e: any) {
-            console.log(`${TAG} ❌ Send Error:`, e.message);
+            console.log(`${TAG} ❌ ПОМИЛКА ВІДПРАВКИ:`, e.message);
         }
     };
 
@@ -73,6 +77,8 @@ export const useTrainingBle = () => {
         const triggerTime = data.time || 0;
         const currentState = stateRef.current;
 
+        console.log(`${TAG} ⚡ ТРИГЕР ДАТЧИКА: ID=${triggeredId} | Час=${triggerTime} | Стейт=${currentState}`);
+
         // Оновлюємо візуал сенсора (час та сигнал)
         setSensors(prev => prev.map(s =>
             s.id === triggeredId ? { ...s, triggerTime, splitTime: data.split, status: 'active', rssi: data.rssi } : s
@@ -81,6 +87,7 @@ export const useTrainingBle = () => {
         // 🟢 СТАРТ (ID 0)
         if (triggeredId === 0) {
             if (['armed', 'ready', 'active', 'finished'].includes(currentState)) {
+                console.log(`${TAG} 🏁 СТАРТ ЗАБІГУ! Мастер перетнуто.`);
                 setState('active');
                 setElapsedTime(0);
                 setSession({
@@ -99,18 +106,26 @@ export const useTrainingBle = () => {
             const activeSensors = sensorsRef.current.filter(s => s.status === 'active' && s.id !== 0);
             const finishSensorId = activeSensors.length > 0 ? Math.max(...activeSensors.map(s => s.id)) : 0;
 
+            console.log(`${TAG} 🧮 Перевірка фінішу: Поточний=${triggeredId} | Очікуваний Фініш=${finishSensorId} | Кількість активних(без мастера)=${activeSensors.length}`);
+
             setSession(prev => {
                 if (!prev) return null;
                 const isDuplicate = prev.triggers.some(t => t.sensorId === triggeredId && Math.abs(t.time - triggerTime) < 500);
-                if (isDuplicate) return prev;
+                if (isDuplicate) {
+                    console.log(`${TAG} ⚠️ Ігноруємо дубль тригера від ID=${triggeredId}`);
+                    return prev;
+                }
                 return { ...prev, triggers: [...prev.triggers, { sensorId: triggeredId, time: triggerTime, split: data.split }] };
             });
 
             if (triggeredId === finishSensorId) {
+                console.log(`${TAG} 🛑 ФІНІШ ДОСЯГНУТО! Датчик ${triggeredId} співпав з фінішним.`);
                 setState('finished');
                 setElapsedTime(triggerTime);
                 setPingProgress('Фініш!');
                 sendCommand({ type: 21 }); // Зупиняємо залізо
+            } else {
+                console.log(`${TAG} ⏱️ ПРОМІЖНИЙ СПЛІТ (Датчик ${triggeredId})`);
             }
         }
     }, []);
@@ -118,6 +133,11 @@ export const useTrainingBle = () => {
     // --- ОБРОБКА ДАНИХ ВІД STM32 ---
     const handleMasterResponse = useCallback((data: any) => {
         const currentState = stateRef.current;
+
+        // Не логуємо 31 (постійний час), щоб не забити термінал
+        if (data.type !== 31) {
+            console.log(`${TAG} 📥 ОТРИМАНО ВІД ПЛАТИ:`, JSON.stringify(data));
+        }
 
         switch (data.type) {
             case 31: // Точний час від STM32
@@ -146,13 +166,19 @@ export const useTrainingBle = () => {
                 }
                 break;
             case 20: // Озброєно (Armed)
+                console.log(`${TAG} Плата підтвердила стан ARMED (Код 20)`);
                 setState('armed');
                 setPingProgress('Очікування старту');
                 break;
             case 21: // Фініш
-                if (data.status === 'FINISHED' || currentState === 'active') {
+                // Плата спамить {"type":21,"TxDoneNum":0} після кожної відправки. Ми це ігноруємо.
+                // Реальний фініш від плати виглядає так: {"type":21,"status":"FINISHED","total_time":6046}
+                if (data.status === 'FINISHED') {
+                    console.log(`${TAG} 🛑 РЕАЛЬНИЙ ФІНІШ ВІД ПЛАТИ`);
                     setState('finished');
                     setPingProgress('Фініш!');
+                } else {
+                    console.log(`${TAG} 🛡️ Ігноруємо технічний звіт плати (Код 21 без статусу FINISHED)`);
                 }
                 break;
             case 30: // ТРИГЕР
@@ -257,6 +283,7 @@ export const useTrainingBle = () => {
 
         startTraining: () => {
             const count = sensors.filter(s => s.status === 'active' && s.id !== 0).length;
+            console.log(`${TAG} Натиснуто СТАРТ. Відправляємо type: 20, sensors: ${count}`);
             sendCommand({ type: 20, sensors: count });
             setState('armed'); // Чекаємо старту
         },

@@ -13,6 +13,7 @@ export interface BleContextType {
     session: TrainingSession | null;
     pingProgress: string;
     device: any;
+    cancelConnecting: () => Promise<void>;
     canFinish: boolean;
     startDiscovery: () => Promise<void>;
     connectToDevice: (target: any) => Promise<void>;
@@ -23,6 +24,7 @@ export interface BleContextType {
     stopTraining: () => void;
     resetSession: () => void;
     simulateWebTrigger: () => void;
+
 }
 
 const BleContext = createContext<BleContextType | null>(null);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // 🔥 Додали хуки
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Platform } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -13,16 +13,16 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
     const { isDark } = useTheme();
     const {
         connected, state, sensors, elapsedTime, scannedDevices, canFinish,
-        startDiscovery, stopScanning, connectToDevice, disconnect,
+        startDiscovery, stopScanning, connectToDevice, disconnect, cancelConnecting, // 🔥 Додали cancelConnecting
         finishInitialization, startTraining, stopTraining, resetSession, simulateWebTrigger
     } = useBle();
 
-    // 🔥 ТАЙМЕР ПІДКЛЮЧЕННЯ (15 секунд)
+    // ТАЙМЕР ПІДКЛЮЧЕННЯ (15 секунд)
     const [connectionTimer, setConnectionTimer] = useState(15);
     const isScanning = state === 'discovering';
-    const isConnecting = state === 'connecting'; // Переконайся, що в хуку setState('connecting')
+    const isConnecting = state === 'connecting';
 
-    // Логіка відліку для модалки
+    // Логіка відліку для модалки підключення
     useEffect(() => {
         let interval: NodeJS.Timeout;
         if (isConnecting && connectionTimer > 0) {
@@ -30,10 +30,19 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                 setConnectionTimer(prev => prev - 1);
             }, 1000);
         } else if (!isConnecting) {
-            setConnectionTimer(15); // Скидаємо таймер, коли підключення завершено/перервано
+            setConnectionTimer(15); // Скидаємо таймер, якщо не підключаємось
         }
         return () => clearInterval(interval);
     }, [isConnecting, connectionTimer]);
+
+    // Обробник закриття модалки
+    const handleCloseModal = () => {
+        if (isConnecting) {
+            cancelConnecting();
+        } else if (isScanning) {
+            stopScanning();
+        }
+    };
 
     const renderHeader = () => (
         <View className="px-4 pt-2">
@@ -116,17 +125,17 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                 )}
             </View>
 
-            {/* 🔥 ОНОВЛЕНА МОДАЛКА: ПОШУК + ПІДКЛЮЧЕННЯ */}
+            {/* 🔥 МОДАЛКА: ПОШУК + ПІДКЛЮЧЕННЯ */}
             <AppModal
                 visible={isScanning || isConnecting}
-                onClose={isConnecting ? () => {} : stopScanning} // Блокуємо закриття при підключенні
+                onClose={handleCloseModal} // Дозволяємо закриття, воно скасує поточну дію
                 title={isConnecting ? t('tools.bluetooth.connecting_title') : t('tools.bluetooth.select_master')}
                 type="bottom"
             >
-                <View className="min-h-[320px] pb-6">
+                <View className="min-h-[320px] pb-6 flex-col">
                     {isConnecting ? (
                         /* --- СТАН ПІДКЛЮЧЕННЯ (ТАЙМЕР) --- */
-                        <View className="items-center justify-center py-10">
+                        <View className="items-center justify-center flex-1 pt-8 pb-4">
                             <View className="relative items-center justify-center">
                                 {/* Великий лоадер */}
                                 <ActivityIndicator size={120} color="#facc15" style={{ transform: [{ scale: 2.5 }] }} />
@@ -137,20 +146,49 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                                     </Text>
                                 </View>
                             </View>
-                            <Text className={`text-xl font-bold mt-12 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                            <Text className={`text-xl font-bold mt-12 mb-2 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                                 {t('tools.bluetooth.establishing')}
                             </Text>
-                            <Text className="text-slate-500 text-center mt-2 px-10">
+                            <Text className="text-slate-500 text-center px-10 mb-8">
                                 {t('tools.bluetooth.stay_close')}
                             </Text>
+
+                            {/* 🔥 Кнопка скасування підключення */}
+                            <TouchableOpacity
+                                onPress={cancelConnecting}
+                                className={`px-6 py-3 rounded-xl border ${isDark ? 'bg-slate-900 border-red-500/30' : 'bg-red-50 border-red-200'}`}
+                            >
+                                <Text className={`font-bold uppercase text-xs ${isDark ? 'text-red-400' : 'text-red-500'}`}>
+                                    Скасувати
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                     ) : (
                         /* --- СТАН ПОШУКУ (СПИСОК) --- */
                         <View className="flex-1">
-                            <View className="flex-row items-center justify-center py-4 mb-2">
-                                <ActivityIndicator size="small" color="#facc15" className="mr-3" />
-                                <Text className="text-slate-500 font-medium">{t('tools.bluetooth.searching')}</Text>
+                            <View className="flex-row items-center justify-between py-2 mb-4 px-1">
+                                <View className="flex-row items-center">
+                                    <ActivityIndicator size="small" color="#facc15" className="mr-3" />
+                                    <Text className="text-slate-500 font-medium">{t('tools.bluetooth.searching')}</Text>
+                                </View>
+
+                                {/* 🔥 Кнопки керування пошуком */}
+                                <View className="flex-row gap-2">
+                                    <TouchableOpacity
+                                        onPress={stopScanning}
+                                        className={`p-2 rounded-full border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}
+                                    >
+                                        <Feather name="stop-circle" size={18} color={isDark ? '#ef4444' : '#dc2626'} />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={startDiscovery} // Перезапускає пошук (очищає список)
+                                        className={`p-2 rounded-full border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}
+                                    >
+                                        <Feather name="refresh-cw" size={18} color={isDark ? '#60a5fa' : '#2563eb'} />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
+
                             <FlatList
                                 data={scannedDevices}
                                 keyExtractor={item => item.id}

@@ -1,11 +1,22 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // NOTE: Update this to include the paths to all files that contain Nativewind classes.
-  content: ["./App.tsx", "./components/**/*.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
+  content: [
+    "./App.tsx",
+    "./src/**/*.{js,jsx,ts,tsx}"
+  ],
   presets: [require("nativewind/preset")],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // Додаємо твій фірмовий помаранчевий (з orange-200)
+        brand: {
+          orange: '#FF6D00',
+          light: '#F5F5F5',
+          gray: '#C3C3C3'
+        }
+      }
+    },
   },
   plugins: [],
 }

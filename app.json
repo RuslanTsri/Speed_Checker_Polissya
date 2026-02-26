@@ -3,6 +3,7 @@
     "name": "Tempo Metrics",
     "slug": "my-app",
     "version": "1.0.1",
+
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,7 +15,6 @@
     },
     "ios": {
       "supportsTablet": true
-
     },
     "android": {
       "adaptiveIcon": {
@@ -23,15 +23,16 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.ruslan_tsri.myapp"
+      "package": "com.ruslan_tsri.myapp",
+      "permissions": [
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_CONNECT",
+        "BLUETOOTH_SCAN",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
-    "permissions": [
-      "android.permission.BLUETOOTH",
-      "android.permission.BLUETOOTH_ADMIN",
-      "android.permission.BLUETOOTH_CONNECT",
-      "android.permission.BLUETOOTH_SCAN",
-      "android.permission.ACCESS_FINE_LOCATION"
-    ],
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
@@ -42,7 +43,14 @@
       }
     },
     "plugins": [
-      "@sfourdrinier/react-native-ble-plx"
+      [
+        "@sfourdrinier/react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["central"],
+          "bluetoothAlwaysPermission": "Дозвольте додатку підключатися до сенсорів Tempo Metrics"
+        }
+      ]
     ]
   }
 }

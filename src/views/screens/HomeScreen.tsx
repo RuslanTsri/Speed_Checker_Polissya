@@ -12,7 +12,7 @@ interface HomeScreenProps {
     onNavigate: (tab: TabType, params?: any) => void;
 }
 
-export default function HomeScreen({ onNavigate }: HomeScreenProps) {
+export default function HomeScreen({ onNavigate, externalTool, setExternalTool }: any) {
     const { t } = useTranslation();
     const { isDark } = useTheme();
     const {
@@ -21,16 +21,52 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
         openTimer, openBluetooth, openSpeedCheck, closeTool,
         goToPlayers, goToSessions, openRecentActivity
     } = useHomeScreen(onNavigate);
+    // 1. Слідкуємо за натисканням у ФУТЕРІ
+    React.useEffect(() => {
+        // 1. Якщо натиснули Primary у футері, а тул ще закритий — відкриваємо
+        if (externalTool === 'SPEEDCHECK' && currentTool !== 'SPEEDCHECK') {
+            openSpeedCheck();
+        }
+        // 2. Якщо натиснули Home у футері (externalTool став null), а тул відкритий — закриваємо
+        else if (externalTool === null && currentTool === 'SPEEDCHECK') {
+            closeTool();
+        }
+    }, [externalTool]); // Слідкуємо за командами зверху (Footer -> MainLayout)
 
-    if (currentTool === 'TIMER') return <TimerTool onBack={closeTool} />;
+    // 3. ПОВІДОМЛЯЄМО ФУТЕР, ЯКЩО ВІДКРИЛИ ТУЛ КНОПКОЮ НА ЕКРАНІ
+    React.useEffect(() => {
+        if (currentTool === 'SPEEDCHECK') {
+            if (setExternalTool && externalTool !== 'SPEEDCHECK') {
+                setExternalTool('SPEEDCHECK');
+            }
+        } else if (currentTool === null) {
+            if (setExternalTool && externalTool !== null) {
+                setExternalTool(null);
+            }
+        }
+    }, [currentTool]); // Слідкуємо за локальним станом інструмента
+
+    // Обробка закриття через кнопку "Назад" в самому інструменті
+    const handleClose = () => {
+        closeTool();
+        if (setExternalTool) setExternalTool(null);
+    };
+
+    if (currentTool === 'TIMER') return <TimerTool onBack={handleClose} />;
+    if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} />;
     if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={closeTool} />;
-    if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={closeTool} />;
 
-    // 🔥 ФІКС: Додали розрахунок активних сенсорів
     const activeSensorsCount = sensors && sensors.length > 0 ? sensors.length - 1 : 0;
 
     return (
-        <ScrollView className={`flex-1 pt-4 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <ScrollView
+            className="flex-1"
+            contentContainerStyle={{
+                paddingTop: 16,
+                paddingBottom: 40
+            }}
+            showsVerticalScrollIndicator={false}
+        >
 
             {/* 1. БЛОК СТАТУСУ ПІДКЛЮЧЕННЯ */}
             <View className={`mx-4 mt-2 rounded-3xl p-6 items-center border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} ${status.border}`}>
@@ -131,7 +167,6 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
                 </View>
             </View>
 
-            {/* 🔥 3. ОСТАННЯ АКТИВНІСТЬ */}
             <View className="mx-4 mt-6 mb-10">
                 <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4">
                     {t('screens.home.recent_activity') as string}

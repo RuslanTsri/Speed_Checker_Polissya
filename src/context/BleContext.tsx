@@ -2,7 +2,6 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { useTrainingBle } from '../hooks/useTrainingBle';
 import { SensorInfo, TrainingState, TrainingSession } from '../types/telemetry';
 
-// 🔥 ЯВНО ОПИСУЄМО ІНТЕРФЕЙС
 export interface BleContextType {
     connected: boolean;
     state: TrainingState;
@@ -16,6 +15,7 @@ export interface BleContextType {
     cancelConnecting: () => Promise<void>;
     canFinish: boolean;
     startDiscovery: () => Promise<void>;
+    stopScanning: () => void;
     connectToDevice: (target: any) => Promise<void>;
     disconnect: () => Promise<void>;
     pingMaster: () => Promise<boolean>;
@@ -24,7 +24,6 @@ export interface BleContextType {
     stopTraining: () => void;
     resetSession: () => void;
     simulateWebTrigger: () => void;
-
 }
 
 const BleContext = createContext<BleContextType | null>(null);

@@ -13,7 +13,7 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
     const { isDark } = useTheme();
     const {
         connected, state, sensors, elapsedTime, scannedDevices, canFinish,
-        startDiscovery, stopScanning, connectToDevice, disconnect, cancelConnecting, // 🔥 Додали cancelConnecting
+        startDiscovery, stopScanning, connectToDevice, disconnect, cancelConnecting,
         finishInitialization, startTraining, stopTraining, resetSession, simulateWebTrigger
     } = useBle();
 

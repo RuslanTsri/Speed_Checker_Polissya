@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Image, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { BottomModal } from '../components/BottomModal';
 import { useSettingsScreen } from '../../hooks/useSettingsScreen';
+import { Switch } from '../components/ui/Switch';
 
 const PRESET_AVATARS = [
     'https://img.icons8.com/color/480/wolf.png',
@@ -31,37 +32,44 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
 
     if (isLoading) {
         return (
-            <View className={`flex-1 items-center justify-center ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
-                <ActivityIndicator size="large" color="#facc15" />
+            <View className="flex-1 items-center justify-center">
+                <ActivityIndicator size="large" color="#FF6D00" />
             </View>
         );
     }
 
     return (
-        <View className={`flex-1 pt-4 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <View className="flex-1 pt-4">
             <View className="px-4 mb-6">
                 <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {t('screens.settings.title')}
                 </Text>
             </View>
 
-            <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+            <ScrollView
+                className="flex-1"
+                contentContainerStyle={{
+                    paddingTop: 16,
+                    paddingBottom: 40
+                }}
+                showsVerticalScrollIndicator={false}
+            >
 
-                {/* 1. КАРТКА ПРОФІЛЮ */}
+                {/* 1. КАРТКА ПРОФІЛЮ (Glassmorphism) */}
                 <TouchableOpacity
                     onPress={openEditModal}
                     activeOpacity={0.8}
-                    className={`p-5 rounded-3xl border flex-row items-center mb-8 shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}
+                    className={`p-5 rounded-3xl border flex-row items-center mb-8 shadow-sm ${isDark ? 'bg-slate-900/60 border-slate-800/80' : 'bg-white border-slate-200'}`}
                 >
-                    <View className={`w-16 h-16 rounded-full border-2 mr-4 overflow-hidden ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                    <View className={`w-16 h-16 rounded-full border-2 mr-4 overflow-hidden ${isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
                         <Image source={{ uri: userProfile.avatar }} className="w-full h-full" resizeMode="cover" />
                     </View>
                     <View className="flex-1">
                         <Text className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{userProfile.name}</Text>
                         <Text className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{userProfile.role}</Text>
                     </View>
-                    <View className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                        <Feather name="edit-2" size={18} color="#facc15" />
+                    <View className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                        <Feather name="edit-2" size={18} color="#FF6D00" />
                     </View>
                 </TouchableOpacity>
 
@@ -69,12 +77,12 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">
                     {t('screens.settings.section_equipment')}
                 </Text>
-                <View className={`rounded-3xl px-5 py-2 border mb-8 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <View className={`rounded-3xl px-5 py-2 border mb-8 ${isDark ? 'bg-slate-900/60 border-slate-800/80' : 'bg-white border-slate-200'}`}>
                     <SettingItem
-                        icon={<Feather name="bluetooth" size={20} color="#facc15" />}
+                        icon={<Feather name="bluetooth" size={20} color="#FF6D00" />}
                         title={t('screens.settings.item_ble')}
                         value={t('screens.settings.item_ble_val')}
-                        valueColor={isDark ? "text-yellow-400" : "text-yellow-600"}
+                        valueColor={isDark ? "text-[#FF6D00]" : "text-yellow-600"}
                         onPress={handleConnectionPress}
                         isDark={isDark}
                     />
@@ -84,7 +92,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">
                     {t('screens.settings.section_system')}
                 </Text>
-                <View className={`rounded-3xl px-5 py-2 border mb-8 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <View className={`rounded-3xl px-5 py-2 border mb-8 ${isDark ? 'bg-slate-900/60 border-slate-800/80' : 'bg-white border-slate-200'}`}>
                     <SettingItem
                         icon={<Feather name="bell" size={20} color="#94a3b8" />}
                         title={t('screens.settings.item_notif')}
@@ -112,7 +120,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-4 ml-2">
                     {t('screens.settings.section_other')}
                 </Text>
-                <View className={`rounded-3xl px-5 py-2 border mb-10 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <View className={`rounded-3xl px-5 py-2 border mb-10 ${isDark ? 'bg-slate-900/60 border-slate-800/80' : 'bg-white border-slate-200'}`}>
                     <SettingItem
                         icon={<Feather name="file-text" size={20} color="#94a3b8" />}
                         title={t('screens.settings.item_export')} onPress={handleExport} isDark={isDark}
@@ -124,11 +132,12 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 </View>
             </ScrollView>
 
-            {/* МОДАЛКА РЕДАГУВАННЯ */}
+            {/* МОДАЛКА РЕДАГУВАННЯ залишається без змін... */}
             <BottomModal visible={isEditModalVisible} onClose={() => setEditModalVisible(false)} title={t('screens.settings.edit_modal_title')}>
                 <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+                    {/* ... (Вміст модалки залишив як у тебе) ... */}
                     <View className="items-center mb-6 px-4">
-                        <View className={`w-24 h-24 rounded-full border-2 border-yellow-400 items-center justify-center overflow-hidden mb-6 shadow-xl ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+                        <View className={`w-24 h-24 rounded-full border-2 border-[#FF6D00] items-center justify-center overflow-hidden mb-6 shadow-xl ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
                             <Image source={{ uri: tempAvatar || userProfile.avatar }} className="w-full h-full" key={tempAvatar} />
                         </View>
 
@@ -141,7 +150,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                                 <TouchableOpacity
                                     key={index} activeOpacity={1} onPress={() => setTempAvatar(avatarUrl)}
                                     className={`w-[52px] h-[52px] m-1.5 rounded-full overflow-hidden border-2 ${
-                                        tempAvatar === avatarUrl ? 'border-yellow-400' : (isDark ? 'border-slate-800 opacity-40' : 'border-slate-300 opacity-60')
+                                        tempAvatar === avatarUrl ? 'border-[#FF6D00]' : (isDark ? 'border-slate-800 opacity-40' : 'border-slate-300 opacity-60')
                                     }`}
                                 >
                                     <Image source={{ uri: avatarUrl }} className="w-full h-full" />
@@ -157,7 +166,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                                 <TextInput
                                     value={tempName} onChangeText={setTempName}
                                     placeholderTextColor={isDark ? "#334155" : "#94a3b8"}
-                                    className={`p-5 rounded-2xl border text-base font-bold ${isDark ? 'bg-slate-950 text-white border-slate-800' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
+                                    className={`p-5 rounded-2xl border text-base font-bold ${isDark ? 'bg-slate-900/80 text-white border-slate-800' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
                                 />
                             </View>
 
@@ -172,9 +181,9 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
 
                             <TouchableOpacity
                                 onPress={handleSaveProfile} disabled={isLoading} activeOpacity={0.8}
-                                className={`bg-yellow-400 p-5 rounded-2xl items-center mt-4 shadow-lg shadow-yellow-400/20 ${isLoading ? 'opacity-50' : ''}`}
+                                className={`bg-[#FF6D00] p-5 rounded-2xl items-center mt-4 shadow-lg shadow-[#FF6D00]/20 ${isLoading ? 'opacity-50' : ''}`}
                             >
-                                {isLoading ? <ActivityIndicator color="#0f172a" /> : <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">{t('screens.settings.edit_btn_save')}</Text>}
+                                {isLoading ? <ActivityIndicator color="#FFFFFF" /> : <Text className="text-white font-black text-lg uppercase tracking-wide">{t('screens.settings.edit_btn_save')}</Text>}
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -188,10 +197,10 @@ const SettingItem = ({ icon, title, value, isSwitch = false, switchValue, onSwit
     <TouchableOpacity
         activeOpacity={isSwitch ? 1 : 0.7}
         onPress={isSwitch ? undefined : onPress}
-        className={`flex-row items-center justify-between py-4 border-b last:border-0 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}
+        className={`flex-row items-center justify-between py-4 border-b last:border-0 ${isDark ? 'border-slate-800/80' : 'border-slate-100'}`}
     >
         <View className="flex-row items-center flex-1 mr-4">
-            <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${destructive ? 'bg-red-500/10' : (isDark ? 'bg-slate-800 border border-slate-700' : 'bg-slate-100 border border-slate-200')}`}>
+            <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${destructive ? 'bg-red-500/10' : (isDark ? 'bg-slate-800/80 border border-slate-700/80' : 'bg-slate-100 border border-slate-200')}`}>
                 {icon}
             </View>
             <Text className={`text-base font-bold ${destructive ? (isDark ? 'text-red-400' : 'text-red-500') : (isDark ? 'text-white' : 'text-slate-900')}`}>
@@ -201,10 +210,8 @@ const SettingItem = ({ icon, title, value, isSwitch = false, switchValue, onSwit
 
         {isSwitch ? (
             <Switch
-                trackColor={{ false: isDark ? "#334155" : "#e2e8f0", true: "#facc15" }}
-                thumbColor={switchValue ? "#fff" : (isDark ? "#94a3b8" : "#f8fafc")}
-                onValueChange={onSwitchChange}
-                value={switchValue}
+                active={switchValue}
+                onChange={onSwitchChange}
             />
         ) : (
             <View className="flex-row items-center">

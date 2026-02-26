@@ -42,7 +42,7 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                         </View>
 
                         <Text className="text-4xl font-black tracking-tight text-center mb-2 text-white" style={{ fontFamily: 'Unbounded' }}>
-                            Logo
+                            TEMPO METRICS
                         </Text>
                         <Text className="text-base text-center text-slate-400 px-4">
                             {isRegistering ? t('screens.auth.register_subtitle') : t('screens.auth.login_subtitle')}

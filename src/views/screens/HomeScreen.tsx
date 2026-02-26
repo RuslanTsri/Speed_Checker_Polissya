@@ -1,12 +1,17 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { View, Text, ScrollView } from 'react-native';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import TimerTool from '../tools/TimerTool';
 import BluetoothTool from '../tools/BluetoothTool';
 import SpeedCheckerTool from '../tools/SpeedCheckerTool';
 import { useHomeScreen, TabType } from '../../hooks/useHomeScreen';
 import { useTheme } from '../../context/ThemeContext';
+
+// 🔥 Імпортуємо UI-компоненти та Іконки
+import { Mod } from '../components/ui/mods';
+import { Button } from '../components/ui/Button';
+import { StartIcon, StartIconActive, TeamsIcon, TeamsIconActive } from '../../../assets/icons';
 
 interface HomeScreenProps {
     onNavigate: (tab: TabType, params?: any) => void;
@@ -21,32 +26,21 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
         openTimer, openBluetooth, openSpeedCheck, closeTool,
         goToPlayers, goToSessions, openRecentActivity
     } = useHomeScreen(onNavigate);
-    // 1. Слідкуємо за натисканням у ФУТЕРІ
-    React.useEffect(() => {
-        // 1. Якщо натиснули Primary у футері, а тул ще закритий — відкриваємо
-        if (externalTool === 'SPEEDCHECK' && currentTool !== 'SPEEDCHECK') {
-            openSpeedCheck();
-        }
-        // 2. Якщо натиснули Home у футері (externalTool став null), а тул відкритий — закриваємо
-        else if (externalTool === null && currentTool === 'SPEEDCHECK') {
-            closeTool();
-        }
-    }, [externalTool]); // Слідкуємо за командами зверху (Footer -> MainLayout)
 
-    // 3. ПОВІДОМЛЯЄМО ФУТЕР, ЯКЩО ВІДКРИЛИ ТУЛ КНОПКОЮ НА ЕКРАНІ
+    // Синхронізація футера та екрана (залишаємо як було)
+    React.useEffect(() => {
+        if (externalTool === 'SPEEDCHECK' && currentTool !== 'SPEEDCHECK') openSpeedCheck();
+        else if (externalTool === null && currentTool === 'SPEEDCHECK') closeTool();
+    }, [externalTool]);
+
     React.useEffect(() => {
         if (currentTool === 'SPEEDCHECK') {
-            if (setExternalTool && externalTool !== 'SPEEDCHECK') {
-                setExternalTool('SPEEDCHECK');
-            }
+            if (setExternalTool && externalTool !== 'SPEEDCHECK') setExternalTool('SPEEDCHECK');
         } else if (currentTool === null) {
-            if (setExternalTool && externalTool !== null) {
-                setExternalTool(null);
-            }
+            if (setExternalTool && externalTool !== null) setExternalTool(null);
         }
-    }, [currentTool]); // Слідкуємо за локальним станом інструмента
+    }, [currentTool]);
 
-    // Обробка закриття через кнопку "Назад" в самому інструменті
     const handleClose = () => {
         closeTool();
         if (setExternalTool) setExternalTool(null);
@@ -61,137 +55,92 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
     return (
         <ScrollView
             className="flex-1"
-            contentContainerStyle={{
-                paddingTop: 16,
-                paddingBottom: 40
-            }}
+            contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
         >
-
             {/* 1. БЛОК СТАТУСУ ПІДКЛЮЧЕННЯ */}
-            <View className={`mx-4 mt-2 rounded-3xl p-6 items-center border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} ${status.border}`}>
-
-                {/* Іконка */}
-                <View className={`w-12 h-12 rounded-full items-center justify-center mb-4 border ${isDark ? 'border-slate-700' : 'border-slate-200'} ${status.bgIcon}`}>
-                    <Feather name="bluetooth" size={20} color={status.iconColor} />
-                </View>
-
-                {/* Заголовок */}
-                <Text className={`text-xl font-bold mb-1 ${status.textCol || (isDark ? 'text-white' : 'text-slate-900')}`}>
-                    {status.title}
-                </Text>
-                <Text className={`text-center text-sm mb-4 px-4 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                    {status.desc}
-                </Text>
-
-                {/* Індикатор лазерів */}
-                {connected && (
-                    <View className="flex-row items-center space-x-1 mb-6">
-                        {Array.from({ length: Math.max(2, activeSensorsCount) }).map((_, idx) => {
-                            const isActive = idx < activeSensorsCount;
-                            return (
-                                <View key={idx} className={`w-8 h-8 rounded-full items-center justify-center border ${
-                                    isActive
-                                        ? (isDark ? 'bg-green-500/20 border-green-500/50' : 'bg-green-100 border-green-400')
-                                        : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200')
-                                }`}>
-                                    <MaterialCommunityIcons
-                                        name="laser-pointer"
-                                        size={14}
-                                        color={isActive ? "#4ade80" : (isDark ? "#475569" : "#94a3b8")}
-                                        style={{ transform: [{ rotate: '-45deg' }] }}
-                                    />
-                                </View>
-                            );
-                        })}
-                    </View>
-                )}
-
-                <TouchableOpacity onPress={openBluetooth} className={`w-full py-4 rounded-xl items-center border mb-3 ${status.btnClass}`}>
-                    <Text className={`font-bold text-base ${status.btnTextClass}`}>
-                        {status.btnText}
-                    </Text>
-                </TouchableOpacity>
-
-                {/* Секундомір залишаємо як був */}
+            <View className="mx-4 mt-2">
+                <Mod
+                    title={status.title} // "Девайс не під'єднано"
+                    subtitle={status.desc}
+                    // Мод статичний (немає onPress)
+                >
+                    {/* Кнопки всередині мода */}
+                    {connected ? (
+                        <View>
+                            <View className="flex-row items-center justify-center space-x-2 mb-6 mt-2">
+                                {Array.from({ length: Math.max(2, activeSensorsCount) }).map((_, idx) => {
+                                    const isActive = idx < activeSensorsCount;
+                                    return (
+                                        <View key={idx} className={`w-8 h-8 rounded-full items-center justify-center border ${
+                                            isActive ? 'bg-green-500/20 border-green-500/50' : 'bg-slate-800 border-slate-700'
+                                        }`}>
+                                            <MaterialCommunityIcons name="laser-pointer" size={14} color={isActive ? "#4ade80" : "#475569"} style={{ transform: [{ rotate: '-45deg' }] }} />
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                            <Button variant="outline" title={status.btnText} onPress={openBluetooth} className="w-full" />
+                        </View>
+                    ) : (
+                        <View className="flex-row gap-3 mt-1">
+                            <Button variant="light" title="Під'єднати" onPress={openBluetooth} className="flex-1 px-0" />
+                            <Button variant="outline" title="Ручний режим" onPress={openTimer} className="flex-1 px-0" />
+                        </View>
+                    )}
+                </Mod>
             </View>
 
             {/* 2. ШВИДКІ ДІЇ */}
             <View className="mx-4 mt-8 mb-2">
-                <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4">
-                    {t('screens.home.quick_actions') as string}
+                <Text className="text-slate-500 text-[11px] font-bold tracking-[0.1em] uppercase mb-4 ml-2">
+                    {t('screens.home.quick_actions')}
                 </Text>
 
-                <TouchableOpacity onPress={openSpeedCheck} className={`p-5 rounded-3xl flex-row items-center mb-4 shadow-sm border ${isDark ? 'bg-slate-900 border-slate-800 active:bg-slate-800' : 'bg-white border-slate-200 active:bg-slate-50'}`}>
-                    <View className={`w-12 h-12 rounded-2xl items-center justify-center mr-4 ${isDark ? 'bg-yellow-500/20' : 'bg-yellow-100'}`}>
-                        <Ionicons name="flash" size={24} color={isDark ? "#facc15" : "#eab308"} />
-                    </View>
-                    <View className="flex-1">
-                        <Text className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            {t('screens.home.start_test') as string}
-                        </Text>
-                        <Text className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                            {t('screens.home.start_test_desc') as string}
-                        </Text>
-                    </View>
-                </TouchableOpacity>
+                <Mod
+                    title={t('screens.home.start_test')} // "Швидкий тест"
+                    subtitle={t('screens.home.start_test_desc')}
+                    icon={<StartIcon width={34} height={34} fill="#F5F5F5" />}
+                    activeIcon={<StartIconActive width={34} height={34} fill="#F5F5F5" />}
+                    onPress={openSpeedCheck}
+                    className="mb-3"
+                />
 
-                <View className="flex-row justify-between">
-                    <TouchableOpacity onPress={goToPlayers} className={`p-5 rounded-3xl w-[48%] h-36 justify-between border shadow-sm ${isDark ? 'bg-slate-900 border-slate-800 active:bg-slate-800' : 'bg-white border-slate-200 active:bg-slate-50'}`}>
-                        <View className={`w-10 h-10 rounded-xl items-center justify-center border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                            <Feather name="users" size={20} color={isDark ? "#94a3b8" : "#64748b"} />
-                        </View>
-                        <View>
-                            <Text className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {t('screens.home.teams') as string}
-                            </Text>
-                            <Text className={`text-[10px] uppercase font-bold mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                                {t('screens.home.teams_desc') as string}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={goToSessions} className={`p-5 rounded-3xl w-[48%] h-36 justify-between border shadow-sm ${isDark ? 'bg-slate-900 border-slate-800 active:bg-slate-800' : 'bg-white border-slate-200 active:bg-slate-50'}`}>
-                        <View className={`w-10 h-10 rounded-xl items-center justify-center border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                            <Feather name="bar-chart-2" size={20} color={isDark ? "#94a3b8" : "#64748b"} />
-                        </View>
-                        <View>
-                            <Text className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {t('screens.home.results') as string}
-                            </Text>
-                            <Text className={`text-[10px] uppercase font-bold mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                                {t('screens.home.results_desc') as string}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
+                <View className="flex-row gap-3">
+                    <Mod
+                        title={t('screens.home.teams')} // "Команди"
+                        subtitle={t('screens.home.teams_desc')}
+                        onPress={goToPlayers}
+                        className="flex-1"
+                    />
+                    <Mod
+                        title={t('screens.home.results')} // "Результати"
+                        subtitle={t('screens.home.results_desc')}
+                        onPress={goToSessions}
+                        className="flex-1"
+                    />
                 </View>
             </View>
 
+            {/* 3. ОСТАННЯ АКТИВНІСТЬ */}
             <View className="mx-4 mt-6 mb-10">
-                <Text className="text-slate-500 text-xs font-bold tracking-widest uppercase mb-4">
-                    {t('screens.home.recent_activity') as string}
+                <Text className="text-slate-500 text-[11px] font-bold tracking-[0.1em] uppercase mb-4 ml-2">
+                    {t('screens.home.recent_activity')}
                 </Text>
 
                 {recentActivity ? (
-                    <View className={`p-4 rounded-3xl flex-row items-center border shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                        <View className={`w-12 h-12 rounded-full items-center justify-center mr-4 border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                            <Feather name="activity" size={20} color={isDark ? "#94a3b8" : "#64748b"} />
-                        </View>
-                        <View className="flex-1 mr-2">
-                            <Text className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`} numberOfLines={1}>{recentActivity.teamName}</Text>
-                            <Text className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{recentActivity.date} • {recentActivity.time}</Text>
-                        </View>
-                        <TouchableOpacity onPress={openRecentActivity} className={`px-4 py-2 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700' : 'bg-slate-100 border-slate-200 active:bg-slate-200'}`}>
-                            <Text className={`text-xs font-bold uppercase ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                                {t('screens.home.open') as string}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                    <Mod
+                        title={recentActivity.teamName} // "ФК Динамо U17"
+                        subtitle={`${recentActivity.date} • ${recentActivity.time}`}
+                        icon={<TeamsIcon width={30} height={30} fill="#F5F5F5" />}
+                        activeIcon={<TeamsIconActive width={30} height={30} fill="#F5F5F5" />}
+                        onPress={openRecentActivity}
+                    />
                 ) : (
-                    <View className={`p-6 rounded-3xl items-center justify-center border shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                        <Feather name="inbox" size={24} color={isDark ? "#475569" : "#94a3b8"} className="mb-2" />
-                        <Text className={`font-medium text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {t('screens.home.empty_activity') as string}
+                    <View className="p-6 rounded-3xl items-center justify-center border border-white/10 shadow-sm bg-black/40">
+                        <Feather name="inbox" size={24} color="#475569" className="mb-2" />
+                        <Text className="font-medium text-sm text-slate-500">
+                            {t('screens.home.empty_activity')}
                         </Text>
                     </View>
                 )}

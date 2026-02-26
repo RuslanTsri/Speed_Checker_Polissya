@@ -1,0 +1,32 @@
+import React from 'react';
+import { Pressable, View, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur'; // ⏳ Розкоментуй, коли забілдиш APK
+
+interface IconButtonProps {
+    icon: React.ReactNode;
+    onPress?: () => void;
+    className?: string;
+}
+
+export const IconButton = ({ icon, onPress, className = '' }: IconButtonProps) => {
+    return (
+        <Pressable
+            onPress={onPress}
+            style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.92 : 1 }] }]}
+        >
+            {({ pressed }) => (
+                <View className={`w-12 h-12 rounded-full overflow-hidden items-center justify-center border border-white/10 ${className}`}>
+                    {/* <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} /> */}
+                    <LinearGradient
+                        colors={pressed
+                            ? ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)']
+                            : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    <View className="z-10">{icon}</View>
+                </View>
+            )}
+        </Pressable>
+    );
+};

@@ -40,10 +40,15 @@ import TeamsIconActive from './TeamsIcon_active.svg';
 import UserIcon from './UserIcon.svg';
 import UserIconActive from './UserIcon_active.svg';
 import StartIconActive from './StartIcon_active.svg';
+import ArrowIcon from './ArrowIcon.svg';
+import ArrowIconActive from './ArrowIcon_active.svg';
+import PhotoIcon from './PhotoIcon.svg';
 
 
 export {
     HomeIcon, HomeIconActive,
+    PhotoIcon,
+    ArrowIcon, ArrowIconActive,
     BatteryIcon, BatteryIconActive,
     BleIcon, BleIconActive,
     CalendarIconActive,

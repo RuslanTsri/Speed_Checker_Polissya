@@ -1,140 +1,192 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { TeamSession } from '../../hooks/sessions/useSessionsData';
 import { useSessionDetails } from '../../hooks/sessions/useSessionDetails';
-import { useTheme } from '../../context/ThemeContext';
+
+import { Mod, RatingMod } from '../components/ui/mods';
+import { HeaderTabs, SubTabs } from '../components/ui/tabs/';
+
+import { ExportIcon, ExportIconActive, ArrowIconActive, ArrowIcon } from '../../../assets/icons';
 
 interface Props { session: TeamSession; onBack: () => void; }
 
 export default function SessionDetails({ session, onBack }: Props) {
-    const { t } = useTranslation(); // 🔥
-    const { isDark } = useTheme();
+    const { t } = useTranslation();
     const {
         subTab, setSubTab, selectedDistance, setSelectedDistance, predefinedDistances,
         filteredAttempts, sortedResults, sessionStats, handleExport
     } = useSessionDetails(session);
 
-    const colors = {
-        bgMain: isDark ? '#020617' : '#f8fafc', bgCard: isDark ? '#0f172a' : '#ffffff', border: isDark ? '#1e293b' : '#e2e8f0',
-        textMain: isDark ? '#ffffff' : '#0f172a', textSub: isDark ? '#64748b' : '#64748b', yellow: isDark ? '#facc15' : '#eab308',
-        tabActiveBg: isDark ? '#1e293b' : '#ffffff', tabInactiveBg: 'transparent',
-    };
+    // Конфіг для головних табів
+    const mainTabs = [
+        { id: 'BEST', label: t('tools.sessions.tab_summary') as string }, // "Підсумок (Best)"
+        { id: 'ALL', label: t('tools.sessions.tab_all_attempts') as string } // "Усі спроби"
+    ];
 
     return (
-        <View className="flex-1 pt-4" style={{ backgroundColor: colors.bgMain }}>
+        <View className="flex-1 pt-4 relative">
+
             {/* --- HEADER --- */}
-            <View className="flex-row items-center justify-between px-4 mb-4">
-                <TouchableOpacity onPress={onBack} className="p-2 -ml-2"><Feather name="chevron-left" size={24} color={colors.textMain} /></TouchableOpacity>
-                <View className="items-center">
-                    <Text className="text-lg font-bold" style={{ color: colors.textMain }}>{t('tools.sessions.results_title') as string}</Text>
-                    <Text className="text-xs" style={{ color: colors.textSub }}>{session.testType} {subTab === 'BEST' ? `(${selectedDistance}м)` : ''}</Text>
+            <View className="flex-row items-center justify-between px-4 mb-6 relative z-10">
+
+                {/* 🔥 КНОПКА НАЗАД (Кастомна стрілка) */}
+                <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
+                    {({ pressed }) => (
+                        <View style={{ transform: [{ rotate: '-90deg' }] }}>
+                            {pressed ? (
+                                <ArrowIconActive width={24} height={24} fill="#F5F5F5" />
+                            ) : (
+                                <ArrowIcon width={24} height={24} fill="#F5F5F5" />
+                            )}
+                        </View>
+                    )}
+                </Pressable>
+
+                {/* Текстовий блок по центру */}
+                <View className="items-center flex-1">
+                    <Text className="text-xl font-bold text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                        {t('tools.sessions.results_title') as string}
+                    </Text>
+                    <Text className="text-xs text-[#A3A3A3] mt-0.5" style={{ fontFamily: 'Evolventa' }}>
+                        {t('tools.sessions.team') as string} {session.teamName}
+                    </Text>
                 </View>
-                <TouchableOpacity onPress={handleExport} className="p-2 -mr-2"><Feather name="upload" size={20} color={colors.yellow} /></TouchableOpacity>
-            </View>
 
-            {/* --- INFO CARD --- */}
-            <View className="mx-4 rounded-3xl p-4 border mb-4 shadow-sm" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
-                <View className="flex-row justify-between mb-4">
-                    <View>
-                        <Text className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: colors.textSub }}>{t('tools.sessions.team') as string}</Text>
-                        <Text className="text-lg font-bold" style={{ color: colors.textMain }}>{session.teamName}</Text>
-                    </View>
-                    <View className="items-end">
-                        <Text className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: colors.textSub }}>{t('tools.sessions.top_players') as string}</Text>
-                        <Text className="text-lg font-bold" style={{ color: colors.textMain }}>{subTab === 'BEST' ? sortedResults.length : '-'}</Text>
-                    </View>
-                </View>
-                <View className="flex-row">
-                    <View className="mr-8">
-                        <Text className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: colors.textSub }}>{t('tools.sessions.best') as string}</Text>
-                        <Text className="text-3xl font-black" style={{ color: colors.yellow }}>{sessionStats.best > 0 ? sessionStats.best.toFixed(2) : '--'} <Text className="text-sm font-bold" style={{ color: colors.textSub }}>{t('tools.sessions.seconds_short') as string}</Text></Text>
-                    </View>
-                    <View>
-                        <Text className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: colors.textSub }}>{t('tools.sessions.average') as string}</Text>
-                        <Text className="text-3xl font-black" style={{ color: colors.textMain }}>{sessionStats.avg > 0 ? sessionStats.avg.toFixed(2) : '--'} <Text className="text-sm font-bold" style={{ color: colors.textSub }}>{t('tools.sessions.seconds_short') as string}</Text></Text>
-                    </View>
-                </View>
-            </View>
-
-            {/* --- TABS --- */}
-            <View className="flex-row mx-4 p-1 rounded-xl mb-3 border" style={{ backgroundColor: isDark ? '#0f172a' : '#e2e8f0', borderColor: isDark ? '#1e293b' : '#cbd5e1' }}>
-                <TouchableOpacity onPress={() => setSubTab('BEST')} className="flex-1 py-2 rounded-lg items-center shadow-sm" style={{ backgroundColor: subTab === 'BEST' ? colors.tabActiveBg : colors.tabInactiveBg, borderColor: subTab === 'BEST' ? colors.border : 'transparent', borderWidth: subTab === 'BEST' ? 1 : 0 }}>
-                    <Text className="font-bold text-sm" style={{ color: subTab === 'BEST' ? colors.textMain : colors.textSub }}>{t('tools.sessions.tab_summary') as string}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setSubTab('ALL')} className="flex-1 py-2 rounded-lg items-center shadow-sm" style={{ backgroundColor: subTab === 'ALL' ? colors.tabActiveBg : colors.tabInactiveBg, borderColor: subTab === 'ALL' ? colors.border : 'transparent', borderWidth: subTab === 'ALL' ? 1 : 0 }}>
-                    <Text className="font-bold text-sm" style={{ color: subTab === 'ALL' ? colors.textMain : colors.textSub }}>{t('tools.sessions.tab_all_attempts') as string}</Text>
-                </TouchableOpacity>
-            </View>
-
-            {subTab === 'BEST' && (
-                <View className="px-4 mb-3 flex-row justify-center">
-                    {predefinedDistances.map(dist => {
-                        const isSelected = selectedDistance === dist;
-                        const distBg = isSelected ? (isDark ? 'rgba(234, 179, 8, 0.2)' : '#fefce8') : 'transparent';
-                        const distBorder = isSelected ? (isDark ? 'rgba(234, 179, 8, 0.5)' : '#fde047') : colors.border;
-                        const distText = isSelected ? colors.yellow : colors.textSub;
-
-                        return (
-                            <TouchableOpacity key={dist} onPress={() => setSelectedDistance(dist)} className="mx-2 px-6 py-1.5 rounded-full border" style={{ backgroundColor: distBg, borderColor: distBorder }}>
-                                <Text className="font-bold text-xs" style={{ color: distText }}>{dist} м</Text>
-                            </TouchableOpacity>
+                {/* 🔥 ІКОНКА ЕКСПОРТУ */}
+                <Pressable onPress={handleExport} className="p-2 -mr-2 active:opacity-60">
+                    {({ pressed }) => (
+                        pressed ? (
+                            <ExportIconActive width={24} height={24} />
+                        ) : (
+                            <ExportIcon width={24} height={24} fill="#F5F5F5" />
                         )
-                    })}
-                </View>
+                    )}
+                </Pressable>
+            </View>
+
+            {/* --- INFO CARD (Використовуємо Mod) --- */}
+            <View className="px-4 mb-6 mt-2">
+                <Mod
+                    title={session.teamName}
+                    subtitle={t('tools.sessions.team') as string}
+
+                    rightHeader={
+                        <View className="items-end">
+                            <Text className="text-[10px] text-[#A3A3A3] mb-0.5 tracking-widest uppercase" style={{ fontFamily: 'Evolventa' }}>
+                                {t('tools.sessions.top_players') as string}
+                            </Text>
+                            <Text className="text-lg font-black text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                                {subTab === 'BEST' ? sortedResults.length : '-'}
+                            </Text>
+                        </View>
+                    }
+                >
+                    <View className="flex-row justify-between items-end border-t border-white/10 pt-4 mt-1">
+
+                        {/* ЛІВИЙ НИЖНІЙ КУТ: Найкращий (Світлий "кожаний" відтінок) */}
+                        <View>
+                            <Text className="text-[10px] text-[#A3A3A3] mb-1 tracking-widest uppercase" style={{ fontFamily: 'Evolventa' }}>
+                                {t('tools.sessions.best') as string}
+                            </Text>
+                            <Text className="text-3xl font-black text-[#E5A059]" style={{ fontFamily: 'Unbounded' }}>
+                                {sessionStats.best > 0 ? sessionStats.best.toFixed(2) : '--'}
+                            </Text>
+                        </View>
+
+                        {/* ПРАВИЙ НИЖНІЙ КУТ: Середній (Фірмовий помаранчевий) */}
+                        <View className="items-end">
+                            <Text className="text-[10px] text-[#A3A3A3] mb-1 tracking-widest uppercase" style={{ fontFamily: 'Evolventa' }}>
+                                {t('tools.sessions.average') as string}
+                            </Text>
+                            <Text className="text-3xl font-black text-[#FF6D00]" style={{ fontFamily: 'Unbounded' }}>
+                                {sessionStats.avg > 0 ? sessionStats.avg.toFixed(2) : '--'}
+                            </Text>
+                        </View>
+
+                    </View>
+                </Mod>
+            </View>
+
+            {/* --- TABS (Підсумок / Усі спроби) --- */}
+            <View className="px-4 mb-4">
+                <HeaderTabs
+                    tabs={mainTabs}
+                    activeTab={subTab}
+                    onTabChange={(id) => setSubTab(id as 'BEST' | 'ALL')}
+                />
+            </View>
+
+            {/* --- SUB TABS (10м, 20м, 30м) --- */}
+            {subTab === 'BEST' && predefinedDistances.length > 0 && (
+                <SubTabs
+                    distances={predefinedDistances}
+                    selectedDistance={selectedDistance}
+                    onSelect={setSelectedDistance}
+                />
             )}
 
+            {/* --- СПИСОК РЕЗУЛЬТАТІВ --- */}
             <View className="flex-1">
                 {subTab === 'BEST' && (
-                    <FlatList
-                        className="flex-1" data={sortedResults} keyExtractor={item => item.id}
-                        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}
-                        ListEmptyComponent={() => (
-                            <View className="py-10 items-center"><Text className="font-medium" style={{ color: colors.textSub }}>{t('tools.sessions.no_results_distance', { dist: selectedDistance }) as string}</Text></View>
-                        )}
-                        renderItem={({ item, index }) => {
-                            let rankColor = isDark ? "rgba(30, 41, 59, 0.5)" : "#f8fafc";
-                            let rankBorder = colors.border; let rankTextColor = colors.textSub;
-                            let itemCardBg = colors.bgCard; let itemBorder = colors.border;
-                            if (index === 0) {
-                                rankColor = isDark ? "rgba(234, 179, 8, 0.2)" : "#fefce8"; rankBorder = isDark ? "rgba(234, 179, 8, 0.5)" : "#fde047";
-                                rankTextColor = colors.yellow; itemCardBg = isDark ? "#0f172a" : "#ffffff"; itemBorder = isDark ? "rgba(234, 179, 8, 0.3)" : "#facc15";
-                            }
-
-                            return (
-                                <View className="rounded-xl mb-2 flex-row items-center border overflow-hidden pr-4" style={{ backgroundColor: itemCardBg, borderColor: itemBorder }}>
-                                    <View className="w-10 py-3 items-center justify-center border-r" style={{ backgroundColor: rankColor, borderColor: rankBorder }}>
-                                        <Text className="font-black text-lg" style={{ color: rankTextColor }}>{index + 1}</Text>
-                                    </View>
-                                    <View className="flex-1 pl-3 py-2">
-                                        <Text className="font-bold text-base" style={{ color: colors.textMain }} numberOfLines={1}>{item.playerName}</Text>
-                                        <Text className="text-[10px] font-bold mt-0.5" style={{ color: colors.textSub }}>{t('tools.sessions.attempts_count', { count: item.attemptsCount }) as string}</Text>
-                                    </View>
-                                    <View className="items-end py-2">
-                                        <Text className="font-black text-xl" style={{ color: colors.textMain }}>{item.bestTime.toFixed(2)}<Text className="text-xs font-bold ml-0.5" style={{ color: colors.textSub }}>{t('tools.sessions.seconds_short') as string}</Text></Text>
-                                    </View>
+                    <>
+                        <Text className="px-4 mb-2 text-[11px] font-bold text-[#A3A3A3] uppercase tracking-[0.1em]" style={{ fontFamily: 'Evolventa' }}>
+                            Список гравців
+                        </Text>
+                        <FlatList
+                            data={sortedResults}
+                            keyExtractor={item => item.id}
+                            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}
+                            showsVerticalScrollIndicator={false}
+                            ListEmptyComponent={() => (
+                                <View className="py-10 items-center">
+                                    <Text className="font-medium text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                                        {t('tools.sessions.no_results_distance', { dist: selectedDistance }) as string}
+                                    </Text>
                                 </View>
-                            );
-                        }}
-                    />
+                            )}
+                            renderItem={({ item, index }) => (
+                                // 🔥 ВИКОРИСТОВУЄМО RatingMod
+                                <RatingMod
+                                    rank={index + 1}
+                                    name={item.playerName}
+                                    subtitle={t('tools.sessions.attempts_count', { count: item.attemptsCount }) as string} // Тут можна вивести Роль або К-сть спроб
+                                    resultValue={item.bestTime.toFixed(2)}
+                                    // Якщо є швидкість, показуємо, якщо ні - можна прибрати або залишити як приклад
+                                    secondaryValue="25.1 km/h"
+                                    className="mb-3"
+                                    onPress={() => {}} // Клік на гравця
+                                />
+                            )}
+                        />
+                    </>
                 )}
 
+                {/* --- УСІ СПРОБИ (Простий список у стилі Glassmorphism) --- */}
                 {subTab === 'ALL' && (
                     <View className="flex-1">
-                        <View className="flex-row px-6 pb-2 border-b mb-2 mt-2" style={{ borderColor: colors.border }}>
-                            <Text className="flex-1 text-[10px] font-bold tracking-widest uppercase" style={{ color: colors.textSub }}>{t('tools.sessions.player') as string}</Text>
-                            <Text className="w-16 text-right text-[10px] font-bold tracking-widest uppercase" style={{ color: colors.textSub }}>{t('tools.sessions.time') as string}</Text>
+                        <View className="flex-row px-6 pb-2 border-b border-white/10 mb-2 mt-2">
+                            <Text className="flex-1 text-[10px] font-bold tracking-widest uppercase text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                                {t('tools.sessions.player') as string}
+                            </Text>
+                            <Text className="w-16 text-right text-[10px] font-bold tracking-widest uppercase text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                                {t('tools.sessions.time') as string}
+                            </Text>
                         </View>
                         <FlatList
-                            className="flex-1" data={filteredAttempts} keyExtractor={(item, index) => index.toString()}
-                            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}
+                            data={filteredAttempts}
+                            keyExtractor={(item, index) => index.toString()}
+                            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}
+                            showsVerticalScrollIndicator={false}
                             renderItem={({ item }) => (
-                                <View className="flex-row items-center py-3 border-b" style={{ borderColor: isDark ? 'rgba(30, 41, 59, 0.4)' : '#e2e8f0' }}>
-                                    <Text className="flex-1 font-medium text-sm" style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
-                                        {item.playerName} <Text className="text-[10px]" style={{ color: colors.textSub }}>({item.distance}м)</Text>
+                                <View className="flex-row items-center py-4 border-b border-white/5">
+                                    <Text className="flex-1 text-sm text-[#F5F5F5]" style={{ fontFamily: 'Evolventa' }}>
+                                        {item.playerName} <Text className="text-[10px] text-[#FF6D00]">({item.distance}м)</Text>
                                     </Text>
-                                    <Text className="w-16 text-right font-bold font-mono" style={{ color: colors.textMain }}>{item.time.toFixed(2)}</Text>
+                                    <Text className="w-16 text-right text-lg font-bold text-[#FF6D00]" style={{ fontFamily: 'Unbounded' }}>
+                                        {item.time.toFixed(2)}
+                                    </Text>
                                 </View>
                             )}
                         />

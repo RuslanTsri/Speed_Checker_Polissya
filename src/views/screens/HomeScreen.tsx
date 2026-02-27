@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import {View, Text, ScrollView, Pressable} from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import TimerTool from '../tools/TimerTool';
@@ -11,7 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 // 🔥 Імпортуємо UI-компоненти та Іконки
 import { Mod } from '../components/ui/mods';
 import { Button } from '../components/ui/Button';
-import { StartIcon, StartIconActive, TeamsIcon, TeamsIconActive } from '../../../assets/icons';
+import { StartIcon, StartIconActive, TeamsIcon, TeamsIconActive, BleIconActive, BleIcon } from '../../../assets/icons';
 
 interface HomeScreenProps {
     onNavigate: (tab: TabType, params?: any) => void;
@@ -58,24 +58,26 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
             contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
         >
-            {/* 1. БЛОК СТАТУСУ ПІДКЛЮЧЕННЯ */}
             <View className="mx-4 mt-2">
                 <Mod
-                    title={status.title} // "Девайс не під'єднано"
+                    title={status.title}
                     subtitle={status.desc}
-                    // Мод статичний (немає onPress)
                 >
-                    {/* Кнопки всередині мода */}
                     {connected ? (
-                        <View>
-                            <View className="flex-row items-center justify-center space-x-2 mb-6 mt-2">
+                        <View className="mt-2">
+                            <View className="flex-row items-center justify-center gap-3 mb-6">
                                 {Array.from({ length: Math.max(2, activeSensorsCount) }).map((_, idx) => {
                                     const isActive = idx < activeSensorsCount;
                                     return (
-                                        <View key={idx} className={`w-8 h-8 rounded-full items-center justify-center border ${
-                                            isActive ? 'bg-green-500/20 border-green-500/50' : 'bg-slate-800 border-slate-700'
+                                        <View key={idx} className={`w-10 h-10 rounded-full items-center justify-center border ${
+                                            isActive ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-white/5 border-white/10'
                                         }`}>
-                                            <MaterialCommunityIcons name="laser-pointer" size={14} color={isActive ? "#4ade80" : "#475569"} style={{ transform: [{ rotate: '-45deg' }] }} />
+                                            <MaterialCommunityIcons
+                                                name="laser-pointer"
+                                                size={16}
+                                                color={isActive ? "#34d399" : "#475569"}
+                                                style={{ transform: [{ rotate: '-45deg' }] }}
+                                            />
                                         </View>
                                     );
                                 })}
@@ -83,14 +85,33 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                             <Button variant="outline" title={status.btnText} onPress={openBluetooth} className="w-full" />
                         </View>
                     ) : (
-                        <View className="flex-row gap-3 mt-1">
-                            <Button variant="light" title="Під'єднати" onPress={openBluetooth} className="flex-1 px-0" />
-                            <Button variant="outline" title="Ручний режим" onPress={openTimer} className="flex-1 px-0" />
+                        <View className="flex-row gap-3 mt-2">
+
+                            {/* 1. Кнопка Під'єднати (Тепер через Feather) */}
+                            <View className="flex-1">
+                                <Button
+                                    variant="light"
+                                    title="Під'єднати"
+                                    onPress={openBluetooth}
+                                    icon={<Feather name="bluetooth" size={20} color="#0A0A0A" />}
+                                    className="w-full"
+                                />
+                            </View>
+
+                            <View className="flex-1">
+                                <Button
+                                    variant="outline"
+                                    title="Ручний режим"
+                                    onPress={openTimer}
+                                    icon={<Feather name="clock" size={20} color="#F5F5F5" />}
+                                    className="w-full"
+                                />
+                            </View>
+
                         </View>
                     )}
                 </Mod>
             </View>
-
             {/* 2. ШВИДКІ ДІЇ */}
             <View className="mx-4 mt-8 mb-2">
                 <Text className="text-slate-500 text-[11px] font-bold tracking-[0.1em] uppercase mb-4 ml-2">

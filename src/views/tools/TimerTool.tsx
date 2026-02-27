@@ -1,53 +1,121 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { BlurView } from 'expo-blur'; // 🔥 Імпортуємо BlurView для вкладеного екрану
 import { useStopwatch } from '../../hooks/tools/useStopwatch';
-import { useTheme } from '../../context/ThemeContext';
+
+// 🔥 UI Компоненти
+import { Mod } from '../components/ui/mods';
+import { Button } from '../components/ui/Button';
+import {
+    ArrowIcon,
+    ArrowIconActive,
+    ReloadIcon
+} from '../../../assets/icons';
 
 export default function TimerTool({ onBack }: { onBack: () => void }) {
     const { t } = useTranslation();
-    const { isDark } = useTheme();
     const { timeObj, isActive, toggle, reset } = useStopwatch();
 
     return (
-        <View className={`flex-1 pt-4 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <View className="flex-1 pt-4 relative">
+
             {/* Header */}
-            <View className="px-4 mb-10 flex-row items-center">
-                <TouchableOpacity onPress={onBack} className={`w-10 h-10 items-center justify-center -ml-2 rounded-full ${isDark ? 'active:bg-slate-800' : 'active:bg-slate-200'}`}>
-                    <Feather name="chevron-left" size={28} color={isDark ? "white" : "black"} />
-                </TouchableOpacity>
+            <View className="flex-row items-center justify-between px-4 mb-8 relative z-10">
+                {/* 🔥 Кнопка НАЗАД (Стрілка повернута вліво) */}
+                <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
+                    {({ pressed }) => (
+                        <View style={{ transform: [{ rotate: '-90deg' }] }}>
+                            {pressed ? (
+                                <ArrowIconActive width={28} height={28} fill="#F5F5F5" />
+                            ) : (
+                                <ArrowIcon width={28} height={28} fill="#F5F5F5" />
+                            )}
+                        </View>
+                    )}
+                </Pressable>
+
+                <Text
+                    className="text-xl font-bold flex-1 text-center text-[#F5F5F5]"
+                    style={{ fontFamily: 'Unbounded' }}
+                >
+                    {t('tools.timer.title') as string}
+                </Text>
+
+                <View className="w-10" />
             </View>
 
-            <View className="flex-1 px-6 items-center">
-                {/* Timer Card */}
-                <View className={`w-full border rounded-[40px] p-8 items-center justify-center shadow-lg mb-12 relative overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800 shadow-black/50' : 'bg-white border-slate-200 shadow-slate-300/50'}`}>
-                    <View className={`absolute w-64 h-64 rounded-full ${isDark ? 'bg-slate-800/50' : 'bg-slate-100/50'}`} />
-                    <View className={`absolute w-48 h-48 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`} />
-                    <View className="items-center z-10">
-                        <Text className={`text-xs font-bold tracking-[0.3em] uppercase mb-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {t('tools.timer.title') as string}
-                        </Text>
-                        <View className="flex-row items-baseline">
-                            <Text className={`text-7xl font-black font-mono tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>{timeObj.main}</Text>
-                            <Text className={`text-4xl font-black font-mono mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}>{timeObj.decimal}</Text>
+            <View className="flex-1 px-4 mt-4">
+
+                {/* 🔥 Батьківський Mod */}
+                <Mod
+                    title="Секундомір"
+                    subtitle="Точний час виконання"
+                    icon={
+                        <View className="bg-[#FF6D00]/10 p-3 rounded-xl border border-[#FF6D00]/20">
+                            <Feather name="clock" size={24} color="#FF6D00" />
+                        </View>
+                    }
+                    className="mb-8"
+                >
+                    {/* 🔥 Вкладений "Mod-Екран" з іншим ступенем розмиття */}
+                    <View className="mt-5 rounded-2xl overflow-hidden border border-white/5 shadow-inner">
+                        {/* Зменшений блюр і темніший фон створюють ефект глибини (ніби екран втоплений) */}
+                        <BlurView
+                            intensity={15}
+                            tint="dark"
+                            experimentalBlurMethod="dimezisBlurView"
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10, 10, 10, 0.6)' }]} />
+
+                        {/* ЦИФРОВИЙ ДИСПЛЕЙ */}
+                        <View className="py-8 flex-row items-baseline justify-center">
+                            <Text
+                                className={`text-6xl font-black tracking-widest ${isActive ? 'text-[#FF6D00]' : 'text-[#F5F5F5]'}`}
+                                // 🔥 Системний шрифт для цифр (виглядає як електронний годинник)
+                                style={{ fontFamily: 'monospace' }}
+                            >
+                                {timeObj.main}
+                            </Text>
+                            <Text
+                                className={`text-3xl font-bold ml-1 ${isActive ? 'text-[#FF6D00]/80' : 'text-[#A3A3A3]'}`}
+                                style={{ fontFamily: 'monospace' }}
+                            >
+                                {timeObj.decimal}
+                            </Text>
                         </View>
                     </View>
+                </Mod>
+
+                {/* 🔥 Панель керування (Кнопки) */}
+                <View className="flex-row gap-3">
+                    {/* Кнопка Рестарт */}
+                    <Button
+                        variant="outline"
+                        title=""
+                        onPress={reset}
+                        icon={<ReloadIcon width={24} height={24} fill="#F5F5F5" />}
+                        className="w-16 h-14"
+                    />
+
+                    {/* Кнопка Старт/Стоп */}
+                    <Button
+                        variant="primary"
+                        title={isActive ? (t('tools.timer.stop') as string) : (t('tools.timer.start') as string)}
+                        onPress={toggle}
+                        icon={
+                            <Feather
+                                name={isActive ? "pause" : "play"}
+                                size={22}
+                                color="#F5F5F5"
+                            />
+                        }
+                        className="flex-1 h-14"
+                    />
                 </View>
 
-                {/* Controls */}
-                <View className="flex-row w-full justify-between px-4">
-                    <TouchableOpacity onPress={reset} className={`w-20 h-20 rounded-full items-center justify-center border ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700' : 'bg-white border-slate-200 active:bg-slate-100 shadow-sm'}`}>
-                        <Ionicons name="refresh" size={24} color={isDark ? "#94a3b8" : "#64748b"} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={toggle} className={`h-20 flex-1 mx-6 rounded-2xl items-center justify-center shadow-lg flex-row ${isActive ? 'bg-red-500 shadow-red-500/20' : (isDark ? 'bg-green-500 shadow-green-500/20' : 'bg-green-500 shadow-green-400/30')}`}>
-                        <Feather name={isActive ? "pause" : "play"} size={24} color={isActive ? "white" : "#0f172a"} style={{marginRight: 8}} />
-                        <Text className={`font-black text-xl uppercase tracking-widest ${isActive ? 'text-white' : 'text-slate-900'}`}>
-                            {isActive ? (t('tools.timer.stop') as string) : (t('tools.timer.start') as string)}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
             </View>
         </View>
     );

@@ -17,7 +17,7 @@ export const IconButton = ({ icon, onPress, className = '' }: IconButtonProps) =
         >
             {({ pressed }) => (
                 <View className={`w-12 h-12 rounded-full overflow-hidden items-center justify-center border border-white/10 ${className}`}>
-                    {/* <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} /> */}
+                    <BlurView intensity={30} tint="dark" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
                     <LinearGradient
                         colors={pressed
                             ? ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)']

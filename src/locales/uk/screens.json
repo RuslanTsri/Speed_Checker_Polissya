@@ -71,7 +71,7 @@
     "title": "Звіти",
     "tab_team": "Командні",
     "tab_general": "Загальні / Швидкі",
-    "search_placeholder": "Пошук за командою або датою"
+    "search_placeholder": "Пошук за командою або іменем гравця"
   },
   "app": {
     "pin_modal_title": "Безпека",

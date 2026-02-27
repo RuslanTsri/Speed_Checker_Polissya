@@ -30,7 +30,13 @@ export const RatingMod = ({
         >
             {({ pressed }) => (
                 <View style={styles.container} className="rounded-2xl overflow-hidden border border-[#262626] shadow-sm">
-                    {/* <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} /> */}
+                    <BlurView
+                        intensity={30}
+                        tint="dark"
+                        experimentalBlurMethod="dimezisBlurView"
+                        style={StyleSheet.absoluteFill}
+                    />
+
 
                     <LinearGradient
                         colors={pressed && onPress

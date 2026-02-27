@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import {BlurView} from "expo-blur";
 // import { BlurView } from 'expo-blur';
 
 interface TeamsModProps {
@@ -36,7 +37,13 @@ export const TeamsMod = ({
                 return (
                     <View style={styles.container} className="rounded-2xl overflow-hidden border border-[#262626] shadow-sm">
 
-                        {/* <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} /> */}
+                        <BlurView
+                            intensity={30}
+                            tint="dark"
+                            experimentalBlurMethod="dimezisBlurView"
+                            style={StyleSheet.absoluteFill}
+                        />
+
 
                         <LinearGradient
                             colors={isPressed ? ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)'] : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']}

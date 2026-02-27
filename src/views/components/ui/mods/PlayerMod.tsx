@@ -3,9 +3,8 @@ import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
-// 🔥 Імпортуємо всі необхідні
 import {
-    PhotoIcon,
+    PhotoIcon, // або UserIcon, залежно від того, що ти використовуєш
     PenIcon,
     PenIconActive,
     CrossIconActive
@@ -13,16 +12,19 @@ import {
 
 interface PlayerModProps {
     name: string;
-    subtitle?: string;
+    // 🔥 ДОЗВОЛЯЄМО ПЕРЕДАВАТИ ЯК ТЕКСТ, ТАК І ВЕРСТКУ
+    subtitle?: string | React.ReactNode;
+    rightIcon?: React.ReactNode; // Додано для кастомних елементів справа
     onPress?: () => void;
-    onEditPress?: () => void;   // Клік на олівець
-    onDeletePress?: () => void; // Клік на хрестик
+    onEditPress?: () => void;
+    onDeletePress?: () => void;
     className?: string;
 }
 
 export const PlayerMod = ({
                               name,
                               subtitle,
+                              rightIcon, // Не забуваємо дістати цей пропс
                               onPress,
                               onEditPress,
                               onDeletePress,
@@ -51,22 +53,27 @@ export const PlayerMod = ({
                         <BlurView
                             intensity={30}
                             tint="dark"
+                            experimentalBlurMethod="dimezisBlurView"
                             style={StyleSheet.absoluteFill}
                         />
 
                         {/* 2. НАПІВПРОЗОРИЙ ГРАДІЄНТ */}
-
+                        <LinearGradient
+                            colors={isPressed
+                                ? ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)']
+                                : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']}
+                            start={{ x: 0, y: 0.5 }}
+                            end={{ x: 1, y: 0.5 }}
+                            style={StyleSheet.absoluteFill}
+                        />
 
                         {/* 3. КОНТЕНТ */}
                         <View className="p-3 flex-row items-center justify-between">
                             {/* ЛІВА ЧАСТИНА: Аватар + Інфо */}
                             <View className="flex-1 flex-row items-center gap-3">
                                 <View className="items-center justify-center">
-                                    {isPressed ? (
-                                        <PhotoIcon width={36} height={36} />
-                                    ) : (
-                                        <PhotoIcon width={36} height={36} />
-                                    )}
+                                    {/* Використовуй свою іконку */}
+                                    <PhotoIcon width={36} height={36} />
                                 </View>
 
                                 <View className="flex-1 flex-col justify-center items-start gap-1">
@@ -77,44 +84,56 @@ export const PlayerMod = ({
                                     >
                                         {name}
                                     </Text>
+
+                                    {/* 🔥 РОЗУМНИЙ РЕНДЕР SUBTITLE */}
                                     {subtitle && (
-                                        <Text
-                                            className="text-[#A3A3A3] text-sm font-normal leading-4"
-                                            style={{ fontFamily: 'Evolventa' }}
-                                        >
-                                            {subtitle}
-                                        </Text>
+                                        typeof subtitle === 'string' ? (
+                                            <Text
+                                                className="text-[#A3A3A3] text-sm font-normal leading-4"
+                                                style={{ fontFamily: 'Evolventa' }}
+                                            >
+                                                {subtitle}
+                                            </Text>
+                                        ) : (
+                                            <View>{subtitle}</View>
+                                        )
                                     )}
                                 </View>
                             </View>
 
-                            {/* ПРАВА ЧАСТИНА: Кнопки дій */}
+                            {/* ПРАВА ЧАСТИНА: Кнопки дій АБО Кастомний rightIcon (для результатів) */}
                             <View className="flex-row items-center gap-1">
-                                {/* Кнопка Редагування */}
-                                {onEditPress && (
-                                    <Pressable
-                                        onPress={onEditPress}
-                                        className="p-2 active:opacity-60"
-                                    >
-                                        {({ pressed: isBtnPressed }) => (
-                                            // Іконка стає активною, якщо натиснута сама кнопка АБО вся картка
-                                            isBtnPressed || isPressed ? (
-                                                <PenIconActive width={22} height={22} />
-                                            ) : (
-                                                <PenIcon width={22} height={22} />
-                                            )
-                                        )}
-                                    </Pressable>
-                                )}
 
-                                {/* Кнопка Видалення */}
-                                {onDeletePress && (
-                                    <Pressable
-                                        onPress={onDeletePress}
-                                        className="p-2 active:opacity-60"
-                                    >
-                                        <CrossIconActive width={22} height={22} />
-                                    </Pressable>
+                                {/* Якщо передали кастомний елемент (цифри результатів), показуємо його */}
+                                {rightIcon ? (
+                                    rightIcon
+                                ) : (
+                                    /* Інакше показуємо стандартні кнопки редагування/видалення */
+                                    <>
+                                        {onEditPress && (
+                                            <Pressable
+                                                onPress={onEditPress}
+                                                className="p-2 active:opacity-60"
+                                            >
+                                                {({ pressed: isBtnPressed }) => (
+                                                    isBtnPressed || isPressed ? (
+                                                        <PenIconActive width={22} height={22} />
+                                                    ) : (
+                                                        <PenIcon width={22} height={22} />
+                                                    )
+                                                )}
+                                            </Pressable>
+                                        )}
+
+                                        {onDeletePress && (
+                                            <Pressable
+                                                onPress={onDeletePress}
+                                                className="p-2 active:opacity-60"
+                                            >
+                                                <CrossIconActive width={22} height={22} />
+                                            </Pressable>
+                                        )}
+                                    </>
                                 )}
                             </View>
                         </View>

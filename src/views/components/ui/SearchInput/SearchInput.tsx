@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 // import { BlurView } from 'expo-blur'; // ⏳ ДЛЯ EAS БІЛДУ
 
 import { SearchIcon, SearchIconActive } from '../../../../../assets/icons';
+import {BlurView} from "expo-blur";
 
 interface SearchInputProps {
     value: string;
@@ -23,7 +24,7 @@ export const SearchInput = ({ value, onChangeText, placeholder, className = '' }
             } ${className}`}
         >
             {/* ⏳ ТИМЧАСОВО ЗАКОМЕНТОВАНО ДО БІЛДУ */}
-            {/* <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} /> */}
+            <BlurView intensity={30} tint="dark" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
 
             {/* Градієнт: при фокусі стає трішки темнішим */}
             <LinearGradient

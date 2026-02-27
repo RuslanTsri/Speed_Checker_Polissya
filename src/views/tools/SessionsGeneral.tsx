@@ -1,13 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, FlatList, ScrollView } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSessionsData } from '../../hooks/sessions/useSessionsData';
-import { useTheme } from '../../context/ThemeContext';
+
+// 🔥 Імпортуємо наші преміальні компоненти
+import { BestCard, WorstCard } from '../components/ui/stats';
+import { PlayerMod } from '../components/ui/mods';
 
 interface Props { searchQuery: string; }
 
-const AutoMarqueeId = ({ id, isDark }: { id: string, isDark: boolean }) => {
+// 🔥 Оновлений AutoMarqueeId (зі скляним дизайном і перевіркою на порожній ID)
+const AutoMarqueeId = ({ id }: { id: string | undefined }) => {
     const scrollRef = useRef<ScrollView>(null);
     const scrollX = useRef(0);
     const maxScroll = 120;
@@ -23,10 +27,21 @@ const AutoMarqueeId = ({ id, isDark }: { id: string, isDark: boolean }) => {
         return () => clearInterval(interval);
     }, []);
 
+    // Якщо ID немає — просто нічого не малюємо (уникаємо порожніх сірих рамок)
+    if (!id) return null;
+
     return (
-        <View className={`ml-3 flex-1 rounded-lg border overflow-hidden ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-            <ScrollView ref={scrollRef} horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 6, paddingVertical: 2 }}>
-                <Text className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>ID: <Text className={isDark ? 'text-slate-400' : 'text-slate-500'}>{id}</Text></Text>
+        <View className="ml-3 flex-1 rounded-lg border border-white/10 bg-white/5 overflow-hidden">
+            <ScrollView
+                ref={scrollRef}
+                horizontal
+                scrollEnabled={false}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 6, paddingVertical: 2 }}
+            >
+                <Text className="text-[10px] font-mono text-[#A3A3A3]">
+                    ID: <Text className="text-[#A3A3A3]">{id}</Text>
+                </Text>
             </ScrollView>
         </View>
     );
@@ -34,67 +49,84 @@ const AutoMarqueeId = ({ id, isDark }: { id: string, isDark: boolean }) => {
 
 export default function SessionsGeneral({ searchQuery }: Props) {
     const { t } = useTranslation();
-    const { isDark } = useTheme();
     const { generalSessions, stats } = useSessionsData(searchQuery);
     const { best, worst } = stats;
 
     return (
         <FlatList
-            data={generalSessions} keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}
+            data={generalSessions}
+            keyExtractor={(item, index) => item.id ?? index.toString()} // Захист для TypeScript
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+            showsVerticalScrollIndicator={false}
             ListHeaderComponent={() => (
                 <View className="mb-6">
+                    {/* КАРТКИ СТАТИСТИКИ */}
                     <View className="flex-row justify-between mb-6">
-                        {/* BEST CARD */}
-                        <View className={`w-[48%] border p-4 rounded-2xl relative overflow-hidden shadow-sm ${isDark ? 'bg-green-900/20 border-green-500/30' : 'bg-green-50 border-green-300'}`}>
-                            <View className="flex-row items-center mb-1">
-                                <Feather name="trending-up" size={16} color={isDark ? "#4ade80" : "#16a34a"} />
-                                <Text className={`text-xs font-bold uppercase ml-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>{t('tools.sessions.best') as string}</Text>
-                            </View>
-                            <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{best?.totalTime.toFixed(2) || '--'}s</Text>
-                            <Text className={`text-sm mt-1 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`} numberOfLines={1}>{best?.playerName || (t('tools.sessions.not_available') as string)}</Text>
-                            <Text className={`text-[10px] font-bold mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} numberOfLines={1}>{best?.teamName}</Text>
-                            <View className="absolute -right-2 -bottom-2 opacity-20"><MaterialCommunityIcons name="lightning-bolt" size={60} color={isDark ? "#4ade80" : "#16a34a"} /></View>
-                        </View>
+                        <BestCard
+                            title={t('tools.sessions.best') as string}
+                            time={`${best?.totalTime.toFixed(2) || '--'}s`}
+                            playerName={best?.playerName || (t('tools.sessions.not_available') as string)}
+                            teamName={best?.teamName}
+                        />
 
-                        {/* WORST CARD */}
-                        <View className={`w-[48%] border p-4 rounded-2xl relative overflow-hidden shadow-sm ${isDark ? 'bg-red-900/20 border-red-500/30' : 'bg-red-50 border-red-300'}`}>
-                            <View className="flex-row items-center mb-1">
-                                <Feather name="trending-down" size={16} color={isDark ? "#f87171" : "#dc2626"} />
-                                <Text className={`text-xs font-bold uppercase ml-1 ${isDark ? 'text-red-400' : 'text-red-600'}`}>{t('tools.sessions.worst') as string}</Text>
-                            </View>
-                            <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{worst?.totalTime.toFixed(2) || '--'}s</Text>
-                            <Text className={`text-sm mt-1 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`} numberOfLines={1}>{worst?.playerName || (t('tools.sessions.not_available') as string)}</Text>
-                            <Text className={`text-[10px] font-bold mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} numberOfLines={1}>{worst?.teamName}</Text>
-                        </View>
+                        <WorstCard
+                            title={t('tools.sessions.worst') as string}
+                            time={`${worst?.totalTime.toFixed(2) || '--'}s`}
+                            playerName={worst?.playerName || (t('tools.sessions.not_available') as string)}
+                            teamName={worst?.teamName}
+                        />
                     </View>
-                    <Text className={`font-bold px-2 uppercase text-xs tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{t('tools.sessions.latest_runs') as string}</Text>
+
+                    <Text
+                        className="font-bold px-2 uppercase text-xs tracking-[0.1em] text-[#A3A3A3]"
+                        style={{ fontFamily: 'Evolventa' }}
+                    >
+                        {t('tools.sessions.latest_runs') as string}
+                    </Text>
                 </View>
             )}
             renderItem={({ item }) => (
-                <TouchableOpacity activeOpacity={0.7} className={`mb-3 p-4 rounded-2xl border flex-row justify-between items-center shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                    <View className="flex-1 mr-2">
-                        <Text className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`} numberOfLines={1}>{item.playerName}</Text>
-                        <Text className={`text-xs font-medium mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} numberOfLines={1}>{item.teamName}</Text>
+                <View className="mb-3">
+                    <PlayerMod
+                        name={item.playerName}
 
-                        <View className="flex-row items-center mt-2">
-                            <Feather name="clock" size={12} color={isDark ? "#64748b" : "#94a3b8"} />
-                            <Text className={`text-[11px] ml-1 font-medium ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{item.date}</Text>
-                            <AutoMarqueeId id={item.id} isDark={isDark} />
-                        </View>
-                    </View>
+                        // 🔥 Складний блок: Команда, Дата та ID
+                        subtitle={
+                            <View className="mt-1">
+                                <Text className="text-[10px] font-bold text-[#FF6D00] uppercase mb-1" style={{ fontFamily: 'Evolventa' }}>
+                                    {item.teamName}
+                                </Text>
+                                <View className="flex-row items-center">
+                                    <Feather name="clock" size={10} color="#A3A3A3" />
+                                    <Text className="text-[10px] ml-1 text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                                        {item.date}
+                                    </Text>
 
-                    <View className="items-end">
-                        <Text className={`text-2xl font-black tracking-tight ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}>
-                            {item.totalTime.toFixed(2)}
-                            <Text className={`text-sm font-bold ml-0.5 ${isDark ? 'text-yellow-600' : 'text-yellow-700'}`}>s</Text>
-                        </Text>
-                        <View className="flex-row items-center mt-1">
-                            <MaterialCommunityIcons name="timer-sand" size={12} color={isDark ? "#94a3b8" : "#cbd5e1"} />
-                            <Text className={`text-[11px] ml-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('tools.sessions.split', { time: item.avgSplit.toFixed(2) }) as string}</Text>
-                        </View>
-                    </View>
-                </TouchableOpacity>
+                                </View>
+                            </View>
+                        }
+
+                        // 🔥 Блок з результатами (Час та Спліт) замість кнопок керування
+                        rightIcon={
+                            <View className="items-end justify-center">
+                                <Text
+                                    className="text-2xl font-black text-[#FF6D00]"
+                                    style={{ fontFamily: 'Unbounded' }}
+                                >
+                                    {item.totalTime.toFixed(2)}
+                                    <Text className="text-xs font-bold text-[#FF6D00]/70">s</Text>
+                                </Text>
+
+                                <View className="flex-row items-center mt-1">
+                                    <MaterialCommunityIcons name="timer-sand" size={10} color="#A3A3A3" />
+                                    <Text className="text-[10px] ml-0.5 text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                                        {t('tools.sessions.split', { time: item.avgSplit.toFixed(2) }) as string}
+                                    </Text>
+                                </View>
+                            </View>
+                        }
+                    />
+                </View>
             )}
         />
     );

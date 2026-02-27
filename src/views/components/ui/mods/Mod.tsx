@@ -8,13 +8,20 @@ interface ModProps {
     subtitle?: string;
     icon?: React.ReactNode;
     activeIcon?: React.ReactNode;
+    rightHeader?: React.ReactNode;
     onPress?: () => void;
     className?: string;
     children?: React.ReactNode;
+    // 🔥 ДОДАЛИ ВАРІАНТ ДИЗАЙНУ
+    variant?: 'default' | 'ghost';
 }
 
-export const Mod = ({ title, subtitle, icon, activeIcon, onPress, className = '', children }: ModProps) => {
+export const Mod = ({
+                        title, subtitle, icon, activeIcon, rightHeader, onPress,
+                        className = '', children, variant = 'default'
+                    }: ModProps) => {
     const isClickable = !!onPress;
+    const isDefault = variant === 'default';
 
     return (
         <Pressable
@@ -27,65 +34,67 @@ export const Mod = ({ title, subtitle, icon, activeIcon, onPress, className = ''
         >
             {({ pressed }) => {
                 const isPressed = pressed && isClickable;
-                // Магія зміни іконки
                 const currentIcon = isPressed && activeIcon ? activeIcon : icon;
 
                 return (
                     <View
                         style={styles.container}
-                        // outline-Neutral-800 з Фігми це приблизно #262626
-                        className="rounded-2xl overflow-hidden border border-[#262626] shadow-sm"
+                        // Якщо це ghost (для модалки) — робимо просто легкий фон bg-white/5
+                        className={`rounded-3xl overflow-hidden ${
+                            isDefault
+                                ? 'border border-white/10 shadow-sm'
+                                : 'border border-white/5 bg-white/5'
+                        }`}
                     >
-                        {/* 1. БЛЮР ФОНУ (Матове скло) */}
-                        <BlurView
-                            intensity={20} // Легке розмиття, щоб було видно градієнт фону
-                            tint="dark"
-                            style={StyleSheet.absoluteFill}
-                        />
+                        {/* 🔥 Блюр і градієнт рендеримо ТІЛЬКИ для default варіанту */}
+                        {isDefault && (
+                            <>
+                                <BlurView intensity={30} tint="dark" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
+                                <LinearGradient
+                                    colors={isPressed
+                                        ? ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)']
+                                        : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']}
+                                    start={{ x: 0, y: 0.5 }}
+                                    end={{ x: 1, y: 0.5 }}
+                                    style={StyleSheet.absoluteFill}
+                                />
+                                {isPressed && <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.2)' }]} />}
+                            </>
+                        )}
 
-                        {/* 2. ГРАДІЄНТ З ФІГМИ (from-Neutral-1000 to-Neutral-700) */}
-                        <LinearGradient
-                            colors={isPressed
-                                ? ['rgba(0, 0, 0, 0.6)', 'rgba(64, 64, 64, 0.6)'] // Clicked (60%)
-                                : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']} // Default (40%)
-                            start={{ x: 0, y: 0.5 }} // bg-linear-87 (зліва направо)
-                            end={{ x: 1, y: 0.5 }}
-                            style={StyleSheet.absoluteFill}
-                        />
+                        {/* 🔥 Ефект натискання для ghost варіанту */}
+                        {!isDefault && isPressed && (
+                            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.05)' }]} />
+                        )}
 
-                        {/* 3. КОНТЕНТ (p-3 з Фігми) */}
-                        <View className="p-3">
-                            {/* gap-2 з Фігми */}
-                            <View className="flex-row items-center gap-2">
+                        <View className="p-5">
+                            <View className="flex-row items-center justify-between w-full">
+                                <View className="flex-row items-center gap-4 flex-1">
+                                    {currentIcon && (
+                                        <View className="items-center justify-center">
+                                            {currentIcon}
+                                        </View>
+                                    )}
 
-                                {/* Tap Space для іконки */}
-                                {currentIcon && (
-                                    <View className="p-1 items-center justify-center">
-                                        {currentIcon}
+                                    <View className="flex-1 flex-col justify-center items-start gap-1">
+                                        <Text className="text-[#F5F5F5] text-xl font-bold leading-6" style={{ fontFamily: 'Unbounded' }}>
+                                            {title}
+                                        </Text>
+                                        {subtitle && (
+                                            <Text className="text-[#A3A3A3] text-sm font-normal leading-5 tracking-wide" style={{ fontFamily: 'Evolventa' }}>
+                                                {subtitle}
+                                            </Text>
+                                        )}
+                                    </View>
+                                </View>
+
+                                {rightHeader && (
+                                    <View className="ml-3 items-end">
+                                        {rightHeader}
                                     </View>
                                 )}
-
-                                {/* Тексти */}
-                                <View className="flex-1 flex-col justify-center items-start gap-1">
-                                    <Text
-                                        className="text-[#F5F5F5] text-base font-bold leading-4"
-                                        style={{ fontFamily: 'Unbounded' }}
-                                    >
-                                        {title}
-                                    </Text>
-
-                                    {subtitle && (
-                                        <Text
-                                            className="text-[#A3A3A3] text-sm font-normal leading-5"
-                                            style={{ fontFamily: 'Evolventa' }}
-                                        >
-                                            {subtitle}
-                                        </Text>
-                                    )}
-                                </View>
                             </View>
 
-                            {/* Внутрішні елементи (Кнопки "Під'єднати", "Ручний режим") */}
                             {children && (
                                 <View className="mt-4 w-full">
                                     {children}
@@ -100,8 +109,5 @@ export const Mod = ({ title, subtitle, icon, activeIcon, onPress, className = ''
 };
 
 const styles = StyleSheet.create({
-    container: {
-        // Мінімальна висота, щоб не злипалося, якщо немає підпису
-        minHeight: 64,
-    }
+    container: { minHeight: 80 }
 });

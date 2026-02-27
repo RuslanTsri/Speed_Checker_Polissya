@@ -14,7 +14,7 @@ export const WorstCard = ({ title, time, playerName, teamName }: WorstCardProps)
     return (
         <View className="w-[48%] p-4 rounded-2xl relative overflow-hidden border border-red-500/30">
             {/* Матове скло з червоним відтінком */}
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} experimentalBlurMethod="dimezisBlurView" />
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(220, 38, 38, 0.1)' }]} />
 
             <View className="flex-row items-center mb-1 relative z-10">

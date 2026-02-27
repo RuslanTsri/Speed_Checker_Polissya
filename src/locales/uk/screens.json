@@ -42,7 +42,7 @@
     "default_team": "Команда",
     "status_disconnected_title": "Пристрій не підключено",
     "status_disconnected_desc": "Підключіть Tempo Metrics, щоб почати тест.",
-    "status_btn_connect": "Підключити",
+    "status_btn_connect": "Під'єднати",
     "status_checking": "Перевірка зв'язку...",
     "status_online_title": "Tempo Metrics Online",
     "status_online_desc": "Готовий до роботи",

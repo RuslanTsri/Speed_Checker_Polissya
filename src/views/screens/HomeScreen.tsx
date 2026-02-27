@@ -91,7 +91,7 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                             <View className="flex-1">
                                 <Button
                                     variant="light"
-                                    title="Під'єднати"
+                                    title={t('screens.home.status_btn_connect')}
                                     onPress={openBluetooth}
                                     icon={<Feather name="bluetooth" size={20} color="#0A0A0A" />}
                                     className="w-full"
@@ -101,7 +101,7 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                             <View className="flex-1">
                                 <Button
                                     variant="outline"
-                                    title="Ручний режим"
+                                    title={t('screens.home.stopwatch')}
                                     onPress={openTimer}
                                     icon={<Feather name="clock" size={20} color="#F5F5F5" />}
                                     className="w-full"

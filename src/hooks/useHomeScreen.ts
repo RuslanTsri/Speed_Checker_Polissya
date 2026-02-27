@@ -13,7 +13,6 @@ export const useHomeScreen = (onNavigate: (tab: TabType, params?: any) => void) 
     const { t } = useTranslation();
     const [currentTool, setCurrentTool] = useState<ToolType>('MENU');
 
-    // 🔥 ФІКС: Беремо тільки те, що реально є в useTrainingBle
     const { connected, sensors } = useBle();
 
     // Стан для останньої активності
@@ -99,7 +98,7 @@ export const useHomeScreen = (onNavigate: (tab: TabType, params?: any) => void) 
         status.title = t('screens.home.status_online_title') as string;
         // 🔥 ФІКС: Рахуємо сателіти без device.name
         const satellitesCount = sensors && sensors.length > 0 ? sensors.length - 1 : 0;
-        status.desc = `STM32 Master • Датчиків: ${satellitesCount}`;
+        status.desc = `STM32 Master • Gates: ${satellitesCount}`;
         status.iconColor = "#4ade80";
         status.bgIcon = "bg-green-500/10";
         status.border = "border-green-500/30";

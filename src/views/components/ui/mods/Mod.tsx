@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
 interface ModProps {
-    title: string;
+    title?: string;
     subtitle?: string;
     icon?: React.ReactNode;
     activeIcon?: React.ReactNode;

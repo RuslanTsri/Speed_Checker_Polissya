@@ -132,7 +132,7 @@ export default function SessionDetails({ session, onBack }: Props) {
                 {subTab === 'BEST' && (
                     <>
                         <Text className="px-4 mb-2 text-[11px] font-bold text-[#A3A3A3] uppercase tracking-[0.1em]" style={{ fontFamily: 'Evolventa' }}>
-                            Список гравців
+                            {t("tools.sessions.player")}
                         </Text>
                         <FlatList
                             data={sortedResults}

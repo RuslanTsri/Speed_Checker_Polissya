@@ -6,15 +6,13 @@ import TeamSelector from './TempoMetrics/TeamSelector';
 import PlayerSelector from './TempoMetrics/PlayerSelector';
 import SpeedTestRun from './TempoMetrics/SpeedTestRun';
 import { useSpeedCheckerRouter } from '../../hooks/tools/useSpeedCheckerRouter';
-import { useTheme } from '../../context/ThemeContext';
 
-// Динамічний контейнер
-const ScreenContainer = ({ children, isDark }: { children: React.ReactNode, isDark: boolean }) => (
-    <View className={`flex-1 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>{children}</View>
+// 🔥 Динамічний контейнер (без фону, щоб працював твій глобальний бекграунд)
+const ScreenContainer = ({ children }: { children: React.ReactNode }) => (
+    <View className="flex-1">{children}</View>
 );
 
-export default function SpeedCheckerTool({ onBack }: { onBack: () => void }) {
-    const { isDark } = useTheme();
+export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: () => void, onOpenBluetooth: () => void }) {
     const {
         currentScreen, testConfig, handleModeSelect, handleTeamSelect,
         handlePlayersSelect, handleStartTest, handleBackFromConfig,
@@ -24,31 +22,35 @@ export default function SpeedCheckerTool({ onBack }: { onBack: () => void }) {
     switch (currentScreen) {
         case 'MODE_SELECT':
             return (
-                <ScreenContainer isDark={isDark}>
-                    <SpeedCheckerModeSelector onBack={onBack} onSelect={handleModeSelect} />
+                <ScreenContainer>
+                    <SpeedCheckerModeSelector
+                        onBack={onBack}
+                        onSelect={handleModeSelect}
+                        onOpenBluetooth={onOpenBluetooth} // 🔥 Тепер тут реальна функція, а не помилка
+                    />
                 </ScreenContainer>
             );
         case 'TEAM_SELECT':
             return (
-                <ScreenContainer isDark={isDark}>
+                <ScreenContainer>
                     <TeamSelector onBack={handleBackFromTeam} onSelect={handleTeamSelect} />
                 </ScreenContainer>
             );
         case 'PLAYER_SELECT':
             return (
-                <ScreenContainer isDark={isDark}>
+                <ScreenContainer>
                     <PlayerSelector teamId={testConfig.teamId || ''} onBack={handleBackFromPlayers} onSelect={handlePlayersSelect} />
                 </ScreenContainer>
             );
         case 'QUICK_CONFIG':
             return (
-                <ScreenContainer isDark={isDark}>
+                <ScreenContainer>
                     <QuickTestConfig onBack={handleBackFromConfig} onStart={handleStartTest} playerCount={testConfig.selectedPlayers.length} testType={testConfig.type} />
                 </ScreenContainer>
             );
         case 'TEST_RUN':
             return (
-                <ScreenContainer isDark={isDark}>
+                <ScreenContainer>
                     <SpeedTestRun config={testConfig} onBack={handleBackFromRun} onFinish={onBack} />
                 </ScreenContainer>
             );

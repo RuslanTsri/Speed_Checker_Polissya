@@ -1,11 +1,12 @@
 import React, { memo } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 import { SensorInfo } from '../../types/telemetry';
 import { formatTime } from '../../utils/time';
-import { useTheme } from '../../context/ThemeContext';
 
 interface ExtendedSensorInfo extends SensorInfo {
     rssi?: number;
@@ -14,100 +15,56 @@ interface ExtendedSensorInfo extends SensorInfo {
 
 export const SensorCard = memo(({ item }: { item: ExtendedSensorInfo }) => {
     const { t } = useTranslation();
-    const { isDark } = useTheme();
 
-    // Дефолтні стилі (Невідомий/Очікування)
-    let borderClass = isDark ? "border-slate-800" : "border-slate-200";
-    let bgClass = isDark ? "bg-slate-900" : "bg-white";
-    let statusText = t('components.sensor_card.status_waiting') as string;
-    let statusColor = isDark ? "text-slate-500" : "text-slate-400";
-    let statusBg = isDark ? "bg-slate-800/50" : "bg-slate-100";
-    let iconName: keyof typeof Feather.glyphMap = "radio";
-    let iconColor = isDark ? "#64748b" : "#94a3b8";
-
-    if (item.status === 'active') {
-        borderClass = isDark ? "border-green-500/30" : "border-green-300";
-        bgClass = isDark ? "bg-green-500/5" : "bg-green-50";
-        statusText = t('components.sensor_card.status_active') as string;
-        statusColor = isDark ? "text-green-400" : "text-green-600";
-        statusBg = isDark ? "bg-green-500/10 border border-green-500/20" : "bg-green-100 border border-green-200";
-        iconName = "check-circle";
-        iconColor = isDark ? "#4ade80" : "#16a34a";
-
-    } else if (item.status === 'timeout') {
-        borderClass = isDark ? "border-red-500/30" : "border-red-300";
-        bgClass = isDark ? "bg-red-500/5" : "bg-red-50";
-        statusText = t('components.sensor_card.status_lost') as string;
-        statusColor = isDark ? "text-red-400" : "text-red-600";
-        statusBg = isDark ? "bg-red-500/10 border border-red-500/20" : "bg-red-100 border border-red-200";
-        iconName = "alert-circle";
-        iconColor = isDark ? "#ef4444" : "#dc2626";
-    }
+    const isActive = item.status === 'active';
+    const isLost = item.status === 'timeout';
 
     return (
-        <View className={`mb-3 p-4 rounded-2xl border ${borderClass} ${bgClass} shadow-sm`}>
+        <View className="mb-3 rounded-3xl overflow-hidden border border-white/10 shadow-sm w-full min-h-[80px]">
+            {/* Glass Background */}
+            <BlurView intensity={30} tint="dark" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
+            <LinearGradient
+                colors={isActive ? ['rgba(52, 211, 153, 0.1)', 'rgba(52, 211, 153, 0.05)'] : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']}
+                start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+                style={StyleSheet.absoluteFill}
+            />
 
-            {/* Верхній рядок: Назва та Статус */}
-            <View className="flex-row justify-between items-center mb-3">
-                <View className="flex-row items-center">
-                    <Feather name={iconName} size={16} color={iconColor} style={{ marginRight: 8 }} />
-                    <Text className={`font-bold text-base tracking-wide ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        {item.id === 0 ? (t('components.sensor_card.master_node') as string) : (t('components.sensor_card.sensor_id', { id: item.id }) as string)}
-                    </Text>
-                </View>
-
-                {/* Status Pill */}
-                <View className={`px-2 py-0.5 rounded-md ${statusBg}`}>
-                    <Text className={`text-[9px] font-bold uppercase tracking-wider ${statusColor}`}>
-                        {statusText}
-                    </Text>
-                </View>
-            </View>
-
-            {/* Нижній рядок: Сигнал та Час */}
-            <View className="flex-row justify-between items-end">
-
-                {/* Сигнал */}
-                <View className="flex-row items-center pb-1">
-                    <Feather name="wifi" size={12} color={isDark ? "#94a3b8" : "#cbd5e1"} style={{ marginRight: 4 }} />
-                    <Text className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('components.sensor_card.signal') as string} <Text className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                        {item.rssi !== undefined ? item.rssi : '--'} dBm
-                    </Text>
-                    </Text>
-                </View>
-
-                {/* Час та Спліт */}
-                <View className="items-end">
-                    {item.triggerTime !== undefined ? (
-                        <Text className={`text-2xl font-mono font-black tracking-tighter ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            {formatTime(item.triggerTime)}
-                        </Text>
-                    ) : (
-                        <Text className={`text-2xl font-mono font-black tracking-tighter ${isDark ? 'text-slate-700' : 'text-slate-300'}`}>
-                            --:--:--
-                        </Text>
-                    )}
-
-                    {/* Спліт */}
-                    {item.splitTime ? (
-                        <View className="flex-row items-center mt-0.5">
-                            <Feather name="chevrons-right" size={10} color={isDark ? "#facc15" : "#eab308"} style={{ marginRight: 2 }} />
-                            <Text className={`font-mono text-[11px] font-bold ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                                +{(item.splitTime / 1000).toFixed(3)}s
-                            </Text>
+            <View className="p-4">
+                {/* Верхній рядок: Назва та Статус */}
+                <View className="flex-row justify-between items-center mb-3">
+                    <View className="flex-row items-center gap-3">
+                        <View className={`w-8 h-8 rounded-full items-center justify-center border ${isActive ? 'bg-emerald-500/20 border-emerald-500/50' : 'bg-white/5 border-white/10'}`}>
+                            <Feather name={isActive ? "check" : (isLost ? "alert-circle" : "radio")} size={14} color={isActive ? "#34d399" : (isLost ? "#ef4444" : "#A3A3A3")} />
                         </View>
-                    ) : null}
+                        <Text className="text-[#F5F5F5] font-bold text-base" style={{ fontFamily: 'Unbounded' }}>
+                            {item.id === 0
+                                ? t('tools.bluetooth.master_node')
+                                : t('tools.bluetooth.gate_id', { id: item.id })
+                            }
+                        </Text>
+                    </View>
+
+
+                </View>
+
+                {/* Нижній рядок: Сигнал та Час */}
+                <View className="flex-row justify-between items-end">
+                    {/* Сигнал */}
+                    <View className="flex-row items-center pb-1 gap-1.5">
+                        <Feather name="wifi" size={14} color="#A3A3A3" />
+                        <Text className="text-xs text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                            {t('tools.bluetooth.signal')} <Text className="font-bold text-[#F5F5F5]">{item.rssi !== undefined ? item.rssi : '--'} dBm</Text>
+                        </Text>
+                    </View>
+
+                    {/* Час */}
+                    <View className="items-end">
+                        <Text className="text-2xl font-black tracking-widest text-[#F5F5F5]" style={{ fontFamily: 'monospace' }}>
+                            {item.triggerTime !== undefined ? formatTime(item.triggerTime) : '--:--:--'}
+                        </Text>
+                    </View>
                 </View>
             </View>
         </View>
     );
-
-}, (prev: { item: ExtendedSensorInfo }, next: { item: ExtendedSensorInfo }) => {
-    return (
-        prev.item.status === next.item.status &&
-        prev.item.triggerTime === next.item.triggerTime &&
-        prev.item.rssi === next.item.rssi &&
-        prev.item.splitTime === next.item.splitTime
-    );
-});
+}, (prev, next) => prev.item.status === next.item.status && prev.item.triggerTime === next.item.triggerTime && prev.item.rssi === next.item.rssi);

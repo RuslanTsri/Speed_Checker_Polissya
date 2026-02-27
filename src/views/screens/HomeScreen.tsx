@@ -24,7 +24,8 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
         currentTool, connected, status, recentActivity,
         sensors,
         openTimer, openBluetooth, openSpeedCheck, closeTool,
-        goToPlayers, goToSessions, openRecentActivity
+        goToPlayers, goToSessions, openRecentActivity,
+
     } = useHomeScreen(onNavigate);
 
     // Синхронізація футера та екрана (залишаємо як було)
@@ -40,6 +41,15 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
             if (setExternalTool && externalTool !== null) setExternalTool(null);
         }
     }, [currentTool]);
+    React.useEffect(() => {
+        if (setExternalTool) {
+            // Передаємо currentTool (це може бути 'SPEEDCHECK', 'BLUETOOTH', 'TIMER' або null)
+            // Якщо футер очікує ці значення, він автоматично перемкне активну іконку
+            if (externalTool !== currentTool) {
+                setExternalTool(currentTool);
+            }
+        }
+    }, [currentTool]);
 
     const handleClose = () => {
         closeTool();
@@ -47,8 +57,13 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
     };
 
     if (currentTool === 'TIMER') return <TimerTool onBack={handleClose} />;
-    if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} />;
-    if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={closeTool} />;
+    if (currentTool === 'SPEEDCHECK') return (
+        <SpeedCheckerTool
+            onBack={handleClose}
+            onOpenBluetooth={openBluetooth} // 🔥 Передаємо функцію відкриття Bluetooth
+        />
+    );
+    if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={closeTool}/>;
 
     const activeSensorsCount = sensors && sensors.length > 0 ? sensors.length - 1 : 0;
 
@@ -82,7 +97,18 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                                     );
                                 })}
                             </View>
-                            <Button variant="outline" title={status.btnText} onPress={openBluetooth} className="w-full" />
+
+                            <View className="gap-3">
+                                <Button variant="light" title={status.btnText} onPress={openBluetooth} className="w-full" />
+
+                                <Button
+                                    variant="outline"
+                                    title={t('screens.home.stopwatch')}
+                                    onPress={openTimer}
+                                    icon={<Feather name="clock" size={20} color="#F5F5F5" />}
+                                    className="w-full"
+                                />
+                            </View>
                         </View>
                     ) : (
                         <View className="flex-row gap-3 mt-2">

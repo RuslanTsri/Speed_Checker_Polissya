@@ -7,8 +7,8 @@ import BleIconActive from './BleIcon_active.svg';
 import CalendarIconActive from './CalendarIcon_active.svg';
 import CautionIcon from './CautionIcon.svg';
 import CautionIconActive from './CautionIcon_active.svg';
-import ConnetionIcon from './ConnectionIcon.svg';
-import ConnetionIconActive from './ConnectionIcon_active.svg';
+import ConnectionIcon from './ConnectionIcon.svg';
+import ConnectionIconActive from './ConnectionIcon_active.svg';
 import CrossIconActive from './CrossIcon_active.svg';
 import DocIcon from './DocIcon.svg';
 import DocIconActive from './DocIcon_active.svg';
@@ -53,8 +53,8 @@ export {
     BleIcon, BleIconActive,
     CalendarIconActive,
     CautionIcon, CautionIconActive,
-    ConnetionIconActive,
-    ConnetionIcon,
+    ConnectionIconActive,
+    ConnectionIcon,
     CrossIconActive,
     DocIcon, DocIconActive,
     ExportIcon, ExportIconActive,

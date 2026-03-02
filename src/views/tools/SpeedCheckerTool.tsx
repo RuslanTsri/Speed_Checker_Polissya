@@ -45,7 +45,7 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: 
         case 'QUICK_CONFIG':
             return (
                 <ScreenContainer>
-                    <QuickTestConfig onBack={handleBackFromConfig} onStart={handleStartTest} playerCount={testConfig.selectedPlayers.length} testType={testConfig.type} />
+                    <QuickTestConfig onBack={handleBackFromConfig} onStart={handleStartTest} playerCount={testConfig.selectedPlayers.length} testType={testConfig.type} onOpenBluetooth={onOpenBluetooth} />
                 </ScreenContainer>
             );
         case 'TEST_RUN':

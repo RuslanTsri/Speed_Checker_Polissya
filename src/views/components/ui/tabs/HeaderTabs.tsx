@@ -12,6 +12,7 @@ interface HeaderTabsProps {
     activeTab: string;
     onTabChange: (id: string) => void;
     className?: string;
+
 }
 
 export const HeaderTabs = ({ tabs, activeTab, onTabChange, className = '' }: HeaderTabsProps) => {
@@ -39,15 +40,12 @@ export const HeaderTabs = ({ tabs, activeTab, onTabChange, className = '' }: Hea
                                     : 'border-white/10' // Ледь помітна біла рамка
                             }`}
                         >
-                            {/* 🔥 Сильний блюр для ефекту товстого скла */}
                             <BlurView
                                 intensity={50}
                                 tint="dark"
                                 experimentalBlurMethod="dimezisBlurView"
                                 style={StyleSheet.absoluteFill}
                             />
-
-                            {/* 🔥 Напівпрозорі фони, щоб блюр було видно НАСКРІЗЬ */}
                             <View className={`px-5 py-2 ${
                                 isActive ? 'bg-[#FF6D00]/40' : 'bg-white/10'
                             }`}>

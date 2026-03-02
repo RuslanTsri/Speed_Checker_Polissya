@@ -1,59 +1,113 @@
-import React from 'react';
-import {
-    View, Text, TouchableOpacity, ScrollView,
-    ActivityIndicator, FlatList,
-} from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, FlatList, Pressable, Animated, Easing, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSpeedTestSession } from '../../../hooks/tempoMetrics/useSpeedTestSession';
 import { AppModal } from '../../components/AppModal';
-import { useTheme } from '../../../context/ThemeContext';
 
-// --- SENSOR DOT ---
-// isStart  → жовтий (master, ID=0)
-// isFinish → зелений (останній slave)
-// інакше   → синій (проміжний gate)
-const SensorDot = React.memo(({
-                                  isTriggered, isStart, isFinish, isDark,
-                              }: {
-    isTriggered: boolean;
-    isStart: boolean;
-    isFinish: boolean;
-    isDark: boolean;
-}) => {
-    let dotColors = isDark
-        ? 'bg-slate-800 border-slate-600 shadow-transparent'
-        : 'bg-slate-200 border-slate-300 shadow-transparent';
+// 🔥 Імпорт UI-компонентів
+import { Mod } from '../../components/ui/mods';
+import { Button } from '../../components/ui/Button';
+import { ArrowIconActive, ArrowIcon } from '../../../../assets/icons';
 
-    if (isTriggered) {
-        if (isStart) {
-            dotColors = isDark
-                ? 'bg-yellow-400 border-yellow-400 shadow-yellow-400/40'
-                : 'bg-yellow-500 border-yellow-500 shadow-yellow-500/40';
-        } else if (isFinish) {
-            dotColors = isDark
-                ? 'bg-green-400 border-green-400 shadow-green-400/40'
-                : 'bg-green-500 border-green-500 shadow-green-500/40';
+// ==========================================
+// 🔥 ГОРИЗОНТАЛЬНА ЛІНІЯ ТРЕКУ
+// ==========================================
+const TrackLine = () => (
+    <View className="absolute left-0 right-0 h-[2px] bg-white/10 top-1/2 mt-[-1px]" />
+);
+
+// ==========================================
+// 🔥 ВЕРТИКАЛЬНИЙ МАРКЕР / ФЛАЖОК (Новий дизайн)
+// ==========================================
+interface RunMarkerProps {
+    position: number;
+    totalDistance: number;
+    label: string;
+    type: 'start' | 'finish' | 'gate';
+    triggered: boolean;
+    timeDisplay: string;
+}
+
+const RunMarker = ({ position, totalDistance, label, type, triggered, timeDisplay }: RunMarkerProps) => {
+    // 🔥 ДОДАНО: Хук перекладу для RunMarker
+    const { t } = useTranslation();
+
+    // Рахуємо позицію у % на основі дистанції
+    const percent = totalDistance > 0 ? (position / totalDistance) * 100 : (type === 'start' ? 0 : 100);
+
+    // Визначаємо колір залежно від типу та стану (triggered)
+    let mainColor = '#A3A3A3'; // Сірий за замовчуванням (для гейтів)
+    let shadowColor = 'rgba(163, 163, 163, 0.3)';
+
+    if (triggered) {
+        if (type === 'start') {
+            mainColor = '#FF6D00'; // Помаранчевий
+            shadowColor = 'rgba(255, 109, 0, 0.6)';
+        } else if (type === 'finish') {
+            mainColor = '#34d399'; // Зелений
+            shadowColor = 'rgba(52, 211, 153, 0.6)';
         } else {
-            dotColors = isDark
-                ? 'bg-blue-400 border-blue-400 shadow-blue-400/40'
-                : 'bg-blue-500 border-blue-500 shadow-blue-500/40';
+            // Активований проміжний гейт - робимо його світлішим сірим
+            mainColor = '#F5F5F5';
+            shadowColor = 'rgba(245, 245, 245, 0.3)';
         }
     }
 
-    return <View className={`w-4 h-4 rounded-full border-2 z-10 shadow-sm ${dotColors}`} />;
-});
+    return (
+        <View
+            className="absolute top-0 bottom-0 w-24 -ml-12 items-center justify-center z-20"
+            style={{ left: `${percent}%` }}
+        >
+            {/* Блок із текстом і часом (Зверху) */}
+            <View className="h-16 justify-end items-center mb-3">
+                {triggered && timeDisplay !== '--:--' && (
+                    <View className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md mb-1.5 shadow-sm">
+                        {/* 🔥 ВИПРАВЛЕНО: Видалено tabularNums зі style */}
+                        <Text className="text-white font-mono font-bold text-[10px]">
+                            {timeDisplay}
+                        </Text>
+                    </View>
+                )}
 
-// --- MAIN COMPONENT ---
-export default function SpeedTestRun({
-                                         config, onBack, onFinish,
-                                     }: {
-    config: any;
-    onBack: () => void;
-    onFinish: () => void;
-}) {
+                <Text
+                    className={`text-[10px] font-bold uppercase tracking-widest ${triggered ? 'text-[#F5F5F5]' : 'text-[#A3A3A3]'}`}
+                    style={{ color: triggered ? '#F5F5F5' : mainColor, fontFamily: 'Evolventa' }}
+                >
+                    {label}
+                </Text>
+
+                <Text className="text-[9px] text-white/30 font-bold" style={{ fontFamily: 'Evolventa' }}>
+                    {position} {t('tools.speed_checker.meters_short')}
+                </Text>
+            </View>
+
+            {/* Вертикальна паличка-маркер */}
+            <View
+                className="w-[1px] h-6 rounded-full"
+                style={{
+                    backgroundColor: triggered ? mainColor : 'rgba(255,255,255,0.1)',
+                    shadowColor: triggered ? shadowColor : 'transparent',
+                    shadowOpacity: 1,
+                    shadowRadius: 6,
+                    shadowOffset: { width: 0, height: 0 },
+                    elevation: triggered ? 4 : 0
+                }}
+            />
+
+            {/* Невелике заглиблення для крапки */}
+            <View className="h-6 justify-center">
+                <View className={`w-3 h-3 rounded-full border border-white/10 ${triggered ? 'bg-[#1C1C1E]' : 'bg-transparent'}`}/>
+            </View>
+        </View>
+    );
+};
+
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
+export default function SpeedTestRun({ config, onBack, onFinish }: { config: any; onBack: () => void; onFinish: () => void; }) {
     const { t } = useTranslation();
-    const { isDark } = useTheme();
 
     const {
         currentPlayerObj, teamName, currentPlayerIndex, totalPlayers,
@@ -66,340 +120,255 @@ export default function SpeedTestRun({
         isSaving,
     } = useSpeedTestSession(config, onFinish);
 
-    const colors = {
-        bgList:    isDark ? 'rgba(2, 6, 23, 0.5)' : '#f8fafc',
-        borderList: isDark ? '#1e293b' : '#e2e8f0',
-        borderRow:  isDark ? 'rgba(30, 41, 59, 0.5)' : '#f1f5f9',
-        textMain:   isDark ? '#ffffff' : '#0f172a',
-        textSub:    isDark ? '#64748b' : '#64748b',
-        yellow:     isDark ? '#facc15' : '#eab308',
-    };
+    // ==========================================
+    // 🔥 ПЛАВНА АНІМАЦІЯ ПРОГРЕСУ (Помаранчева)
+    // ==========================================
+    const animatedProgress = useRef(new Animated.Value(0)).current;
 
-    // Колір таймера залежить від стану
-    const timerColor = isFinished
-        ? (isDark ? 'text-green-400' : 'text-green-600')
-        : isReady
-            ? (isDark ? 'text-yellow-400' : 'text-yellow-500')
-            : (isDark ? 'text-white' : 'text-slate-900');
+    useEffect(() => {
+        Animated.timing(animatedProgress, {
+            toValue: progressPercent,
+            duration: 300, // Плавно доповзає за 300мс
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: false,
+        }).start();
+    }, [progressPercent]);
 
-    const decimalColor = isFinished
-        ? (isDark ? 'text-green-400' : 'text-green-600')
-        : (isDark ? 'text-yellow-400' : 'text-yellow-500');
+    const progressWidth = animatedProgress.interpolate({
+        inputRange: [0, 100],
+        outputRange: ['0%', '100%'],
+    });
+
+    // ==========================================
+    // СТИЛІЗАЦІЯ КОЛЬОРІВ ТА СТАТУСІВ
+    // ==========================================
+    const timerColor = isFinished ? 'text-[#34d399]' : isReady ? 'text-[#FF6D00]' : 'text-[#F5F5F5]';
+    const decimalColor = isFinished ? 'text-[#34d399]' : 'text-[#FF6D00]';
+
+    let statusText = t('tools.speed_checker.status_wait');
+    let statusColor = 'text-[#3b82f6]';
+    let dotColor = 'bg-[#3b82f6]';
+
+    if (isFinished) {
+        statusText = t('tools.speed_checker.status_result_obtained');
+        statusColor = 'text-[#34d399]';
+        dotColor = 'bg-[#34d399]';
+    } else if (isReady) {
+        statusText = t('tools.speed_checker.status_ready_to_measure');
+        statusColor = 'text-[#FF6D00]';
+        dotColor = 'bg-[#FF6D00]';
+    } else if (isRunning) {
+        statusText = t('tools.speed_checker.status_running');
+        statusColor = 'text-[#34d399]';
+        dotColor = 'bg-[#34d399]';
+    }
 
     return (
-        <View className={`flex-1 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <View className="flex-1 pt-4 relative">
             <ScrollView
-                className="flex-1 pt-4 px-4"
-                contentContainerStyle={{ paddingBottom: 40 }}
+                className="flex-1 px-4"
+                contentContainerStyle={{ paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
             >
                 {/* HEADER */}
-                <View className="flex-row items-center justify-between mb-6">
-                    <TouchableOpacity
-                        onPress={onBack}
-                        className={`p-2 -ml-2 rounded-full ${isDark ? 'active:bg-slate-800' : 'active:bg-slate-200'}`}
-                    >
-                        <Feather name="chevron-left" size={28} color={isDark ? 'white' : 'black'} />
-                    </TouchableOpacity>
-                    <View className="items-center">
-                        <Text className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            {t('tools.speed_checker.testing_title') as string}
+                <View className="flex-row items-center justify-between mb-4 relative z-10">
+                    <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
+                        {({ pressed }) => (
+                            <View style={{ transform: [{ rotate: '-90deg' }] }}>
+                                {pressed ? <ArrowIconActive width={28} height={28} fill="#F5F5F5" /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                            </View>
+                        )}
+                    </Pressable>
+                    <View className="items-center flex-1">
+                        <Text className="text-xl font-bold text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                            {t('tools.speed_checker.testing_title')}
                         </Text>
-                        <Text className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                        <Text className="text-[10px] font-bold tracking-widest text-[#A3A3A3] mt-1 uppercase" style={{ fontFamily: 'Evolventa' }}>
                             {teamName}
                         </Text>
                     </View>
-                    <View className="w-10" />
+                    <View className="w-10 items-end">
+                        <View className={`w-2 h-2 rounded-full opacity-80 ${dotColor}`} />
+                    </View>
+                </View>
+
+                {/* СТАТУС БАР */}
+                <View className="flex-row items-center justify-center mb-6">
+                    <View className={`w-2 h-2 rounded-full mr-2 shadow-sm ${dotColor}`} />
+                    <Text className={`text-xs font-bold uppercase tracking-widest ${statusColor}`} style={{ fontFamily: 'Evolventa' }}>
+                        {statusText}
+                    </Text>
                 </View>
 
                 {/* PLAYER CARD */}
-                <View className={`border rounded-2xl p-4 mb-8 flex-row justify-between items-center shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                    <View className="flex-row items-center">
-                        <View className={`w-12 h-12 rounded-full items-center justify-center mr-4 border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-300'}`}>
-                            <Text className={`font-bold text-lg ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                                {currentPlayerObj.number || `#${currentPlayerIndex + 1}`}
-                            </Text>
-                        </View>
-                        <View>
-                            <Text className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                                {t('tools.speed_checker.player_index', {
-                                    current: currentPlayerIndex + 1,
-                                    total: totalPlayers,
-                                }) as string}
-                            </Text>
-                            <Text className={`font-bold text-xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {currentPlayerObj.name}
-                            </Text>
-                        </View>
+                <Mod className="mb-6">
+                    <View className="flex-row justify-between items-center mb-2">
+                        <Text className="text-[10px] font-bold uppercase tracking-widest text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                            {t('tools.speed_checker.now_running')}
+                        </Text>
+                        <Text className="font-bold text-xs text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                            {currentPlayerIndex + 1} / {totalPlayers}
+                        </Text>
                     </View>
-                </View>
-
-                {/* TIMER */}
-                <View className="items-center mb-12">
-                    <Text className={`text-xs font-bold tracking-[0.3em] uppercase mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {isFinished
-                            ? (t('tools.speed_checker.result') as string)
-                            : (t('tools.speed_checker.time') as string)}
+                    <Text className="font-bold text-2xl text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                        {currentPlayerObj.name}
                     </Text>
-                    <View className="flex-row items-baseline">
-                        <Text className={`text-7xl font-black font-mono tracking-tighter ${timerColor}`}>
-                            {timeObj.main}
+                </Mod>
+
+                {/* ТАЙМЕР ТА ОНОВЛЕНИЙ SENSOR TRACK */}
+                <Mod className="mb-8">
+                    {/* Головний таймер */}
+                    <View className="items-center py-6 border-b border-white/5 mb-4">
+                        <Text className="text-[10px] font-bold tracking-[0.2em] uppercase mb-2 text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                            {isFinished ? t('tools.speed_checker.result') : t('tools.speed_checker.time')}
                         </Text>
-                        <Text className={`text-4xl font-black font-mono mb-1 ${decimalColor}`}>
-                            {timeObj.decimal}
-                        </Text>
+                        <View className="flex-row items-baseline">
+                            {/* 🔥 ВИПРАВЛЕНО: Видалено tabularNums зі style */}
+                            <Text className={`text-6xl font-black font-mono tracking-tighter ${timerColor}`}>
+                                {timeObj.main}
+                            </Text>
+                            <Text className={`text-3xl font-black font-mono mb-1 ${decimalColor}`}>
+                                {timeObj.decimal}
+                            </Text>
+                        </View>
                     </View>
-                </View>
 
-                {/* SENSOR TRACK */}
-                <View className="mb-12 h-80 relative w-full items-center">
-                    {/* Фонова лінія */}
-                    <View className={`absolute top-0 bottom-0 w-[2px] ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
-                    {/* Прогрес */}
-                    <View
-                        className={`absolute top-0 w-[2px] shadow-lg ${isDark ? 'bg-green-500 shadow-green-500/50' : 'bg-green-500 shadow-green-400/50'}`}
-                        style={{ height: `${progressPercent}%` }}
-                    />
+                    {/* ГОРИЗОНТАЛЬНИЙ SENSOR TRACK */}
+                    <View className="h-32 justify-end relative mx-4 mt-2 mb-4">
+                        <TrackLine />
 
-                    {activeSensors.map((sensor, index) => {
-                        const isStart  = index === 0;                           // завжди master (ID 0)
-                        const isFinish = index === activeSensors.length - 1;    // завжди найбільший ID
+                        {/* ПЛАВНИЙ ПОМАРАНЧЕВИЙ ПРОГРЕС */}
+                        <Animated.View
+                            className="absolute left-0 h-[2px] bg-[#FF6D00] shadow-[0_0_10px_rgba(255,109,0,0.8)] top-1/2 mt-[-1px] z-10"
+                            style={{ width: progressWidth }}
+                        />
 
-                        // Стартовий датчик вважається спрацьованим щойно run почався
-                        const triggered = isStart
-                            ? (isRunning || isFinished)
-                            : (sensor.triggerTime !== undefined && sensor.triggerTime > 0);
+                        {activeSensors.map((sensor, index) => {
+                            const isStart = index === 0;
+                            const isFinish = index === activeSensors.length - 1;
+                            const totalDist = config.distance;
 
-                        const top = (index / Math.max(1, activeSensors.length - 1)) * 100;
+                            // Обчислюємо позицію метрів
+                            // Обчислюємо позицію метрів
+                            let pos = 0;
+                            if (isStart) {
+                                pos = 0;
+                            } else if (isFinish) {
+                                pos = totalDist;
+                            } else {
+                                // 🔥 НАДІЙНИЙ ФОЛБЕК
+                                // Якщо спліт є у конфігу — беремо його.
+                                // Якщо масив порожній — рівномірно розподіляємо гейт по треку.
+                                pos = config.splitPositions?.[index - 1] || Math.round((totalDist / (activeSensors.length - 1)) * index);
+                            }
 
-                        // Підпис датчика
-                        let label = `GATE ${index}`;
-                        if (isStart)  label = 'START';
-                        if (isFinish) label = 'FINISH';
+                            const triggered = isStart
+                                ? (isRunning || isFinished)
+                                : (sensor.triggerTime !== undefined && sensor.triggerTime > 0);
 
-                        // Відображення часу
-                        let timeDisplay = '--:--';
-                        if (isStart && (isRunning || isFinished)) {
-                            timeDisplay = '00:00.00';
-                        } else if (sensor.triggerTime) {
-                            const tf = formatTime(sensor.triggerTime / 1000);
-                            timeDisplay = `${tf.main}${tf.decimal}`;
-                        }
+                            let label = t('tools.speed_checker.gate_label', { number: index });
+                            let type: 'start' | 'finish' | 'gate' = 'gate';
 
-                        return (
-                            <View
-                                key={`sensor-${sensor.id}`}
-                                className="absolute w-full flex-row items-center justify-center"
-                                style={{ top: `${top}%`, marginTop: -12 }}
-                            >
-                                <View className="flex-1 items-end pr-6">
-                                    <Text className={`text-[10px] font-black uppercase ${triggered ? (isDark ? 'text-white' : 'text-slate-900') : (isDark ? 'text-slate-600' : 'text-slate-400')}`}>
-                                        {label}
-                                    </Text>
-                                </View>
-                                <SensorDot
-                                    isTriggered={triggered}
-                                    isStart={isStart}
-                                    isFinish={isFinish}
-                                    isDark={isDark}
+                            if (isStart) {
+                                label = t('tools.speed_checker.start_label');
+                                type = 'start';
+                            } else if (isFinish) {
+                                label = t('tools.speed_checker.finish_label');
+                                type = 'finish';
+                            }
+
+                            let timeDisplay = '--:--';
+                            if (isStart && (isRunning || isFinished)) {
+                                timeDisplay = '00:00.00';
+                            } else if (sensor.triggerTime) {
+                                const tf = formatTime(sensor.triggerTime / 1000);
+                                timeDisplay = `${tf.main}${tf.decimal}`;
+                            }
+
+                            return (
+                                <RunMarker
+                                    key={`sensor-${sensor.id}`}
+                                    position={pos}
+                                    totalDistance={totalDist}
+                                    label={label as string}
+                                    type={type}
+                                    triggered={triggered}
+                                    timeDisplay={timeDisplay}
                                 />
-                                <View className="flex-1 items-start pl-6">
-                                    <Text className={`font-mono text-xs ${triggered ? (isDark ? 'text-slate-300' : 'text-slate-600') : (isDark ? 'text-slate-600' : 'text-slate-400')}`}>
-                                        {timeDisplay}
-                                    </Text>
-                                </View>
-                            </View>
-                        );
-                    })}
-                </View>
+                            );
+                        })}
+                    </View>
+                </Mod>
 
-                {/* ACTION BUTTONS
-                 *  Стан-машина (відповідає BLE хуку):
-                 *  idle/ready  → кнопка "Старт" (озброюємо систему)
-                 *  armed       → очікування перетину START (isReady)
-                 *  active      → таймер іде, кнопка "Стоп" (isRunning)
-                 *  finished    → результат, кнопки "Скинути" / "Наступний" (isFinished)
-                 */}
+                {/* ACTION BUTTONS */}
                 <View className="mb-6">
                     {!isRunning && !isFinished && !isReady && (
-                        // 1. Система готова — озброюємо
-                        <TouchableOpacity
+                        <Button
+                            variant="light"
+                            title={t('tools.speed_checker.btn_start') as string}
+                            icon={<Feather name="play" size={20} color="#0A0A0A" />}
                             onPress={startTraining}
-                            className="bg-green-500 py-5 rounded-2xl items-center flex-row justify-center shadow-sm"
-                        >
-                            <Feather name="play" size={24} color="#0f172a" style={{ marginRight: 10 }} />
-                            <Text className="font-black text-xl text-slate-900">
-                                {t('tools.speed_checker.btn_start') as string}
-                            </Text>
-                        </TouchableOpacity>
+                            className="w-full shadow-lg shadow-white/10"
+                        />
                     )}
 
                     {isReady && (
-                        // 2. Озброєно (armed) — чекаємо перетину стартової лінії.
-                        //    Кнопка "Скасувати" скидає стан назад у ready.
-                        <TouchableOpacity
+                        <Button
+                            variant="primary"
+                            title={t('tools.speed_checker.btn_waiting_start') as string}
+                            icon={<Feather name="loader" size={20} color="#F5F5F5" />}
                             onPress={resetSession}
-                            className="bg-yellow-400 py-5 rounded-2xl items-center flex-row justify-center shadow-sm"
-                        >
-                            <Feather name="loader" size={24} color="#0f172a" style={{ marginRight: 10 }} />
-                            <Text className="font-black text-xl text-slate-900">
-                                {t('tools.speed_checker.btn_waiting_start', { defaultValue: 'ОЧІКУВАННЯ СТАРТУ...' }) as string}
-                            </Text>
-                        </TouchableOpacity>
+                            className="w-full shadow-lg shadow-[#FF6D00]/20"
+                        />
                     )}
 
                     {isRunning && (
-                        // 3. Таймер іде — зупинити достроково
-                        <TouchableOpacity
+                        <Button
+                            variant="outline"
+                            title={t('tools.speed_checker.btn_stop') as string}
+                            icon={<Feather name="square" size={20} color="#F5F5F5" />}
                             onPress={stopTraining}
-                            className="bg-red-500 py-5 rounded-2xl items-center flex-row justify-center shadow-sm"
-                        >
-                            <Feather name="square" size={24} color="white" style={{ marginRight: 10 }} />
-                            <Text className="text-white font-black text-xl">
-                                {t('tools.speed_checker.btn_stop') as string}
-                            </Text>
-                        </TouchableOpacity>
+                            className="w-full bg-red-500/10 border-red-500/30"
+                        />
                     )}
 
                     {isFinished && (
-                        // 4. Фініш — скинути поточний забіг або перейти до наступного гравця
-                        <View className="flex-row space-x-3">
-                            <TouchableOpacity
-                                onPress={resetSession}
-                                className={`flex-1 py-4 rounded-2xl items-center mr-2 border shadow-sm ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-300'}`}
-                            >
-                                <Text className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                    {t('tools.speed_checker.btn_reset') as string}
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={nextPlayer}
-                                className="flex-[2] bg-yellow-400 py-4 rounded-2xl items-center shadow-sm"
-                            >
-                                <Text className="text-slate-900 font-black text-lg uppercase">
-                                    {t('tools.speed_checker.btn_skip') as string}
-                                </Text>
-                            </TouchableOpacity>
+                        <View className="flex-row gap-3">
+                            <View className="flex-1">
+                                <Button
+                                    variant="outline"
+                                    title={t('tools.speed_checker.btn_reset') as string}
+                                    onPress={resetSession}
+                                />
+                            </View>
+                            <View className="flex-[2]">
+                                <Button
+                                    variant="light"
+                                    title={t('tools.speed_checker.btn_skip') as string}
+                                    onPress={nextPlayer}
+                                    icon={<Feather name="chevron-right" size={20} color="#0A0A0A" />}
+                                />
+                            </View>
                         </View>
                     )}
                 </View>
             </ScrollView>
 
-            {/* INDIVIDUAL RUN MODAL */}
-            <AppModal
-                visible={showIndividualModal}
-                onClose={() => {}}
-                title={t('tools.speed_checker.modal_result', { name: currentPlayerObj.name }) as string}
-                type="center"
-            >
+            {/* MODALS (Без змін) */}
+            <AppModal visible={showIndividualModal} onClose={() => {}} title={t('tools.speed_checker.modal_result', { name: currentPlayerObj.name }) as string} type="center">
                 <View className="items-center">
-                    <Text className={`text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('tools.speed_checker.run_time') as string}
-                    </Text>
-
-                    {/* Показуємо час з currentRunResult — точне значення, зафіксоване в хуку */}
+                    <Text className="text-xs font-bold uppercase tracking-widest mb-2 text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>{t('tools.speed_checker.run_time') as string}</Text>
                     {currentRunResult && (
-                        <View className="flex-row items-baseline mb-6">
-                            <Text className={`text-6xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {Math.floor(currentRunResult.fullTime / 60).toString().padStart(2, '0')}
-                                :{Math.floor(currentRunResult.fullTime % 60).toString().padStart(2, '0')}
-                            </Text>
-                            <Text className={`text-3xl font-black ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}>
-                                .{Math.round((currentRunResult.fullTime % 1) * 1000).toString().padStart(3, '0')}
-                            </Text>
+                        <View className="flex-row items-baseline mb-8 mt-2">
+                            <Text className="text-6xl font-black text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>{Math.floor(currentRunResult.fullTime / 60).toString().padStart(2, '0')}:{Math.floor(currentRunResult.fullTime % 60).toString().padStart(2, '0')}</Text>
+                            <Text className="text-3xl font-black text-[#FF6D00]" style={{ fontFamily: 'Unbounded' }}>.{Math.round((currentRunResult.fullTime % 1) * 1000).toString().padStart(3, '0')}</Text>
                         </View>
                     )}
-
-                    <View className="flex-row w-full gap-3">
-                        <TouchableOpacity
-                            onPress={retryIndividualRun}
-                            className={`flex-1 py-4 rounded-xl items-center border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-300'}`}
-                        >
-                            <Text className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                                {t('tools.speed_checker.btn_retry') as string}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={confirmIndividualRun}
-                            className="flex-1 bg-green-500 py-4 rounded-xl items-center flex-row justify-center"
-                        >
-                            <Text className="text-slate-900 font-black uppercase mr-1">
-                                {t('tools.speed_checker.btn_accept') as string}
-                            </Text>
-                            <Feather name="check" size={18} color="#0f172a" />
-                        </TouchableOpacity>
-                    </View>
+                    <View className="flex-row w-full gap-3"><View className="flex-1"><Button variant="outline" title={t('tools.speed_checker.btn_retry') as string} onPress={retryIndividualRun} /></View><View className="flex-1"><Button variant="primary" title={t('tools.speed_checker.btn_accept') as string} onPress={confirmIndividualRun} icon={<Feather name="check" size={18} color="#F5F5F5" />} /></View></View>
                 </View>
             </AppModal>
-
-            {/* SUMMARY MODAL */}
-            <AppModal
-                visible={showSummaryModal}
-                onClose={() => {}}
-                title={t('tools.speed_checker.modal_summary', { count: localResults.length }) as string}
-                type="center"
-            >
-                <View className="h-96 w-full">
-                    <Text className={`text-xs mb-4 text-center ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                        {t('tools.speed_checker.summary_desc') as string}
-                    </Text>
-                    <FlatList
-                        data={localResults}
-                        keyExtractor={(_, index) => index.toString()}
-                        className="flex-1 rounded-xl border mb-4"
-                        style={{ backgroundColor: colors.bgList, borderColor: colors.borderList }}
-                        contentContainerStyle={{ padding: 12 }}
-                        showsVerticalScrollIndicator={false}
-                        renderItem={({ item, index }) => (
-                            <View
-                                className="flex-row justify-between items-center py-3 border-b"
-                                style={{ borderColor: colors.borderRow }}
-                            >
-                                <View className="flex-row items-center">
-                                    <Text className="w-6 font-bold" style={{ color: colors.textSub }}>
-                                        {index + 1}.
-                                    </Text>
-                                    <View>
-                                        <Text className="font-bold text-sm" style={{ color: colors.textMain }}>
-                                            {item.player.name}
-                                        </Text>
-                                        <Text className="text-[10px]" style={{ color: colors.textSub }}>
-                                            #{item.player.number}
-                                        </Text>
-                                    </View>
-                                </View>
-                                <Text className="font-mono font-bold text-lg" style={{ color: colors.yellow }}>
-                                    {item.fullTime.toFixed(3)}s
-                                </Text>
-                            </View>
-                        )}
-                    />
-                    <View className="flex-row w-full gap-3 mt-2">
-                        <TouchableOpacity
-                            onPress={restartWholeSession}
-                            className={`flex-1 py-4 rounded-xl items-center border ${isDark ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200'}`}
-                        >
-                            <Text className={`font-bold uppercase ${isDark ? 'text-red-400' : 'text-red-500'}`}>
-                                {t('tools.speed_checker.btn_reset_all') as string}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={saveAllResults}
-                            disabled={isSaving}
-                            className="flex-1 bg-green-500 py-4 rounded-xl items-center flex-row justify-center"
-                        >
-                            {isSaving
-                                ? <ActivityIndicator color="#0f172a" size="small" />
-                                : <>
-                                    <Text className="text-slate-900 font-black uppercase mr-1">
-                                        {t('tools.speed_checker.btn_save_db') as string}
-                                    </Text>
-                                    <Feather name="database" size={18} color="#0f172a" />
-                                </>
-                            }
-                        </TouchableOpacity>
-                    </View>
-                </View>
+            <AppModal visible={showSummaryModal} onClose={() => {}} title={t('tools.speed_checker.modal_summary', { count: localResults.length }) as string} type="center">
+                <View className="h-96 w-full mt-2"><Text className="text-xs mb-4 text-center text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>{t('tools.speed_checker.summary_desc') as string}</Text><FlatList data={localResults} keyExtractor={(_, index) => index.toString()} className="flex-1 rounded-2xl border border-white/10 bg-white/5 mb-6" contentContainerStyle={{ padding: 12 }} showsVerticalScrollIndicator={false} renderItem={({ item, index }) => (<View className="flex-row justify-between items-center py-3 border-b border-white/5"><View className="flex-row items-center"><Text className="w-6 font-bold text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>{index + 1}.</Text><View><Text className="font-bold text-sm text-[#F5F5F5]" style={{ fontFamily: 'Evolventa' }}>{item.player.name}</Text><Text className="text-[10px] text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>#{item.player.number || 'N/A'}</Text></View></View><Text className="font-mono font-bold text-lg text-[#FF6D00]">{item.fullTime.toFixed(3)}s</Text></View>)} /><View className="flex-row w-full gap-3 mt-2"><View className="flex-1"><Button variant="outline" title={t('tools.speed_checker.btn_reset_all') as string} onPress={restartWholeSession} /></View><View className="flex-1"><Button variant="primary" title={t('tools.speed_checker.btn_save_db') as string} onPress={saveAllResults} isLoading={isSaving} icon={!isSaving && <Feather name="database" size={18} color="#F5F5F5" />} /></View></View></View>
             </AppModal>
         </View>
     );

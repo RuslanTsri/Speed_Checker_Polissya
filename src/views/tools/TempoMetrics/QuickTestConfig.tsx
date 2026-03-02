@@ -1,108 +1,175 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { View, Text, ScrollView, Pressable } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+
+// 🔥 Імпорт хуків
 import { useTestConfiguration } from '../../../hooks/tempoMetrics/useTestConfiguration';
-import { useTheme } from '../../../context/ThemeContext';
+import { useBle } from '../../../context/BleContext';
 
-interface Props { onBack: () => void; onStart: (distance: number) => void; playerCount: number; testType?: string; }
+// 🔥 Імпорт UI-компонентів
+import { HeaderTabs } from '../../components/ui/tabs';
+import { Button } from '../../components/ui/Button';
+import { TextField } from '../../components/ui/TextField';
+import { ArrowIconActive, ArrowIcon } from '../../../../assets/icons';
 
-export default function QuickTestConfig({ onBack, onStart, playerCount, testType }: Props) {
+// 🔥 Імпорт розбитої схеми
+import { LayoutContainer, LayoutTrack, LayoutMarker } from '../../components/ui/LayoutScheme';
+
+interface Props {
+    onBack: () => void;
+    onStart: (distance: number) => void;
+    playerCount: number;
+    testType?: string;
+    onOpenBluetooth: () => void; // 🔥 Додаємо новий пропс
+}
+
+// ==========================================
+// 🔥 Локальний компонент для кнопок регулювання (+ / -)
+// ==========================================
+const AdjustButton = ({ direction, onPress }: { direction: 'left' | 'right', onPress: () => void }) => (
+    <Pressable
+        onPress={onPress}
+        className="w-12 h-14 items-center justify-center rounded-lg border border-white/20 bg-transparent active:bg-white/5"
+    >
+        {({ pressed }) => (
+            <View style={{ transform: [{ rotate: direction === 'left' ? '-90deg' : '90deg' }] }}>
+                {pressed
+                    ? <ArrowIconActive width={24} height={24} fill="#F5F5F5" />
+                    : <ArrowIcon width={24} height={24} fill="#A3A3A3" />
+                }
+            </View>
+        )}
+    </Pressable>
+);
+
+export default function QuickTestConfig({ onBack, onStart, playerCount, testType, onOpenBluetooth }: Props) { // 🔥 Дістаємо onOpenBluetooth
     const { t } = useTranslation();
-    const { isDark } = useTheme();
     const { distance, setDistance, splitPositions, adjustSplit, sensorsCount, intermediateCount } = useTestConfiguration();
 
+    // Отримуємо статус підключення з Bluetooth
+    const { connected } = useBle();
+
+    // Дані для табів дистанції
+    const distanceTabs = [
+        { id: '30', label: `30 ${t('tools.speed_checker.meters_short')}` },
+        { id: '60', label: `60 ${t('tools.speed_checker.meters_short')}` },
+        { id: '100', label: `100 ${t('tools.speed_checker.meters_short')}` }
+    ];
+
     return (
-        <View className="flex-1 px-4 pt-4">
-            <View className="flex-row items-center justify-between mb-6">
-                <TouchableOpacity onPress={onBack} className={`p-2 -ml-2 rounded-full ${isDark ? 'active:bg-slate-800' : 'active:bg-slate-200'}`}><Feather name="chevron-left" size={28} color={isDark ? "white" : "black"} /></TouchableOpacity>
-                <Text className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('tools.speed_checker.test_config_title') as string}</Text>
+        <View className="flex-1 pt-4 relative">
+
+            {/* HEADER */}
+            <View className="flex-row items-center justify-between px-4 mb-2 relative z-10">
+                <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
+                    {({ pressed }) => (
+                        <View style={{ transform: [{ rotate: '-90deg' }] }}>
+                            {pressed ? <ArrowIconActive width={28} height={28} fill="#F5F5F5" /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                        </View>
+                    )}
+                </Pressable>
+
+                <View className="flex-1 items-center">
+                    <Text className="text-xl font-bold text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                        {t('tools.speed_checker.quick_test_title')}
+                    </Text>
+                </View>
                 <View className="w-10" />
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-                <View className="flex-row justify-center space-x-2 mb-8">
-                    {testType === 'TEAM' && (
-                        <View className={`border px-3 py-1.5 rounded-lg flex-row items-center ${isDark ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
-                            <Feather name="users" size={12} color={isDark ? "#60a5fa" : "#3b82f6"} style={{ marginRight: 6 }} />
-                            <Text className={`text-xs font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{t('tools.speed_checker.players_count', { count: playerCount }) as string}</Text>
-                        </View>
-                    )}
-                    <View className={`border px-3 py-1.5 rounded-lg flex-row items-center ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-300'}`}>
-                        <MaterialCommunityIcons name="layers" size={12} color={isDark ? "#94a3b8" : "#64748b"} style={{ marginRight: 6 }} />
-                        <Text className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{t('tools.speed_checker.gates_count', { count: sensorsCount }) as string}</Text>
-                    </View>
-                    <View className={`border px-3 py-1.5 rounded-lg flex-row items-center ${isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200'}`}>
-                        <Feather name="wifi" size={12} color={isDark ? "#4ade80" : "#16a34a"} style={{ marginRight: 6 }} />
-                        <Text className={`text-xs font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>{t('tools.speed_checker.with_device') as string}</Text>
-                    </View>
+            {/* СУБХЕДЕР (Статус підключення та гейтів) */}
+            <View className="items-center mb-8">
+                <Text className="text-[#A3A3A3] text-sm" style={{ fontFamily: 'Evolventa' }}>
+                    {t('tools.speed_checker.gates_count', { count: sensorsCount })} • {connected ? t('tools.speed_checker.status_ready') : t('tools.speed_checker.connection_required')}
+                </Text>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 60 }}>
+
+                {/* 1. ВИБІР ДИСТАНЦІЇ */}
+                <View className="w-full mb-8">
+                    <HeaderTabs
+                        tabs={distanceTabs}
+                        activeTab={distance.toString()}
+                        onTabChange={(id) => setDistance(parseInt(id))}
+                        className="w-full"
+                    />
                 </View>
 
-                <Text className={`text-xs font-bold uppercase mb-3 ml-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{t('tools.speed_checker.total_distance') as string}</Text>
-                <View className="flex-row space-x-3 mb-8">
-                    {[30, 60, 100].map(d => (
-                        <TouchableOpacity key={d} onPress={() => setDistance(d)} className={`flex-1 py-4 rounded-2xl items-center border shadow-sm ${distance === d ? (isDark ? 'bg-yellow-400 border-yellow-400' : 'bg-yellow-400 border-yellow-400') : (isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200')}`}>
-                            <Text className={`text-lg font-black ${distance === d ? 'text-slate-900' : (isDark ? 'text-slate-500' : 'text-slate-500')}`}>{d} м</Text>
-                        </TouchableOpacity>
+                {/* 2. СХЕМА РОЗСТАНОВКИ ГЕЙТІВ */}
+                <LayoutContainer
+                    title={t('tools.speed_checker.scheme_title') as string}
+                    subtitle={t('tools.speed_checker.scheme_desc') as string}
+                >
+                    <LayoutTrack />
+
+                    {/* Старт */}
+                    <LayoutMarker position={0} totalDistance={distance} label={t('tools.speed_checker.start_label') as string} type="start" />
+
+                    {/* Проміжні гейти (Спліти) */}
+                    {splitPositions.map((pos, i) => (
+                        <LayoutMarker key={i} position={pos} totalDistance={distance} label={t('tools.speed_checker.gate_label', { number: i + 1 }) as string} type="gate" />
                     ))}
-                </View>
 
-                <View className={`border rounded-3xl p-6 mb-6 shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                    <View className="flex-row justify-between items-center mb-4">
-                        <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('tools.speed_checker.scheme_title') as string}</Text>
-                        {intermediateCount > 0 && <Text className={`text-[10px] uppercase font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t('tools.speed_checker.can_change') as string}</Text>}
-                    </View>
+                    {/* Фініш */}
+                    <LayoutMarker position={distance} totalDistance={distance} label={t('tools.speed_checker.finish_label') as string} type="finish" />
+                </LayoutContainer>
 
-                    <View className="h-40 relative mx-4">
-                        <View className={`h-[2px] w-full absolute top-1/2 mt-[-1px] ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-                        <View className="absolute top-0 bottom-0 w-20 -ml-10 items-center justify-center" style={{ left: '0%' }}>
-                            <View className={`mb-2 px-2 py-0.5 rounded border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-300'}`}><Text className={`font-bold text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>0 м</Text></View>
-                            <View className={`w-1.5 h-8 rounded-full ${isDark ? 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]'}`} />
-                            <Text className={`mt-2 text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>START</Text>
-                        </View>
-                        {splitPositions.map((pos, i) => {
-                            const percent = (pos / distance) * 100;
-                            return (
-                                <View key={i} className="absolute top-0 bottom-0 w-20 -ml-10 items-center justify-center" style={{ left: `${percent}%` }}>
-                                    <View className={`mb-2 px-2 py-0.5 rounded border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-300'}`}><Text className={`font-bold text-[10px] ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{pos} м</Text></View>
-                                    <View className={`w-1.5 h-8 rounded-full ${isDark ? 'bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'}`} />
-                                    <Text className={`mt-2 text-[10px] font-bold opacity-60 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>GATE {i+1}</Text>
-                                </View>
-                            );
-                        })}
-                        <View className="absolute top-0 bottom-0 w-20 -ml-10 items-center justify-center" style={{ left: '100%' }}>
-                            <View className={`mb-2 px-2 py-0.5 rounded border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-300'}`}><Text className={`font-bold text-[10px] ${isDark ? 'text-white' : 'text-slate-900'}`}>{distance} м</Text></View>
-                            <View className={`w-1.5 h-8 rounded-full ${isDark ? 'bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]'}`} />
-                            <Text className={`mt-2 text-[10px] font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>FINISH</Text>
-                        </View>
-                    </View>
-                </View>
-
+                {/* 3. НАЛАШТУВАННЯ СПЛІТІВ (Якщо є проміжні гейти) */}
                 {intermediateCount > 0 && (
-                    <View className="mb-8">
-                        <Text className={`text-xs font-bold uppercase mb-3 ml-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{t('tools.speed_checker.split_settings') as string}</Text>
+                    <View className="mb-6">
+                        <Text className="text-[11px] font-bold tracking-[0.1em] uppercase mb-4 ml-1 text-slate-500">
+                            {t('tools.speed_checker.split_settings')}
+                        </Text>
+
                         {splitPositions.map((pos, index) => (
-                            <View key={index} className={`border rounded-2xl p-4 mb-3 flex-row items-center justify-between shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <View className="flex-row items-center">
-                                    <View className={`w-8 h-8 rounded-full items-center justify-center mr-3 border ${isDark ? 'bg-blue-500/20 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
-                                        <Text className={`font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{index + 1}</Text>
-                                    </View>
-                                    <Text className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('tools.speed_checker.gate_number', { number: index + 1 }) as string}</Text>
+                            <View key={index} className="flex-row items-center gap-3 mb-2">
+                                <View className="flex-1">
+                                    <TextField
+                                        label={t('tools.speed_checker.gate_meters_label', { number: index + 1 }) as string}
+                                        value={pos.toString()}
+                                        editable={false}
+                                    />
                                 </View>
-                                <View className={`flex-row items-center rounded-xl border p-1 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                    <TouchableOpacity onPress={() => adjustSplit(index, -5)} className={`w-10 h-10 items-center justify-center rounded-lg ${isDark ? 'active:bg-slate-800' : 'active:bg-slate-200'}`}><Feather name="minus" size={18} color={isDark ? "white" : "black"} /></TouchableOpacity>
-                                    <View className="w-16 items-center"><Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>{pos}м</Text></View>
-                                    <TouchableOpacity onPress={() => adjustSplit(index, 5)} className={`w-10 h-10 items-center justify-center rounded-lg ${isDark ? 'active:bg-slate-800' : 'active:bg-slate-200'}`}><Feather name="plus" size={18} color={isDark ? "white" : "black"} /></TouchableOpacity>
+
+                                {/* Нові кнопки регулювання з іконками стрілок */}
+                                <View className="flex-row gap-2 mt-4">
+                                    <AdjustButton direction="left" onPress={() => adjustSplit(index, -5)} />
+                                    <AdjustButton direction="right" onPress={() => adjustSplit(index, 5)} />
                                 </View>
                             </View>
                         ))}
                     </View>
                 )}
 
-                <TouchableOpacity onPress={() => onStart(distance)} className={`w-full py-5 rounded-2xl items-center mb-10 shadow-lg flex-row justify-center ${isDark ? 'bg-yellow-400 active:bg-yellow-500 shadow-yellow-400/20' : 'bg-yellow-400 active:bg-yellow-500 shadow-yellow-400/30'}`}>
-                    <Feather name="play" size={20} color="#0f172a" style={{ marginRight: 8 }} />
-                    <Text className="text-slate-900 font-black text-lg uppercase">{t('tools.speed_checker.btn_start_test') as string}</Text>
-                </TouchableOpacity>
+                {/* 4. ІНФО-ПОВІДОМЛЕННЯ */}
+                {!connected && (
+                    <View className="flex-row items-center justify-center mb-6 opacity-70">
+                        <Feather name="alert-circle" size={16} color="#F5F5F5" />
+                        <Text className="text-[#F5F5F5] text-sm ml-2" style={{ fontFamily: 'Evolventa' }}>
+                            {t('tools.speed_checker.gates_connection_required')}
+                        </Text>
+                    </View>
+                )}
+
+                {/* 5. КНОПКА СТАРТУ */}
+                <Button
+                    variant="light"
+                    title={t('tools.speed_checker.btn_start_test') as string}
+                    onPress={() => onStart(distance)}
+                    disabled={!connected}
+                    className="w-full mb-4"
+                />
+
+                {/* 6. КНОПКА ПІДКЛЮЧЕННЯ (OUTLINE) */}
+                <Button
+                    variant="outline"
+                    title={t('tools.speed_checker.go_to_connection') as string}
+                    onPress={onOpenBluetooth}
+                    className="w-full mb-10"
+                />
+
             </ScrollView>
         </View>
     );

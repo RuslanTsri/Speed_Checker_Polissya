@@ -136,6 +136,20 @@
     "success_save": "All results saved!",
     "error_save": "Failed to save data. Check internet and try again.",
     "alert_ok": "OK",
-    "error_load_teams": "Failed to load teams"
+    "error_load_teams": "Failed to load teams",
+    "scheme_desc": "Check the distance between start and finish.",
+    "meters_short": "m",
+    "connection_required": "Connection required",
+    "start_label": "Start",
+    "finish_label": "Finish",
+    "gate_label": "Gate {{number}}",
+    "gate_meters_label": "Gate {{number}} (meters)",
+    "gates_connection_required": "Gate connection required",
+    "go_to_connection": "Go to connection",
+    "now_running": "Now",
+    "status_ready_to_measure": "Ready to measure",
+    "status_result_obtained": "Result obtained",
+    "status_running": "Measuring...",
+    "btn_waiting_start": "WAITING FOR START..."
   }
 }

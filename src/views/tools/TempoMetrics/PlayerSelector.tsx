@@ -1,106 +1,166 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, Pressable, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { usePlayerSelection } from '../../../hooks/tempoMetrics/usePlayerSelection';
 import { Player } from '../../../services/playerService';
-import { useTheme } from '../../../context/ThemeContext';
-import {Checkbox } from '../../components/ui/Checkbox'; // <--- Перевір шлях!
-interface Props { teamId: string; onBack: () => void; onSelect: (players: Player[]) => void; }
+
+// 🔥 Імпорт UI-компонентів
+import { SearchInput } from '../../components/ui/SearchInput';
+import { Button } from '../../components/ui/Button';
+import { Checkbox } from '../../components/ui/Checkbox';
+import {
+    ArrowIcon,
+    ArrowIconActive,
+    PhotoIcon
+} from '../../../../assets/icons';
+
+interface Props {
+    teamId: string;
+    onBack: () => void;
+    onSelect: (players: Player[]) => void;
+}
 
 export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
     const { t } = useTranslation();
-    const { isDark } = useTheme();
     const { players, selectedIds, toggleSelection, toggleAll, isEmpty, isLoading, search, setSearch } = usePlayerSelection(teamId);
 
+    // ==========================================
+    // СТАН: ПОРОЖНЯ КОМАНДА
+    // ==========================================
     if (isEmpty) {
         return (
-            <View className="flex-1 px-4 pt-4">
-                <View className="flex-row items-center justify-between mb-6">
-                    <TouchableOpacity onPress={onBack} className={`p-2 -ml-2 rounded-full ${isDark ? 'active:bg-slate-800' : 'active:bg-slate-200'}`}><Feather name="chevron-left" size={28} color={isDark ? "white" : "black"} /></TouchableOpacity>
-                    <Text className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('tools.speed_checker.team_empty_title') as string}</Text>
+            <View className="flex-1 pt-4 relative">
+                <View className="flex-row items-center justify-between px-4 mb-6">
+                    <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
+                        {({ pressed }) => (
+                            <View style={{ transform: [{ rotate: '-90deg' }] }}>
+                                {pressed ? <ArrowIconActive width={28} height={28} fill="#F5F5F5" /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                            </View>
+                        )}
+                    </Pressable>
+                    <Text className="text-xl font-bold flex-1 text-center text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                        {t('tools.speed_checker.team_empty_title')}
+                    </Text>
                     <View className="w-10" />
                 </View>
-                <View className="items-center justify-center flex-1 mb-20">
-                    <Text className={`font-bold uppercase tracking-widest mb-8 text-center px-6 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t('tools.speed_checker.team_empty_desc') as string}</Text>
-                    <TouchableOpacity onPress={onBack} className={`border py-4 px-8 rounded-2xl shadow-sm ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}>
-                        <Text className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('tools.speed_checker.btn_go_back') as string}</Text>
-                    </TouchableOpacity>
+
+                <View className="items-center justify-center flex-1 px-6 pb-20">
+                    <View className="w-20 h-20 bg-white/5 border border-white/10 rounded-full items-center justify-center mb-6">
+                        <Feather name="users" size={32} color="#A3A3A3" />
+                    </View>
+                    <Text className="text-[#A3A3A3] text-center mb-8" style={{ fontFamily: 'Evolventa', lineHeight: 22 }}>
+                        {t('tools.speed_checker.team_empty_desc')}
+                    </Text>
+                    <Button
+                        variant="outline"
+                        title={t('tools.speed_checker.btn_go_back')}
+                        onPress={onBack}
+                        className="w-full"
+                    />
                 </View>
             </View>
         );
     }
 
+    // ==========================================
+    // СТАН: СПИСОК ГРАВЦІВ
+    // ==========================================
     return (
-        <View className="flex-1 px-4 pt-4">
-            <View className="flex-row items-center justify-between mb-2">
-                <TouchableOpacity onPress={onBack} className={`p-2 -ml-2 rounded-full ${isDark ? 'active:bg-slate-800' : 'active:bg-slate-200'}`}><Feather name="chevron-left" size={28} color={isDark ? "white" : "black"} /></TouchableOpacity>
-                <Text className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('tools.speed_checker.select_players_title') as string}</Text>
+        <View className="flex-1 pt-4 relative">
+
+            {/* HEADER */}
+            <View className="flex-row items-center justify-between px-4 mb-6 relative z-10">
+                <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
+                    {({ pressed }) => (
+                        <View style={{ transform: [{ rotate: '-90deg' }] }}>
+                            {pressed ? <ArrowIconActive width={28} height={28} fill="#F5F5F5" /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                        </View>
+                    )}
+                </Pressable>
+                <Text className="text-xl font-bold flex-1 text-center text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                    {t('tools.speed_checker.select_players_title')}
+                </Text>
                 <View className="w-10" />
             </View>
 
-            <View className="flex-row justify-between items-center mb-4">
-                <Text className={`font-bold text-base ${isDark ? 'text-blue-500' : 'text-blue-600'}`}>{t('tools.speed_checker.selected_count') as string} <Text className={isDark ? 'text-white' : 'text-slate-900'}>{selectedIds.length}</Text> {t('tools.speed_checker.from') as string} {players.length}</Text>
+            {/* ПОШУК */}
+            <View className="px-4 mb-4 z-10">
+                <SearchInput
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder={t('tools.speed_checker.search_player')}
+                />
             </View>
 
-            <View className={`flex-row items-center px-4 rounded-2xl border h-14 mb-4 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                <Feather name="search" size={20} color={isDark ? "#64748b" : "#94a3b8"} className="mr-3" />
-                <TextInput value={search} onChangeText={setSearch} placeholder={t('tools.speed_checker.search_player') as string} placeholderTextColor={isDark ? "#64748b" : "#94a3b8"} className={`flex-1 text-base h-full ${isDark ? 'text-white' : 'text-slate-900'}`} />
-            </View>
+            {/* СУБХЕДЕР */}
+            <View className="flex-row justify-between items-center px-5 mb-4 z-10">
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
+                    {t('tools.speed_checker.selected_count')} <Text className="text-[#FF6D00]">{selectedIds.length}</Text> {t('tools.speed_checker.from')} {players.length}
+                </Text>
 
-            <View className="flex-row justify-between mb-4 px-1">
-                <Text className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{t('tools.speed_checker.player_list') as string}</Text>
-                <TouchableOpacity onPress={toggleAll}>
-                    <Text className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>{selectedIds.length === players.length && players.length > 0 ? (t('tools.speed_checker.deselect_all') as string) : (t('tools.speed_checker.select_all') as string)}</Text>
+                <TouchableOpacity onPress={toggleAll} className="active:opacity-60 py-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-widest text-[#FF6D00]" style={{ fontFamily: 'Evolventa' }}>
+                        {selectedIds.length === players.length && players.length > 0
+                            ? t('tools.speed_checker.deselect_all')
+                            : t('tools.speed_checker.select_all')}
+                    </Text>
                 </TouchableOpacity>
             </View>
 
+            {/* СПИСОК ГРАВЦІВ */}
             {isLoading ? (
-                <ActivityIndicator size="large" color={isDark ? "#facc15" : "#eab308"} className="mt-10" />
+                <ActivityIndicator size="large" color="#FF6D00" className="mt-10" />
             ) : (
                 <FlatList
-                    data={players} keyExtractor={item => item.id || Math.random().toString()} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}
+                    data={players}
+                    keyExtractor={item => item.id || Math.random().toString()}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 200 }}
                     renderItem={({ item }) => {
                         const isSelected = selectedIds.includes(item.id || '');
                         return (
-                            <TouchableOpacity
+                            <Pressable
                                 onPress={() => toggleSelection(item.id || '')}
-                                activeOpacity={0.7}
-                                className={`p-4 rounded-2xl mb-3 border flex-row items-center shadow-sm ${
+                                style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+                                className={`p-4 rounded-3xl mb-3 border flex-row items-center justify-between transition-colors shadow-sm ${
                                     isSelected
-                                        ? (isDark ? 'bg-slate-900 border-yellow-600' : 'bg-yellow-50 border-yellow-400')
-                                        : (isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200')
+                                        ? 'bg-[#FF6D00]/10 border-[#FF6D00]/50'
+                                        : 'bg-white/5 border-white/10'
                                 }`}
                             >
-                                {/* ТУТ МИ СТАВИМО НАШ ЧЕКБОКС: */}
-                                <View className="mr-4">
-                                    <Checkbox
-                                        checked={isSelected}
-                                        // Ми вже обробляємо клік на всьому рядку (TouchableOpacity),
-                                        // але MyCheckbox теж має свою логіку натискання.
-                                        // Щоб не було подвійних спрацьовувань, передаємо порожню функцію або ту саму:
-                                        onChange={() => toggleSelection(item.id || '')}
-                                    />
-                                </View>
-
-                                <View>
-                                    <Text className={`font-bold text-base ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                {/* Ліва частина: Просто іконка та Ім'я */}
+                                <View className="flex-row items-center flex-1 gap-3">
+                                    <PhotoIcon width={24} height={24} fill="#A3A3A3" />
+                                    <Text className="font-bold text-base text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
                                         {item.name}
                                     </Text>
                                 </View>
-                            </TouchableOpacity>
+
+                                {/* Права частина: Чекбокс */}
+                                <View className="ml-4" pointerEvents="none">
+                                    <Checkbox
+                                        checked={isSelected}
+                                        onChange={() => {}}
+                                    />
+                                </View>
+                            </Pressable>
                         );
                     }}
                 />
             )}
 
-            <TouchableOpacity
-                onPress={() => onSelect(players.filter(p => selectedIds.includes(p.id || '')))}
-                disabled={selectedIds.length === 0}
-                className={`w-full py-5 rounded-2xl items-center mb-8 absolute bottom-0 left-4 right-4 shadow-lg ${selectedIds.length > 0 ? (isDark ? 'bg-yellow-400 shadow-yellow-400/20' : 'bg-yellow-400 shadow-yellow-400/30') : (isDark ? 'bg-slate-900 border border-slate-800 opacity-50' : 'bg-slate-200 opacity-70')}`}
-            >
-                <Text className={`font-black text-lg uppercase ${selectedIds.length > 0 ? 'text-slate-900' : (isDark ? 'text-slate-600' : 'text-slate-400')}`}>{t('tools.speed_checker.btn_continue') as string}</Text>
-            </TouchableOpacity>
+            {/* 🔥 НИЖНЯ КНОПКА (Над футером) */}
+            <View className="absolute bottom-28 left-4 right-4 z-50">
+                <Button
+                    variant="primary"
+                    title={t('tools.speed_checker.btn_continue')}
+                    onPress={() => onSelect(players.filter(p => selectedIds.includes(p.id || '')))}
+                    disabled={selectedIds.length === 0}
+                    className="w-full shadow-xl shadow-black/50"
+                />
+            </View>
+
         </View>
     );
 }

@@ -141,6 +141,20 @@
     "success_save": "Всі результати збережено!",
     "error_save": "Не вдалося зберегти дані. Перевірте інтернет та спробуйте ще раз.",
     "alert_ok": "ОК",
-    "error_load_teams": "Не вдалося завантажити команди"
+    "error_load_teams": "Не вдалося завантажити команди",
+    "scheme_desc": "Перевірте відстань між стартом і фінішем.",
+    "meters_short": "м",
+    "connection_required": "Потрібне підключення",
+    "start_label": "Start",
+    "finish_label": "Finish",
+    "gate_label": "Gate {{number}}",
+    "gate_meters_label": "Гейт {{number}} (метри)",
+    "gates_connection_required": "Потрібне підключення гейтів",
+    "go_to_connection": "Перейти до підключення",
+    "now_running": "Зараз",
+    "status_ready_to_measure": "Ready to measure",
+    "status_result_obtained": "Результат отримано",
+    "status_running": "Вимірювання...",
+    "btn_waiting_start": "ОЧІКУВАННЯ СТАРТУ..."
   }
 }

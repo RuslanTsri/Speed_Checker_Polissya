@@ -120,7 +120,6 @@ export const useTrainingBle = () => {
     };
 
     // --- ЛОГІКА ТРИГЕРІВ (СТАРТ / СПЛІТ / ФІНІШ) ---
-    // --- ЛОГІКА ТРИГЕРІВ (СТАРТ / СПЛІТ / ФІНІШ) ---
     const handleTrigger = useCallback((data: any) => {
         const triggeredId = data.sensor;
         const triggerTime = data.time || 0;
@@ -162,7 +161,7 @@ export const useTrainingBle = () => {
             // 🔥 ФІКС 2: Анти-Брязкіт (Debounce).
             // Якщо цей самий датчик уже спрацьовував менше ніж 1.5 секунди тому — це просто "задня нога" бігуна або подвійний змах рукою.
             const currentSensor = sensorsRef.current.find(s => s.id === triggeredId);
-            if (currentSensor?.triggerTime !== undefined && Math.abs(currentSensor.triggerTime - triggerTime) < 1500) {
+            if (currentSensor?.triggerTime !== undefined && Math.abs(currentSensor.triggerTime - triggerTime) < 500) {
                 console.log(`${TAG} ⚠️ Подвійний тригер від ID=${triggeredId} (задня нога/рука). Ігноруємо!`);
                 return; // Виходимо, не оновлюючи таймери
             }

@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
 export interface LayoutMarkerProps {
     position: number;
@@ -10,54 +9,50 @@ export interface LayoutMarkerProps {
 }
 
 export const LayoutMarker = ({ position, totalDistance, label, type }: LayoutMarkerProps) => {
-    // Рахуємо позицію у відсотках
     const percent = totalDistance > 0 ? (position / totalDistance) * 100 : 0;
 
-    // Визначаємо колір залежно від типу
-    let color = '#A3A3A3'; // gate (сірий)
-    let shadowColor = 'rgba(163, 163, 163, 0.5)';
+    // 🔥 Визначаємо стилі через токени Tailwind
+    const isStart = type === 'start';
+    const isFinish = type === 'finish';
 
-    if (type === 'start') {
-        color = '#FF6D00'; // Помаранчевий
-        shadowColor = 'rgba(255, 109, 0, 0.5)';
-    } else if (type === 'finish') {
-        color = '#34d399'; // Зелений
-        shadowColor = 'rgba(52, 211, 153, 0.5)';
-    }
+    // Динамічні класи для кольорів
+    const markerBgClass = isStart ? 'bg-brand-orange' : isFinish ? 'bg-status-success' : 'bg-text-sub';
+    const textColorClass = isStart ? 'text-brand-orange' : isFinish ? 'text-status-success' : 'text-text-sub';
+
+    // Колір тіні для стилів (StyleSheet), бо Tailwind не вміє в динамічні тіні RN
+    const shadowColor = isStart ? '#FF6D00' : isFinish ? '#34d399' : '#A3A3A3';
 
     return (
-
-        <View className="absolute top-0 bottom-0 w-24 -ml-12 items-center justify-center" style={{ left: `${percent}%` }}>
-
-            {/* Метраж (стилізований по-різному для гейтів та старту/фінішу) */}
-            {type !== 'start' && type !== 'finish' && (
-                <View className="mb-2 bg-[#1C1C1E]/80 px-2 py-0.5 rounded-full border border-white/10">
-                    <Text className="text-white text-[10px] font-bold" style={{ fontFamily: 'Evolventa' }}>
+        <View
+            className="absolute top-0 bottom-0 w-24 -ml-12 items-center justify-center"
+            style={{ left: `${percent}%` }}
+        >
+            {/* 1. МЕТРАЖ (використовуємо caption для гейтів і small для старт/фініш) */}
+            {!isStart && !isFinish ? (
+                <View className="mb-2 bg-surface-card/80 px-2 py-0.5 rounded-full border border-surface-border">
+                    <Text className="text-text-main text-caption font-bold font-evolventa">
                         {position} м
                     </Text>
                 </View>
-            )}
-            {(type === 'start' || type === 'finish') && (
-                <Text className="text-white text-[12px] font-bold mb-2" style={{ fontFamily: 'Evolventa' }}>
+            ) : (
+                <Text className="text-text-main text-small font-bold mb-2 font-evolventa">
                     {position} м
                 </Text>
             )}
 
-            {/* Палочка гейта */}
+            {/* 2. ПАЛИЧКА ГЕЙТА */}
             <View
-                className="w-1 h-6 rounded-full"
+                className={`w-1 h-6 rounded-full ${markerBgClass}`}
                 style={{
-                    backgroundColor: color,
                     shadowColor: shadowColor,
-                    shadowOpacity: 1,
-                    shadowRadius: 8,
-                    shadowOffset: { width: 0, height: 0 },
-                    elevation: 5
+                    shadowOpacity: 0.5,
+                    shadowRadius: 6,
+                    elevation: 4
                 }}
             />
 
-            {/* Підпис (Start / Finish / Gate X) */}
-            <Text className="mt-2 text-[12px] font-bold" style={{ color: color, fontFamily: 'Evolventa' }}>
+            {/* 3. ПІДПИС (Start / Finish / Gate X) */}
+            <Text className={`mt-2 text-small font-bold font-evolventa ${textColorClass}`}>
                 {label}
             </Text>
         </View>

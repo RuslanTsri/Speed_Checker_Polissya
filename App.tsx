@@ -1,12 +1,20 @@
 import "./global.css";
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useEffect } from 'react';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Feather } from "@expo/vector-icons";
 
+// Блокуємо авто-хованку заставки
+SplashScreen.preventAutoHideAsync();
+
+// Layouts & Components
 import { MainLayout } from './src/views/layout/MainLayout';
-import { BottomModal } from './src/views/components/BottomModal';
+import { TabType } from './src/views/layout/Footer'; // Імпортуємо тип для фіксу TS
+import { AppModal } from './src/views/components/AppModal'; // Використовуй оновлену AppModal
 
 // Screens
 import AuthScreen from './src/views/screens/AuthScreen';
@@ -21,15 +29,25 @@ import { BleProvider } from './src/context/BleContext';
 import { UserProvider, useUser } from './src/context/UserContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { useAppLogic } from './src/hooks/useAppLogic';
-import { Feather } from "@expo/vector-icons";
+import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
 import './src/lib/i18n';
-import {LanguageProvider, useLanguage} from "./src/context/LanguageContext";
 
 const AppContentWrapper = () => {
     const { t } = useTranslation();
-    const { user, isLoading } = useUser();
+    const { user, isLoading: isUserLoading } = useUser();
     const { isDark } = useTheme();
     const { isLangLoading } = useLanguage();
+
+    // 🔥 ЗАВАНТАЖЕННЯ ВСІХ ВАШИХ ШРИФТІВ ЗІ СКРІНШОТА
+    const [fontsLoaded] = useFonts({
+        'Unbounded': require('./assets/fonts/Unbounded-Regular.ttf'),
+        'Unbounded-Bold': require('./assets/fonts/Unbounded-Bold.ttf'),
+        'Unbounded-Black': require('./assets/fonts/Unbounded-Black.ttf'),
+        'Unbounded-Medium': require('./assets/fonts/Unbounded-Medium.ttf'),
+        'Unbounded-Light': require('./assets/fonts/Unbounded-Light.ttf'),
+        'Evolventa': require('./assets/fonts/Evolventa-Regular.ttf'),
+        'Evolventa-Bold': require('./assets/fonts/Evolventa-Bold.ttf'),
+    });
 
     const {
         currentTab, sessionsInitialTab, navParams,
@@ -39,10 +57,18 @@ const AppContentWrapper = () => {
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange
     } = useAppLogic();
 
-    if (isLoading || isLangLoading) {
+    useEffect(() => {
+        if (fontsLoaded && !isUserLoading && !isLangLoading) {
+            SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded, isUserLoading, isLangLoading]);
+
+    if (!fontsLoaded) return null;
+
+    if (isUserLoading || isLangLoading) {
         return (
-            <View className={`flex-1 justify-center items-center ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
-                <ActivityIndicator size="large" color="#facc15" />
+            <View className={`flex-1 justify-center items-center ${isDark ? 'bg-surface-bg' : 'bg-brand-light'}`}>
+                <ActivityIndicator size="large" color="#FF6D00" />
             </View>
         );
     }
@@ -50,7 +76,7 @@ const AppContentWrapper = () => {
     if (!user) {
         return (
             <SafeAreaProvider>
-                <StatusBar style={isDark ? "light" : "dark"} />
+                <StatusBar style="light" />
                 <AuthScreen onLogin={() => {}} />
             </SafeAreaProvider>
         );
@@ -60,9 +86,19 @@ const AppContentWrapper = () => {
         switch (currentTab) {
             case 'HOME': return <HomeScreen onNavigate={handleNavigate} />;
             case 'PLAYERS': return <PlayersScreen />;
-            case 'SESSIONS': return <SessionsScreen key={sessionsInitialTab} initialTab={sessionsInitialTab} openSession={navParams?.openSession} />;
+            case 'SESSIONS':
+                return <SessionsScreen
+                    key={sessionsInitialTab}
+                    initialTab={sessionsInitialTab}
+                    openSession={navParams?.openSession}
+                />;
             case 'TOOLS': return <BluetoothTool onBack={() => handleNavigate('SETTINGS')} />;
-            case 'SETTINGS': return <SettingsScreen onLogout={handleLogout} onOpenPinChange={handleOpenPinModal} onOpenBluetooth={() => handleNavigate('TOOLS')} />;
+            case 'SETTINGS':
+                return <SettingsScreen
+                    onLogout={handleLogout}
+                    onOpenPinChange={handleOpenPinModal}
+                    onOpenBluetooth={() => handleNavigate('TOOLS')}
+                />;
             default: return null;
         }
     };
@@ -70,79 +106,91 @@ const AppContentWrapper = () => {
     return (
         <SafeAreaProvider>
             <BleProvider>
-                <StatusBar style={isDark ? "light" : "dark"} />
+                <StatusBar style="light" />
 
                 <MainLayout
                     currentTab={currentTab === 'TOOLS' || currentTab === 'SETTINGS' ? 'SETTINGS' : currentTab}
-                    onSwitchTab={(tab) => handleNavigate(tab)}
+                    // ✅ ВИПРАВЛЕНО TS7006: додано тип TabType
+                    onSwitchTab={(tab: TabType) => handleNavigate(tab)}
                     onLogout={handleLogout}
                     onOpenPinChange={handleOpenPinModal}
                 >
                     {renderScreen()}
                 </MainLayout>
 
-                {/* PIN Change Modal */}
-                <BottomModal visible={isPinModalVisible} onClose={() => !isPinLoading && setPinModalVisible(false)} title={t('screens.app.pin_modal_title') as string}>
+                {/* 🔥 ОНОВЛЕНА PIN МОДАЛКА НА ТОКЕНАХ */}
+                <AppModal
+                    visible={isPinModalVisible}
+                    onClose={() => !isPinLoading && setPinModalVisible(false)}
+                    title={t('screens.app.pin_modal_title') as string}
+                    type="bottom"
+                >
                     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                        <View className="p-1">
-                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">
-                                {t('screens.app.old_pin_label') as string}
-                            </Text>
-                            <TextInput
-                                value={oldPin} onChangeText={setOldPin}
-                                keyboardType="numeric" secureTextEntry maxLength={4}
-                                placeholder="••••" placeholderTextColor="#94a3b8"
-                                className={`p-5 rounded-2xl mb-4 text-2xl tracking-[0.5em] text-center font-bold border 
-                                    ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'} 
-                                    ${pinError ? 'border-red-500/50' : (isDark ? 'border-slate-800' : 'border-slate-200')}`}
-                            />
+                        <View className="p-1 gap-y-4">
+                            {/* Старий PIN */}
+                            <View>
+                                <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
+                                    {t('screens.app.old_pin_label') as string}
+                                </Text>
+                                <TextInput
+                                    value={oldPin} onChangeText={setOldPin}
+                                    keyboardType="numeric" secureTextEntry maxLength={4}
+                                    placeholder="••••" placeholderTextColor="#717171"
+                                    className={`p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded
+                                        bg-surface-card text-text-main 
+                                        ${pinError ? 'border-status-error/50' : 'border-surface-border'}`}
+                                />
+                            </View>
 
-                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">
-                                {t('screens.app.new_pin_label') as string}
-                            </Text>
-                            <TextInput
-                                value={newPin} onChangeText={setNewPin}
-                                keyboardType="numeric" secureTextEntry maxLength={4}
-                                placeholder="••••" placeholderTextColor="#94a3b8"
-                                className={`p-5 rounded-2xl mb-4 text-2xl tracking-[0.5em] text-center font-bold border 
-                                    ${isDark ? 'bg-slate-950 text-white border-slate-800' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
-                            />
+                            {/* Новий PIN */}
+                            <View>
+                                <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
+                                    {t('screens.app.new_pin_label') as string}
+                                </Text>
+                                <TextInput
+                                    value={newPin} onChangeText={setNewPin}
+                                    keyboardType="numeric" secureTextEntry maxLength={4}
+                                    placeholder="••••" placeholderTextColor="#717171"
+                                    className="p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded bg-surface-card text-text-main border-surface-border"
+                                />
+                            </View>
 
-                            <Text className="text-slate-500 text-[10px] uppercase font-bold mb-2 ml-1">
-                                {t('screens.app.confirm_pin_label') as string}
-                            </Text>
-                            <TextInput
-                                value={confirmPin} onChangeText={setConfirmPin}
-                                keyboardType="numeric" secureTextEntry maxLength={4}
-                                placeholder="••••" placeholderTextColor="#94a3b8"
-                                className={`p-5 rounded-2xl mb-6 text-2xl tracking-[0.5em] text-center font-bold border 
-                                    ${isDark ? 'bg-slate-950 text-white border-slate-800' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
-                            />
+                            {/* Підтвердження PIN */}
+                            <View>
+                                <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
+                                    {t('screens.app.confirm_pin_label') as string}
+                                </Text>
+                                <TextInput
+                                    value={confirmPin} onChangeText={setConfirmPin}
+                                    keyboardType="numeric" secureTextEntry maxLength={4}
+                                    placeholder="••••" placeholderTextColor="#717171"
+                                    className="p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded bg-surface-card text-text-main border-surface-border"
+                                />
+                            </View>
 
-                            {/* Помилка з useAppLogic (якщо є). Бажано також локалізувати самі помилки всередині хука */}
                             {pinError && (
-                                <View className="bg-red-500/10 border border-red-500/50 p-3 rounded-xl mb-6 flex-row items-center justify-center">
-                                    <Feather name="alert-circle" size={16} color="#ef4444" style={{ marginRight: 8 }} />
-                                    <Text className="text-red-400 font-bold text-sm text-center">{pinError}</Text>
+                                <View className="bg-status-error/10 border border-status-error/30 p-3 rounded-xl flex-row items-center justify-center">
+                                    <Feather name="alert-circle" size={16} color="#f87171" style={{ marginRight: 8 }} />
+                                    <Text className="text-status-error font-bold text-sm text-center font-evolventa">{pinError}</Text>
                                 </View>
                             )}
 
                             <TouchableOpacity
                                 onPress={handleSubmitPinChange}
                                 disabled={isPinLoading}
-                                className={`bg-yellow-400 p-5 rounded-2xl items-center shadow-lg shadow-yellow-400/20 active:bg-yellow-500 ${isPinLoading ? 'opacity-50' : ''}`}
+                                className={`bg-brand-orange h-16 rounded-2xl items-center justify-center shadow-lg active:opacity-80 mt-2 ${isPinLoading ? 'opacity-50' : ''}`}
                             >
                                 {isPinLoading ? (
-                                    <ActivityIndicator color="#0f172a" />
+                                    <ActivityIndicator color="#000" />
                                 ) : (
-                                    <Text className="text-slate-900 font-black text-lg uppercase tracking-wide">
+                                    <Text className="text-black font-black text-body uppercase tracking-widest font-unbounded">
                                         {t('screens.app.btn_save_pin') as string}
                                     </Text>
                                 )}
                             </TouchableOpacity>
                         </View>
                     </ScrollView>
-                </BottomModal>
+                </AppModal>
             </BleProvider>
         </SafeAreaProvider>
     );

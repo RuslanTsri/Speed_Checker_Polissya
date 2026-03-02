@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+
+const RADIO_GRADIENT = ['#CA4402', '#FF6D00', '#FCAE0E', '#FFF958'] as const;
 
 interface RadioButtonProps {
     selected: boolean;
@@ -22,28 +24,30 @@ export const RadioButton = ({ selected, onSelect }: RadioButtonProps) => {
         <Pressable
             onPress={onSelect}
             className="items-center justify-center"
-            style={{ width: 24, height: 24, borderRadius: 12, overflow: 'hidden' }} // 🔥 Явно робимо круглим
+            style={styles.radioWrapper}
         >
             {selected ? (
                 <LinearGradient
-                    colors={['#CA4402', '#FF6D00', '#FCAE0E', '#FFF958']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                    colors={RADIO_GRADIENT}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={styles.radioCircle}
                     className="w-full h-full items-center justify-center"
-                    style={{ borderRadius: 12 }} // 🔥 Залізобетонне закруглення для градієнта
                 >
                     <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: fadeAnim }] }}>
-                        {/* Внутрішня біла крапка */}
-                        <View className="w-2.5 h-2.5 bg-[#F5F5F5] rounded-full" />
+                        <View className="w-2.5 h-2.5 bg-text-main rounded-full" />
                     </Animated.View>
                 </LinearGradient>
             ) : (
-                // Стан без вибору
                 <View
-                    className="w-full h-full bg-white/5 border border-white/20 items-center justify-center"
-                    style={{ borderRadius: 12 }}
+                    style={styles.radioCircle}
+                    className="w-full h-full bg-white/5 border border-surface-border items-center justify-center"
                 />
             )}
         </Pressable>
     );
 };
+
+const styles = StyleSheet.create({
+    radioWrapper: { width: 24, height: 24 },
+    radioCircle: { borderRadius: 12 }
+});

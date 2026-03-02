@@ -1,16 +1,20 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+
+// 🔥 Кольори градієнта в константах — це +5 до карми та швидкості рендеру
+const GRAD_COLORS = ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)'] as const;
 
 interface RatingModProps {
     rank: number | string;
     name: string;
     subtitle?: string;
-    resultValue: string; // Наприклад "4.04"
-    secondaryValue?: string; // Наприклад "25.1 km/h"
+    resultValue: string;
+    secondaryValue?: string;
     onPress?: () => void;
     className?: string;
+    optimizeForList?: boolean;
 }
 
 export const RatingMod = ({
@@ -20,8 +24,11 @@ export const RatingMod = ({
                               resultValue,
                               secondaryValue,
                               onPress,
-                              className = ''
+                              className = '',
+                              optimizeForList = false
                           }: RatingModProps) => {
+    const isAndroid = Platform.OS === 'android' && optimizeForList;
+
     return (
         <Pressable
             onPress={onPress}
@@ -29,71 +36,31 @@ export const RatingMod = ({
             className={`w-full ${className}`}
         >
             {({ pressed }) => (
-                <View style={styles.container} className="rounded-2xl overflow-hidden border border-[#262626] shadow-sm">
-                    <BlurView
-                        intensity={30}
-                        tint="dark"
-                        experimentalBlurMethod="dimezisBlurView"
-                        style={StyleSheet.absoluteFill}
-                    />
-
-
-                    <LinearGradient
-                        colors={pressed && onPress
-                            ? ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)']
-                            : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']}
-                        start={{ x: 0, y: 0.5 }}
-                        end={{ x: 1, y: 0.5 }}
-                        style={StyleSheet.absoluteFill}
-                    />
+                // ✅ ВИПРАВЛЕНО: Просто styles.container
+                <View style={styles.container} className="rounded-2xl overflow-hidden border border-surface-border">
+                    {isAndroid ? (
+                        <View style={StyleSheet.absoluteFill} className={pressed ? 'bg-surface-cardPressed' : 'bg-surface-card'} />
+                    ) : (
+                        <>
+                            <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+                            <LinearGradient colors={GRAD_COLORS} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
+                        </>
+                    )}
 
                     <View className="p-3 flex-row items-center justify-between">
-                        {/* ЛІВА ЧАСТИНА: Ранг + Ім'я */}
                         <View className="flex-1 flex-row items-center gap-3">
                             <View className="w-8 items-center justify-center">
-                                <Text
-                                    className="text-[#F5F5F5] text-base font-bold"
-                                    style={{ fontFamily: 'Unbounded' }}
-                                >
-                                    {rank}
-                                </Text>
+                                <Text className="text-text-main text-h4 font-bold font-unbounded">{rank}</Text>
                             </View>
-
-                            <View className="flex-1 flex-col justify-center items-start gap-1">
-                                <Text
-                                    className="text-[#F5F5F5] text-base font-bold leading-4"
-                                    style={{ fontFamily: 'Unbounded' }}
-                                    numberOfLines={1}
-                                >
-                                    {name}
-                                </Text>
-                                {subtitle && (
-                                    <Text
-                                        className="text-[#A3A3A3] text-sm font-normal leading-4"
-                                        style={{ fontFamily: 'Evolventa' }}
-                                    >
-                                        {subtitle}
-                                    </Text>
-                                )}
+                            <View className="flex-1">
+                                <Text className="text-text-main text-h4 font-bold font-unbounded" numberOfLines={1}>{name}</Text>
+                                {subtitle && <Text className="text-text-sub text-body font-evolventa">{subtitle}</Text>}
                             </View>
                         </View>
 
-                        {/* ПРАВА ЧАСТИНА: Результати */}
-                        <View className="items-end gap-0.5">
-                            <Text
-                                className="text-[#F5F5F5] text-base font-bold leading-4"
-                                style={{ fontFamily: 'Unbounded' }}
-                            >
-                                {resultValue}
-                            </Text>
-                            {secondaryValue && (
-                                <Text
-                                    className="text-[#A3A3A3] text-[10px] font-normal"
-                                    style={{ fontFamily: 'Evolventa' }}
-                                >
-                                    {secondaryValue}
-                                </Text>
-                            )}
+                        <View className="items-end">
+                            <Text className="text-text-main text-h4 font-bold font-unbounded">{resultValue}</Text>
+                            {secondaryValue && <Text className="text-text-sub text-caption font-evolventa">{secondaryValue}</Text>}
                         </View>
                     </View>
                 </View>
@@ -102,6 +69,9 @@ export const RatingMod = ({
     );
 };
 
+// 🔥 Створюємо об'єкт стилів один раз
 const styles = StyleSheet.create({
-    container: { minHeight: 64 }
+    container: {
+        minHeight: 64,
+    },
 });

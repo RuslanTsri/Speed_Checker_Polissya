@@ -1,24 +1,23 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 
 interface SubTabsProps {
     distances: number[];
     selectedDistance: number;
     onSelect: (distance: number) => void;
+    optimizeForList?: boolean;
 }
 
-export const SubTabs = ({ distances, selectedDistance, onSelect }: SubTabsProps) => {
+export const SubTabs = ({ distances, selectedDistance, onSelect, optimizeForList = false }: SubTabsProps) => {
+    const isAndroidTurbo = Platform.OS === 'android' && optimizeForList;
+
     return (
         <View className="w-full mb-4">
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{
-                    gap: 8,
-                    flexGrow: 1,
-                    justifyContent: 'center'
-                }}
+                contentContainerStyle={styles.scrollContent}
             >
                 {distances.map(dist => {
                     const isActive = selectedDistance === dist;
@@ -28,27 +27,20 @@ export const SubTabs = ({ distances, selectedDistance, onSelect }: SubTabsProps)
                             onPress={() => onSelect(dist)}
                             activeOpacity={0.7}
                             className={`rounded-full overflow-hidden border ${
-                                isActive
-                                    ? 'border-[#FF6D00]/60'
-                                    : 'border-white/10'
+                                isActive ? 'border-brand-orange/60' : 'border-surface-border'
                             }`}
                         >
-                            {/* 🔥 Сильний блюр */}
-                            <BlurView
-                                intensity={50}
-                                tint="dark"
-                                experimentalBlurMethod="dimezisBlurView"
-                                style={StyleSheet.absoluteFill}
-                            />
+                            {/* Android Turbo Оптимізація */}
+                            {isAndroidTurbo ? (
+                                <View style={StyleSheet.absoluteFill} className="bg-surface-card" />
+                            ) : (
+                                <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+                            )}
 
-                            {/* 🔥 Тонування скла: помаранчеве для активного, сіре для неактивного */}
-                            <View className={`px-5 py-1.5 ${
-                                isActive ? 'bg-[#FF6D00]/20' : 'bg-white/5'
-                            }`}>
-                                <Text
-                                    className={`text-xs font-bold ${isActive ? 'text-[#FF6D00]' : 'text-[#A3A3A3]'}`}
-                                    style={{ fontFamily: 'Evolventa' }}
-                                >
+                            <View className={`px-5 py-1.5 ${isActive ? 'bg-brand-orange/20' : 'bg-surface-card/20'}`}>
+                                <Text className={`text-small font-bold font-evolventa ${
+                                    isActive ? 'text-brand-orange' : 'text-text-sub'
+                                }`}>
                                     {dist} м
                                 </Text>
                             </View>
@@ -59,3 +51,12 @@ export const SubTabs = ({ distances, selectedDistance, onSelect }: SubTabsProps)
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    scrollContent: {
+        gap: 8,
+        flexGrow: 1,
+        justifyContent: 'center',
+        paddingHorizontal: 4
+    }
+});

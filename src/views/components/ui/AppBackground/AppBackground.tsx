@@ -3,7 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, RadialGradient, Stop, Ellipse } from 'react-native-svg';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface AppBackgroundProps {
     children?: React.ReactNode;
@@ -12,44 +12,33 @@ interface AppBackgroundProps {
 
 export const AppBackground = ({ children, className = '' }: AppBackgroundProps) => {
     return (
-        <View className={`flex-1 ${className}`} style={styles.container}>
+        <View className={`flex-1 bg-black ${className}`}>
+            {/* Глибокий темний градієнт */}
             <LinearGradient
-                colors={['#000000', '#121212', '#2A2A2A']}
+                colors={['#000000', '#0A0A0A', '#1C1C1E']} // Перехід у твій surface-card
                 locations={[0, 0.6, 1]}
                 style={StyleSheet.absoluteFill}
             />
 
-            {/* 2. СВІТЛОВА ПЛЯМА ЗНИЗУ (Ellipse 4) */}
+            {/* Світлова пляма (Glow) */}
             <View style={styles.glowContainer}>
                 <Svg height="100%" width="100%">
                     <Defs>
                         <RadialGradient
                             id="grad"
-                            cx="50%"
-                            cy="50%"
-                            rx="50%"
-                            ry="50%"
-                            fx="50%"
-                            fy="50%"
+                            cx="50%" cy="50%" rx="50%" ry="50%" fx="50%" fy="50%"
                             gradientUnits="userSpaceOnUse"
                         >
-                            <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.15" />
-                            <Stop offset="21%" stopColor="#E7E5E4" stopOpacity="0.08" />
-                            <Stop offset="100%" stopColor="#E7E5E4" stopOpacity="0" />
+                            <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.12" />
+                            <Stop offset="21%" stopColor="#A3A3A3" stopOpacity="0.06" />
+                            <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
                         </RadialGradient>
                     </Defs>
-                    <Ellipse
-                        cx={SCREEN_WIDTH / 2}
-                        cy={420}
-                        rx={420}
-                        ry={420}
-                        fill="url(#grad)"
-                    />
+                    <Ellipse cx={SCREEN_WIDTH / 2} cy={420} rx={420} ry={420} fill="url(#grad)" />
                 </Svg>
             </View>
 
-            {/* 3. КОНТЕНТ ЕКРАНУ */}
-            <View style={styles.content}>
+            <View className="flex-1 z-10">
                 {children}
             </View>
         </View>
@@ -57,20 +46,11 @@ export const AppBackground = ({ children, className = '' }: AppBackgroundProps) 
 };
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: '#000',
-    },
     glowContainer: {
         position: 'absolute',
         bottom: -400,
-        left: 0,
-        right: 0,
-        height: 841,
-        width: '100%',
+        left: 0, right: 0,
+        height: 841, width: '100%',
         pointerEvents: 'none',
-    },
-    content: {
-        flex: 1,
-        zIndex: 1,
     },
 });

@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { Pressable, View, Animated } from 'react-native';
+import { Pressable, View, Animated, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+
+const SWITCH_GRADIENT = ['#CA4402', '#FF6D00', '#FFF958'] as const;
 
 interface SwitchProps {
     active: boolean;
@@ -8,7 +10,6 @@ interface SwitchProps {
 }
 
 export const Switch = ({ active, onChange }: SwitchProps) => {
-    // Анімація: 18px відступ зліва (увімкнено), 2px (вимкнено)
     const translateX = useRef(new Animated.Value(active ? 18 : 2)).current;
 
     useEffect(() => {
@@ -22,33 +23,34 @@ export const Switch = ({ active, onChange }: SwitchProps) => {
     return (
         <Pressable
             onPress={() => onChange(!active)}
+            style={styles.switchContainer}
             className="justify-center"
-            // w-9 (36px) h-5 (20px) — точні розміри з Фігми
-            style={{ width: 36, height: 20 }}
         >
             {active ? (
-                // УВІМКНЕНИЙ СТАН (Додали borderRadius в style)
                 <LinearGradient
-                    colors={['#CA4402', '#FF6D00', '#FCAE0E', '#FFF958']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                    colors={SWITCH_GRADIENT}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={styles.background}
                     className="w-full h-full justify-center"
-                    style={{ borderRadius: 9999 }} // <--- ОСЬ ВАЖЛИВИЙ ФІКС
                 >
                     <Animated.View
                         style={{ transform: [{ translateX }] }}
-                        className="w-4 h-4 bg-[#F5F5F5] rounded-full shadow-sm"
+                        className="w-4 h-4 bg-text-main rounded-full shadow-sm"
                     />
                 </LinearGradient>
             ) : (
-                // ВИМКНЕНИЙ СТАН
-                <View className="w-full h-full rounded-full bg-[#C3C3C3] justify-center">
+                <View style={styles.background} className="w-full h-full bg-brand-gray justify-center">
                     <Animated.View
                         style={{ transform: [{ translateX }] }}
-                        className="w-4 h-4 bg-[#F5F5F5] rounded-full shadow-sm"
+                        className="w-4 h-4 bg-text-main rounded-full shadow-sm"
                     />
                 </View>
             )}
         </Pressable>
     );
 };
+
+const styles = StyleSheet.create({
+    switchContainer: { width: 36, height: 20 },
+    background: { borderRadius: 10 }
+});

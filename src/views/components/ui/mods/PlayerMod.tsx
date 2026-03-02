@@ -1,151 +1,80 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { PhotoIcon, PenIcon, PenIconActive, CrossIconActive } from '../../../../../assets/icons';
 
-import {
-    PhotoIcon, // або UserIcon, залежно від того, що ти використовуєш
-    PenIcon,
-    PenIconActive,
-    CrossIconActive
-} from '../../../../../assets/icons';
+const GRAD_COLORS = ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)'] as const;
 
 interface PlayerModProps {
     name: string;
-    // 🔥 ДОЗВОЛЯЄМО ПЕРЕДАВАТИ ЯК ТЕКСТ, ТАК І ВЕРСТКУ
     subtitle?: string | React.ReactNode;
-    rightIcon?: React.ReactNode; // Додано для кастомних елементів справа
+    rightIcon?: React.ReactNode;
     onPress?: () => void;
     onEditPress?: () => void;
     onDeletePress?: () => void;
     className?: string;
+    optimizeForList?: boolean;
 }
 
-export const PlayerMod = ({
-                              name,
-                              subtitle,
-                              rightIcon, // Не забуваємо дістати цей пропс
-                              onPress,
-                              onEditPress,
-                              onDeletePress,
-                              className = ''
-                          }: PlayerModProps) => {
-    const isClickable = !!onPress;
+export const PlayerMod = ({ name, subtitle, rightIcon, onPress, onEditPress, onDeletePress, className = '', optimizeForList = false }: PlayerModProps) => {
+    const isAndroid = Platform.OS === 'android' && optimizeForList;
 
     return (
         <Pressable
             onPress={onPress}
-            disabled={!isClickable}
-            style={({ pressed }) => [
-                { transform: [{ scale: pressed && isClickable ? 0.98 : 1 }] }
-            ]}
-            className={`w-full ${className}`}
+            disabled={!onPress}
+            style={({ pressed }) => [styles.wrapper, { transform: [{ scale: pressed && onPress ? 0.98 : 1 }] }]}
+            className={className}
         >
-            {({ pressed }) => {
-                const isPressed = pressed && isClickable;
+            {({ pressed }) => (
+                <View style={styles.container} className="rounded-2xl overflow-hidden border border-surface-border">
+                    {!isAndroid ? (
+                        <>
+                            <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+                            <LinearGradient colors={GRAD_COLORS} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
+                        </>
+                    ) : (
+                        <View style={StyleSheet.absoluteFill} className="bg-surface-card" />
+                    )}
 
-                return (
-                    <View
-                        style={styles.container}
-                        className="rounded-2xl overflow-hidden border border-white/10 shadow-sm"
-                    >
-                        {/* 1. ШАР БЛЮРУ (Матове скло) */}
-                        <BlurView
-                            intensity={30}
-                            tint="dark"
-                            experimentalBlurMethod="dimezisBlurView"
-                            style={StyleSheet.absoluteFill}
-                        />
-
-                        {/* 2. НАПІВПРОЗОРИЙ ГРАДІЄНТ */}
-                        <LinearGradient
-                            colors={isPressed
-                                ? ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)']
-                                : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']}
-                            start={{ x: 0, y: 0.5 }}
-                            end={{ x: 1, y: 0.5 }}
-                            style={StyleSheet.absoluteFill}
-                        />
-
-                        {/* 3. КОНТЕНТ */}
-                        <View className="p-3 flex-row items-center justify-between">
-                            {/* ЛІВА ЧАСТИНА: Аватар + Інфо */}
-                            <View className="flex-1 flex-row items-center gap-3">
-                                <View className="items-center justify-center">
-                                    {/* Використовуй свою іконку */}
-                                    <PhotoIcon width={36} height={36} />
-                                </View>
-
-                                <View className="flex-1 flex-col justify-center items-start gap-1">
-                                    <Text
-                                        className="text-[#F5F5F5] text-base font-bold leading-4"
-                                        style={{ fontFamily: 'Unbounded' }}
-                                        numberOfLines={1}
-                                    >
-                                        {name}
-                                    </Text>
-
-                                    {/* 🔥 РОЗУМНИЙ РЕНДЕР SUBTITLE */}
-                                    {subtitle && (
-                                        typeof subtitle === 'string' ? (
-                                            <Text
-                                                className="text-[#A3A3A3] text-sm font-normal leading-4"
-                                                style={{ fontFamily: 'Evolventa' }}
-                                            >
-                                                {subtitle}
-                                            </Text>
-                                        ) : (
-                                            <View>{subtitle}</View>
-                                        )
-                                    )}
-                                </View>
-                            </View>
-
-                            {/* ПРАВА ЧАСТИНА: Кнопки дій АБО Кастомний rightIcon (для результатів) */}
-                            <View className="flex-row items-center gap-1">
-
-                                {/* Якщо передали кастомний елемент (цифри результатів), показуємо його */}
-                                {rightIcon ? (
-                                    rightIcon
-                                ) : (
-                                    /* Інакше показуємо стандартні кнопки редагування/видалення */
-                                    <>
-                                        {onEditPress && (
-                                            <Pressable
-                                                onPress={onEditPress}
-                                                className="p-2 active:opacity-60"
-                                            >
-                                                {({ pressed: isBtnPressed }) => (
-                                                    isBtnPressed || isPressed ? (
-                                                        <PenIconActive width={22} height={22} />
-                                                    ) : (
-                                                        <PenIcon width={22} height={22} />
-                                                    )
-                                                )}
-                                            </Pressable>
-                                        )}
-
-                                        {onDeletePress && (
-                                            <Pressable
-                                                onPress={onDeletePress}
-                                                className="p-2 active:opacity-60"
-                                            >
-                                                <CrossIconActive width={22} height={22} />
-                                            </Pressable>
-                                        )}
-                                    </>
-                                )}
+                    <View className="p-3 flex-row items-center justify-between z-10">
+                        <View className="flex-1 flex-row items-center gap-3">
+                            <PhotoIcon width={36} height={36} />
+                            <View className="flex-1">
+                                <Text className="text-text-main text-h4 font-bold font-unbounded" numberOfLines={1}>{name}</Text>
+                                {typeof subtitle === 'string' ? (
+                                    <Text className="text-text-sub text-body font-evolventa">{subtitle}</Text>
+                                ) : (subtitle)}
                             </View>
                         </View>
+
+                        <View className="flex-row items-center gap-1">
+                            {rightIcon || (
+                                <>
+                                    {onEditPress && (
+                                        <Pressable onPress={onEditPress} className="p-2">
+                                            {({ pressed: p }) => (p ? <PenIconActive width={22} height={22} /> : <PenIcon width={22} height={22} />)}
+                                        </Pressable>
+                                    )}
+                                    {onDeletePress && (
+                                        <Pressable onPress={onDeletePress} className="p-2">
+                                            <CrossIconActive width={22} height={22} />
+                                        </Pressable>
+                                    )}
+                                </>
+                            )}
+                        </View>
                     </View>
-                );
-            }}
+                    {pressed && onPress && <View style={styles.pressedOverlay} />}
+                </View>
+            )}
         </Pressable>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        minHeight: 64,
-    }
+    wrapper: { width: '100%' },
+    container: { minHeight: 64 },
+    pressedOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.2)', zIndex: 20 }
 });

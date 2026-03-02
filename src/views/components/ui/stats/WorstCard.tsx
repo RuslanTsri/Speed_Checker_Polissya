@@ -1,56 +1,55 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const CARD_GRADIENT = ['#1C1C1E', '#161617'] as const;
 
 interface WorstCardProps {
     title: string;
     time: string;
     playerName: string;
     teamName?: string;
+    optimizeForList?: boolean;
 }
 
-export const WorstCard = ({ title, time, playerName, teamName }: WorstCardProps) => {
+export const WorstCard = ({ title, time, playerName, teamName, optimizeForList = false }: WorstCardProps) => {
+    const isAndroidTurbo = Platform.OS === 'android' && optimizeForList;
+
     return (
-        <View className="w-[48%] p-4 rounded-2xl relative overflow-hidden border border-red-500/30">
-            {/* Матове скло з червоним відтінком */}
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} experimentalBlurMethod="dimezisBlurView" />
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(220, 38, 38, 0.1)' }]} />
+        <View className="w-[48%] p-4 rounded-2xl relative overflow-hidden border border-status-error/30">
+            <LinearGradient colors={CARD_GRADIENT} style={StyleSheet.absoluteFill} />
 
-            <View className="flex-row items-center mb-1 relative z-10">
-                <Feather name="trending-down" size={16} color="#f87171" />
-                <Text
-                    className="text-xs font-bold uppercase ml-1 text-red-400"
-                    style={{ fontFamily: 'Evolventa' }}
-                >
-                    {title}
-                </Text>
-            </View>
-
-            <Text
-                className="text-3xl font-bold text-white relative z-10"
-                style={{ fontFamily: 'Unbounded' }}
-            >
-                {time}
-            </Text>
-
-            <Text
-                className="text-sm mt-1 font-bold text-[#F5F5F5] relative z-10"
-                numberOfLines={1}
-                style={{ fontFamily: 'Evolventa' }}
-            >
-                {playerName}
-            </Text>
-
-            {teamName && (
-                <Text
-                    className="text-[10px] font-bold mt-0.5 text-[#A3A3A3] relative z-10"
-                    numberOfLines={1}
-                    style={{ fontFamily: 'Evolventa' }}
-                >
-                    {teamName}
-                </Text>
+            {!isAndroidTurbo && (
+                <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} experimentalBlurMethod="dimezisBlurView" />
             )}
+
+            {/* ЧЕРВОНЕ ТОНУВАННЯ */}
+            <View style={StyleSheet.absoluteFill} className="bg-status-error/5" />
+
+            <View className="relative z-10">
+                <View className="flex-row items-center mb-1">
+                    <Feather name="trending-down" size={16} color="#f87171" />
+                    <Text className="text-caption font-bold uppercase ml-1 text-status-error font-evolventa">
+                        {title}
+                    </Text>
+                </View>
+
+                <Text className="text-h1 font-bold text-text-main font-unbounded leading-none">
+                    {time}
+                </Text>
+
+                <Text className="text-body mt-1 font-bold text-text-main font-evolventa" numberOfLines={1}>
+                    {playerName}
+                </Text>
+
+                {teamName && (
+                    <Text className="text-caption font-bold mt-0.5 text-text-sub font-evolventa" numberOfLines={1}>
+                        {teamName}
+                    </Text>
+                )}
+            </View>
 
             <View className="absolute -right-2 -bottom-2 opacity-10">
                 <MaterialCommunityIcons name="timer-sand" size={70} color="#f87171" />

@@ -4,108 +4,43 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 
-type ModalType = 'bottom' | 'center' | 'fullscreen';
-
-interface AppModalProps {
-    visible: boolean;
-    onClose: () => void;
-    title: string;
-    children: React.ReactNode;
-    type?: ModalType; // За замовчуванням 'bottom'
-}
-
-export const AppModal = ({ visible, onClose, title, children, type = 'bottom' }: AppModalProps) => {
+export const AppModal = ({ visible, onClose, title, children, type = 'bottom' }: any) => {
     const insets = useSafeAreaInsets();
+    const isFull = type === 'fullscreen';
+    const isCenter = type === 'center';
 
-    // 1. Стилі для зовнішнього фону (робимо його більш прозорим, бо основну роботу тепер робить BlurView)
-    const getBackdropClass = () => {
-        if (type === 'fullscreen') return "flex-1"; // Для фулскріну фон не потрібен
-        if (type === 'center') return "flex-1 justify-center items-center bg-black/30 p-6";
-        return "flex-1 justify-end bg-black/30"; // bottom
-    };
-
-    // 2. Стилі для самого вікна з контентом
-    const getContainerClass = () => {
-        if (type === 'fullscreen') return "flex-1 w-full overflow-hidden";
-        if (type === 'center') return "w-full rounded-3xl border border-white/10 overflow-hidden shadow-2xl";
-        return "w-full rounded-t-3xl border-t border-white/10 overflow-hidden shadow-2xl"; // bottom
-    };
-
-    // 3. Динамічні відступи всередині
     const getDynamicStyles = () => {
         if (type === 'bottom') return { paddingBottom: Math.max(insets.bottom + 24, 24), paddingTop: 24, paddingHorizontal: 24 };
-        if (type === 'fullscreen') return { paddingTop: Math.max(insets.top, 20), paddingBottom: Math.max(insets.bottom, 20) };
-        return { padding: 24 }; // center
+        if (isFull) return { paddingTop: Math.max(insets.top, 20), paddingBottom: Math.max(insets.bottom, 20) };
+        return { padding: 24 };
     };
 
-    const animation = type === 'center' ? 'fade' : 'slide';
-
     return (
-        <Modal
-            animationType={animation}
-            transparent={true}
-            visible={visible}
-
-            onRequestClose={onClose}
-        >
-            {/* 🔥 РОЗМИТИЙ ФОН НА ВЕСЬ ЕКРАН */}
-            <BlurView intensity={15} tint="dark" style={{ flex: 1 }} experimentalBlurMethod="dimezisBlurView">
-
+        <Modal animationType={isCenter ? 'fade' : 'slide'} transparent visible={visible} onRequestClose={onClose}>
+            <BlurView intensity={15} tint="dark" style={StyleSheet.absoluteFill} experimentalBlurMethod="dimezisBlurView">
                 <Pressable
-                    className={getBackdropClass()}
-                    onPress={type !== 'fullscreen' ? onClose : undefined}
+                    className={`flex-1 ${isCenter ? 'justify-center items-center p-6 bg-black/30' : isFull ? '' : 'justify-end bg-black/30'}`}
+                    onPress={!isFull ? onClose : undefined}
                 >
-                    {/* КОНТЕЙНЕР САМОЇ МОДАЛКИ */}
                     <Pressable
-                        className={getContainerClass()}
+                        className={`w-full overflow-hidden ${isFull ? 'flex-1' : isCenter ? 'rounded-3xl border border-surface-border shadow-2xl' : 'rounded-t-3xl border-t border-surface-border shadow-2xl'}`}
                         onPress={(e) => e.stopPropagation()}
                     >
-                        {/* 🔥 БЛЮР САМОГО ВІКНА МОДАЛКИ (Подвійне скло) */}
-                        <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
+                        <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10, 10, 10, 0.8)' }]} />
 
-                        {/* Затемнення модалки, щоб вона виділялась на фоні екрану */}
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(15, 15, 15, 0.7)' }]} />
-
-                        {/* ВНУТРІШНІЙ КОНТЕНТ */}
-                        <View style={getDynamicStyles()} className={type === 'fullscreen' ? 'flex-1' : 'w-full'}>
-
-                            {/* Шапка для Bottom */}
-                            {type === 'bottom' && (
-                                <View className="flex-row justify-between items-center mb-6">
-                                    <Text className="text-xl font-bold text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
-                                        {title}
-                                    </Text>
-                                    <TouchableOpacity onPress={onClose} className="p-2 -mr-2 active:opacity-50">
-                                        <Feather name="x" size={24} color="#A3A3A3" />
-                                    </TouchableOpacity>
-                                </View>
-                            )}
-
-                            {/* Шапка для Center */}
-                            {type === 'center' && (
-                                <View className="mb-6">
-                                    <Text className="text-xl font-bold text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
-                                        {title}
-                                    </Text>
-                                </View>
-                            )}
-
-                            {/* Шапка для Fullscreen */}
-                            {type === 'fullscreen' && (
-                                <View className="flex-row items-center px-4 pb-6 border-b border-white/10 mb-6">
-                                    <TouchableOpacity onPress={onClose} className="p-2 -ml-2 active:opacity-50">
-                                        <Feather name="chevron-left" size={28} color="#F5F5F5" />
-                                    </TouchableOpacity>
-                                    <Text className="text-lg font-bold flex-1 text-center -ml-8 text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
-                                        {title}
-                                    </Text>
-                                </View>
-                            )}
-
-                            {/* ОСНОВНИЙ КОНТЕНТ */}
-                            <View className={type === 'fullscreen' ? 'px-4 flex-1' : ''}>
-                                {children}
+                        <View style={getDynamicStyles()} className={isFull ? 'flex-1' : 'w-full'}>
+                            {/* Header */}
+                            <View className={`flex-row justify-between items-center mb-6 ${isFull ? 'px-4 pb-4 border-b border-surface-border' : ''}`}>
+                                <Text className={`${isFull ? 'text-h4' : 'text-h3'} font-bold text-text-main font-unbounded flex-1`}>
+                                    {title}
+                                </Text>
+                                <TouchableOpacity onPress={onClose} className="p-2 -mr-2 active:opacity-50">
+                                    <Feather name={isFull ? "chevron-left" : "x"} size={24} color="#A3A3A3" />
+                                </TouchableOpacity>
                             </View>
+
+                            <View className={isFull ? 'px-4 flex-1' : ''}>{children}</View>
                         </View>
                     </Pressable>
                 </Pressable>

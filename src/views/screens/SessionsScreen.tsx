@@ -5,26 +5,24 @@ import SessionsGeneral from '../tools/SessionsGeneral';
 import SessionsTeam from '../tools/SessionsTeam';
 import SessionDetails from '../tools/SessionDetails';
 import { useSessionsManager, SessionTabType } from '../../hooks/sessions/useSessionsManager';
-import { TeamSession } from '../../hooks/sessions/useSessionsData';
 
 // 🔥 Наші UI Компоненти
-import { HeaderTabs } from '../components/ui/tabs/';
+import { HeaderTabs } from '../components/ui/tabs';
 import { SearchInput } from '../components/ui/SearchInput';
 
 interface SessionsScreenProps {
     initialTab?: SessionTabType;
-    openSession?: TeamSession | null;
+    openSession?: any; // Типізуй згідно зі своєю моделлю даних
 }
 
 export default function SessionsScreen({ initialTab, openSession }: SessionsScreenProps) {
     const { t } = useTranslation();
     const {
-        activeTab, setActiveTab,
-        searchQuery, setSearchQuery,
-        selectedTeamSession, setSelectedTeamSession,
-        clearSelection
+        activeTab, setActiveTab, searchQuery, setSearchQuery,
+        selectedTeamSession, setSelectedTeamSession, clearSelection
     } = useSessionsManager(initialTab);
 
+    // Синхронізація табів при зміні пропсів
     useEffect(() => {
         if (initialTab) setActiveTab(initialTab);
     }, [initialTab]);
@@ -40,27 +38,22 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
         return <SessionDetails session={selectedTeamSession} onBack={clearSelection} />;
     }
 
-    // Конфіг для наших табів
+    // Конфіг для табів (використовуємо твої переклади)
     const tabs = [
-        { id: 'TEAM', label: t('screens.sessions.tab_team') as string }, // "Командні"
-        { id: 'GENERAL', label: t('screens.sessions.tab_general') as string } // "Швидкі тести / Загальні"
+        { id: 'TEAM', label: t('screens.sessions.tab_team') as string },
+        { id: 'GENERAL', label: t('screens.sessions.tab_general') as string }
     ];
 
     return (
-        // 🔥 Прибрали жорсткий bg, щоб AppBackground просвічувався
-        <View className="flex-1 pt-4 relative">
-
-            {/* Заголовок */}
-            <View className="flex-row items-center justify-center px-4 mb-4">
-                <Text
-                    className="text-2xl font-bold text-[#F5F5F5]"
-                    style={{ fontFamily: 'Unbounded' }}
-                >
+        <View className="flex-1 pt-4">
+            {/* Заголовок: h3 + font-unbounded */}
+            <View className="items-center px-4 mb-4">
+                <Text className="text-h3 font-bold text-text-main font-unbounded">
                     {t('screens.sessions.title') as string}
                 </Text>
             </View>
 
-            {/* 🔥 Нові Таби */}
+            {/* Таби: виправляємо помилку TS2322 за допомогою приведення типу */}
             <View className="px-4 mb-5">
                 <HeaderTabs
                     tabs={tabs}
@@ -69,7 +62,7 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
                 />
             </View>
 
-            {/* 🔥 Скляне поле пошуку */}
+            {/* Пошук: наш преміальний SearchInput */}
             <View className="px-4 mb-6">
                 <SearchInput
                     value={searchQuery}
@@ -78,11 +71,16 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
                 />
             </View>
 
-            {/* Контент */}
+            {/* Контентна частина: відображаємо потрібний тул */}
             {activeTab === 'TEAM' ? (
-                <SessionsTeam searchQuery={searchQuery} onSelectSession={setSelectedTeamSession} />
+                <SessionsTeam
+                    searchQuery={searchQuery}
+                    onSelectSession={setSelectedTeamSession}
+                />
             ) : (
-                <SessionsGeneral searchQuery={searchQuery} />
+                <SessionsGeneral
+                    searchQuery={searchQuery}
+                />
             )}
         </View>
     );

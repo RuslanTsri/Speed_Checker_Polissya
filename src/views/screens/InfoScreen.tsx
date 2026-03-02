@@ -1,106 +1,66 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { usePlayerInfo, Player } from '../../hooks/players/usePlayerInfo';
-import { useTheme } from '../../context/ThemeContext';
+import { usePlayerInfo } from '../../hooks/players/usePlayerInfo';
 
-interface InfoScreenProps {
-    player: Player;
-    onBack: () => void;
-    onDelete: (id: string) => void;
-}
-
-export default function InfoScreen({ player, onBack, onDelete }: InfoScreenProps) {
+export default function InfoScreen({ player, onBack, onDelete }: any) {
     const { t } = useTranslation();
-    const { isDark } = useTheme();
     const { positionLabel, handleDeletePress, handleBack } = usePlayerInfo(player, onBack, onDelete);
 
     return (
-        <ScrollView className={`flex-1 pt-4 px-4 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <ScrollView className="flex-1 pt-4 px-4 bg-surface-bg">
             <View className="flex-row justify-between items-center mb-6">
                 <TouchableOpacity onPress={handleBack} className="flex-row items-center">
-                    <Feather name="arrow-left" size={24} color={isDark ? "#facc15" : "#eab308"} />
-                    <Text className={`font-bold ml-2 text-lg ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                        {t('screens.player_info.back') as string}
+                    <Feather name="arrow-left" size={24} color="#FF6D00" />
+                    <Text className="font-bold ml-2 text-h4 text-brand-orange font-evolventa">
+                        {t('screens.player_info.back')}
                     </Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity onPress={handleDeletePress} className={`p-2 rounded-lg border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <Feather name="trash-2" size={20} color="#ef4444" />
+                <TouchableOpacity onPress={handleDeletePress} className="p-2 rounded-xl bg-surface-card border border-surface-border">
+                    <Feather name="trash-2" size={20} color="#f87171" />
                 </TouchableOpacity>
             </View>
 
             <View className="items-center mb-8">
-                <View className={`w-48 h-48 rounded-full border-4 items-center justify-center overflow-hidden mb-6 shadow-2xl ${isDark ? 'bg-slate-800 border-yellow-400 shadow-yellow-400/20' : 'bg-white border-yellow-400 shadow-yellow-400/30'}`}>
+                <View className="w-48 h-48 rounded-full border-4 border-brand-orange items-center justify-center overflow-hidden mb-6 shadow-2xl shadow-brand-orange/20 bg-surface-card">
                     <Image source={{ uri: player.photoUrl }} className="w-full h-full" resizeMode="cover" />
                 </View>
-
-                <Text className={`text-3xl font-black text-center mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{player.name}</Text>
-                <Text className={`text-sm font-bold uppercase tracking-widest mb-6 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                    {t('screens.player_info.main_squad') as string}
+                <Text className="text-h1 font-black text-center mb-1 text-text-main font-unbounded">{player.name}</Text>
+                <Text className="text-caption font-bold uppercase tracking-widest text-text-muted font-evolventa">
+                    {t('screens.player_info.main_squad')}
                 </Text>
 
-                <View className="flex-row items-center gap-4">
-                    <View className={`px-6 py-3 rounded-2xl border items-center min-w-[90px] shadow-sm ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                        <Text className={`text-xs uppercase font-bold mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {t('screens.player_info.label_number') as string}
-                        </Text>
-                        <Text className={`font-black text-3xl ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}>#{player.number}</Text>
+                <View className="flex-row items-center gap-4 mt-6">
+                    <View className="px-6 py-3 rounded-2xl border border-surface-border bg-surface-card items-center min-w-[100px]">
+                        <Text className="text-caption uppercase font-bold text-text-sub font-evolventa mb-1">{t('screens.player_info.label_number')}</Text>
+                        <Text className="font-black text-h2 text-brand-orange font-unbounded">#{player.number}</Text>
                     </View>
-                    <View className="bg-yellow-400 px-6 py-3 rounded-2xl items-center min-w-[90px] shadow-lg shadow-yellow-400/20">
-                        <Text className="text-slate-900 text-xs uppercase font-bold mb-1">
-                            {t('screens.player_info.label_position') as string}
-                        </Text>
-                        <Text className="text-slate-900 font-black text-2xl">{positionLabel}</Text>
+                    <View className="bg-brand-orange px-6 py-3 rounded-2xl items-center min-w-[100px] shadow-lg shadow-brand-orange/20">
+                        <Text className="text-black text-caption uppercase font-bold font-evolventa mb-1">{t('screens.player_info.label_position')}</Text>
+                        <Text className="text-black font-black text-h3 font-unbounded">{positionLabel}</Text>
                     </View>
                 </View>
             </View>
 
-            <View className={`border-t my-2 ${isDark ? 'border-slate-800' : 'border-slate-200'}`} />
-            <Text className={`font-bold uppercase text-xs tracking-widest mb-4 mt-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {t('screens.player_info.label_stats') as string}
-            </Text>
+            <View className="border-t border-surface-border my-6" />
 
             <View className="flex-row justify-between mb-4">
-                <View className={`w-[48%] p-5 rounded-3xl border items-center shadow-sm ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <View className="w-12 h-12 bg-green-500/10 rounded-full items-center justify-center mb-3">
-                        <Feather name="award" size={24} color="#4ade80" />
+                <View className="w-[48%] p-5 rounded-3xl border border-surface-border bg-surface-card items-center">
+                    <View className="w-12 h-12 bg-status-success/10 rounded-full items-center justify-center mb-3">
+                        <Feather name="award" size={24} color="#34d399" />
                     </View>
-                    <Text className={`text-[10px] uppercase font-bold mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('screens.player_info.best_time') as string}
-                    </Text>
-                    <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{player.stats?.bestTime || '--'}</Text>
+                    <Text className="text-caption uppercase font-bold text-text-sub font-evolventa">{t('screens.player_info.best_time')}</Text>
+                    <Text className="text-h2 font-black text-text-main font-unbounded">{player.stats?.bestTime || '--'}</Text>
                 </View>
-
-                <View className={`w-[48%] p-5 rounded-3xl border items-center shadow-sm ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <View className="w-12 h-12 bg-blue-500/10 rounded-full items-center justify-center mb-3">
-                        <Feather name="clock" size={24} color="#60a5fa" />
+                <View className="w-[48%] p-5 rounded-3xl border border-surface-border bg-surface-card items-center">
+                    <View className="w-12 h-12 bg-brand-orange/10 rounded-full items-center justify-center mb-3">
+                        <Feather name="clock" size={24} color="#FF6D00" />
                     </View>
-                    <Text className={`text-[10px] uppercase font-bold mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {t('screens.player_info.last_time') as string}
-                    </Text>
-                    <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{player.stats?.lastTime || '--'}</Text>
+                    <Text className="text-caption uppercase font-bold text-text-sub font-evolventa">{t('screens.player_info.last_time')}</Text>
+                    <Text className="text-h2 font-black text-text-main font-unbounded">{player.stats?.lastTime || '--'}</Text>
                 </View>
             </View>
-
-            <View className={`p-5 rounded-3xl border flex-row justify-between items-center mb-20 shadow-sm ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                <View className="flex-row items-center">
-                    <View className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                        <MaterialCommunityIcons name="run-fast" size={24} color={isDark ? "#cbd5e1" : "#64748b"} />
-                    </View>
-                    <View>
-                        <Text className={`text-xs uppercase font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {t('screens.player_info.activity') as string}
-                        </Text>
-                        <Text className={`font-bold text-base ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            {t('screens.player_info.total_sessions') as string}
-                        </Text>
-                    </View>
-                </View>
-                <Text className={`font-black text-3xl ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}>{player.stats?.totalSessions || 0}</Text>
-            </View>
-
         </ScrollView>
     );
 }

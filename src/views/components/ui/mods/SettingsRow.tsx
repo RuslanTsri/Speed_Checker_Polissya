@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-// 🔥 Не забудь імпортувати іконки тут або передавати їх як пропси
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ArrowIcon, ArrowIconActive } from '../../../../../assets/icons';
 
 interface SettingsRowProps {
@@ -20,48 +19,48 @@ export const SettingsRow = ({
     return (
         <Pressable
             onPress={onPress}
-            className={`flex-row items-center justify-between py-4 ${!isLast ? 'border-b border-white/5' : ''}`}
-            style={({ pressed }) => [{ opacity: pressed && onPress ? 0.8 : 1 }]}
+            // Використовуємо твій surface-border для ліній
+            className={`flex-row items-center justify-between py-4 ${!isLast ? 'border-b border-surface-border' : ''}`}
+            style={({ pressed }) => [{ opacity: pressed && onPress ? 0.7 : 1 }]}
         >
-            {({ pressed }) => {
-                const currentIcon = pressed && activeIcon ? activeIcon : icon;
-                return (
-                    <>
-                        <View className="flex-row items-center gap-4 flex-1">
-                            <View className="w-8 h-8 items-center justify-center">
-                                {currentIcon}
-                            </View>
-                            <Text
-                                className={`text-base font-bold ${destructive ? 'text-red-500' : 'text-[#F5F5F5]'}`}
-                                style={{ fontFamily: 'Evolventa' }}
-                            >
-                                {title}
+            {({ pressed }) => (
+                <>
+                    {/* Ліва частина: Іконка + Заголовок */}
+                    <View className="flex-row items-center gap-4 flex-1">
+                        <View className="w-8 h-8 items-center justify-center">
+                            {pressed && activeIcon ? activeIcon : icon}
+                        </View>
+                        <Text className={`text-h4 font-bold font-evolventa ${destructive ? 'text-status-error' : 'text-text-main'}`}>
+                            {title}
+                        </Text>
+                    </View>
+
+                    {/* Права частина: Значення + Стрілка/Елемент */}
+                    <View className="flex-row items-center gap-2">
+                        {value && (
+                            <Text className="text-text-sub text-body font-evolventa mr-1">
+                                {value}
                             </Text>
-                        </View>
+                        )}
 
-                        <View className="flex-row items-center gap-2">
-                            {value ? (
-                                <Text className="text-[#A3A3A3] text-sm mr-1" style={{ fontFamily: 'Evolventa' }}>
-                                    {value}
-                                </Text>
-                            ) : null}
-
-                            {/* 🔥 ПРАВА ЧАСТИНА: Світч або наша стрілка */}
-                            {rightElement ? rightElement : (
-                                onPress ? (
-                                    <View style={{ transform: [{ rotate: '90deg' }] }}>
-                                        {pressed ? (
-                                            <ArrowIconActive width={18} height={18} fill="#F5F5F5" />
-                                        ) : (
-                                            <ArrowIcon width={18} height={18} fill="#64748b" />
-                                        )}
-                                    </View>
-                                ) : null
-                            )}
-                        </View>
-                    </>
-                );
-            }}
+                        {rightElement || (onPress && (
+                            <View style={styles.rotate90}>
+                                {pressed ? (
+                                    <ArrowIconActive width={18} height={18} fill="#F5F5F5" />
+                                ) : (
+                                    <ArrowIcon width={18} height={18} fill="#A3A3A3" />
+                                )}
+                            </View>
+                        ))}
+                    </View>
+                </>
+            )}
         </Pressable>
     );
 };
+
+const styles = StyleSheet.create({
+    rotate90: {
+        transform: [{ rotate: '90deg' }]
+    }
+});

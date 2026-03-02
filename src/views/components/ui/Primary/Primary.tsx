@@ -1,8 +1,10 @@
 import React from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-// Імпортуємо обидві іконки
 import { StartIcon, StartIconActive } from '../../../../../assets/icons/';
+
+// 🔥 Константи градієнта з твого конфігу
+const START_GRADIENT = ['#CA4402', '#FF6D00', '#FFF958'] as const;
 
 interface PrimaryProps {
     onPress?: () => void;
@@ -11,49 +13,36 @@ interface PrimaryProps {
     className?: string;
 }
 
-export const Primary = ({
-                            onPress,
-                            variant = 'gradient',
-                            isActive = false,
-                            className = ''
-                        }: PrimaryProps) => {
+export const Primary = ({ onPress, variant = 'gradient', isActive = false, className = '' }: PrimaryProps) => {
     const isGradient = variant === 'gradient';
     const borderRadius = 32;
-
     const IconComponent = isActive ? StartIconActive : StartIcon;
 
     return (
         <Pressable
             onPress={onPress}
-            style={({ pressed }) => [
-                { transform: [{ scale: pressed ? 0.94 : 1 }], borderRadius },
-            ]}
+            style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.94 : 1 }], borderRadius }]}
         >
             {({ pressed }) => (
                 <View
-                    style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius,
-                        overflow: 'hidden',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                    className={className}
+                    style={styles.container}
+                    className={`${className} overflow-hidden items-center justify-center`}
                 >
                     {isGradient ? (
                         <LinearGradient
-                            colors={['#C2410C', '#FF9100', '#FDE047']}
-                            locations={[0, 0.3, 1]}
+                            colors={START_GRADIENT}
+                            locations={[0, 0.4, 1]}
                             style={StyleSheet.absoluteFill}
                         />
                     ) : (
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]} />
+                        // Використовуємо твій surface-card для темного варіанту
+                        <View
+                            style={StyleSheet.absoluteFill}
+                            className="bg-white/5 border border-white/10"
+                        />
                     )}
 
-                    {pressed && (
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.15)', zIndex: 1 }]} />
-                    )}
+                    {pressed && <View style={styles.pressedOverlay} />}
 
                     <IconComponent
                         width={32}
@@ -66,3 +55,8 @@ export const Primary = ({
         </Pressable>
     );
 };
+
+const styles = StyleSheet.create({
+    container: { width: 64, height: 64, borderRadius: 32 },
+    pressedOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.15)', zIndex: 1 }
+});

@@ -1,19 +1,14 @@
 import React from 'react';
-import { View, Text, FlatList, ActivityIndicator, Pressable, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, Pressable, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { usePlayerSelection } from '../../../hooks/tempoMetrics/usePlayerSelection';
 import { Player } from '../../../services/playerService';
 
-// 🔥 Імпорт UI-компонентів
 import { SearchInput } from '../../components/ui/SearchInput';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
-import {
-    ArrowIcon,
-    ArrowIconActive,
-    PhotoIcon
-} from '../../../../assets/icons';
+import { ArrowIcon, ArrowIconActive, PhotoIcon } from '../../../../assets/icons';
 
 interface Props {
     teamId: string;
@@ -25,90 +20,63 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
     const { t } = useTranslation();
     const { players, selectedIds, toggleSelection, toggleAll, isEmpty, isLoading, search, setSearch } = usePlayerSelection(teamId);
 
-    // ==========================================
-    // СТАН: ПОРОЖНЯ КОМАНДА
-    // ==========================================
     if (isEmpty) {
         return (
-            <View className="flex-1 pt-4 relative">
+            <View className="flex-1 pt-4 relative bg-surface-bg">
                 <View className="flex-row items-center justify-between px-4 mb-6">
                     <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
-                        {({ pressed }) => (
-                            <View style={{ transform: [{ rotate: '-90deg' }] }}>
-                                {pressed ? <ArrowIconActive width={28} height={28} fill="#F5F5F5" /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
-                            </View>
-                        )}
+                        <View style={styles.rotateNeg90}>
+                            <ArrowIcon width={28} height={28} fill="#F5F5F5" />
+                        </View>
                     </Pressable>
-                    <Text className="text-xl font-bold flex-1 text-center text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                    <Text className="text-h3 font-bold flex-1 text-center text-text-main font-unbounded">
                         {t('tools.speed_checker.team_empty_title')}
                     </Text>
                     <View className="w-10" />
                 </View>
 
                 <View className="items-center justify-center flex-1 px-6 pb-20">
-                    <View className="w-20 h-20 bg-white/5 border border-white/10 rounded-full items-center justify-center mb-6">
-                        <Feather name="users" size={32} color="#A3A3A3" />
+                    <View className="w-20 h-20 bg-surface-card border border-surface-border rounded-full items-center justify-center mb-6">
+                        <Feather name="users" size={32} color="#717171" />
                     </View>
-                    <Text className="text-[#A3A3A3] text-center mb-8" style={{ fontFamily: 'Evolventa', lineHeight: 22 }}>
+                    <Text className="text-text-sub text-center mb-8 font-evolventa text-body leading-5">
                         {t('tools.speed_checker.team_empty_desc')}
                     </Text>
-                    <Button
-                        variant="outline"
-                        title={t('tools.speed_checker.btn_go_back')}
-                        onPress={onBack}
-                        className="w-full"
-                    />
+                    <Button variant="outline" title={t('tools.speed_checker.btn_go_back')} onPress={onBack} className="w-full" />
                 </View>
             </View>
         );
     }
 
-    // ==========================================
-    // СТАН: СПИСОК ГРАВЦІВ
-    // ==========================================
     return (
-        <View className="flex-1 pt-4 relative">
-
-            {/* HEADER */}
-            <View className="flex-row items-center justify-between px-4 mb-6 relative z-10">
+        <View className="flex-1 pt-4 relative bg-surface-bg">
+            <View className="flex-row items-center justify-between px-4 mb-6 z-10">
                 <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
-                    {({ pressed }) => (
-                        <View style={{ transform: [{ rotate: '-90deg' }] }}>
-                            {pressed ? <ArrowIconActive width={28} height={28} fill="#F5F5F5" /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
-                        </View>
-                    )}
+                    <View style={styles.rotateNeg90}>
+                        <ArrowIcon width={28} height={28} fill="#F5F5F5" />
+                    </View>
                 </Pressable>
-                <Text className="text-xl font-bold flex-1 text-center text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
+                <Text className="text-h3 font-bold flex-1 text-center text-text-main font-unbounded">
                     {t('tools.speed_checker.select_players_title')}
                 </Text>
                 <View className="w-10" />
             </View>
 
-            {/* ПОШУК */}
             <View className="px-4 mb-4 z-10">
-                <SearchInput
-                    value={search}
-                    onChangeText={setSearch}
-                    placeholder={t('tools.speed_checker.search_player')}
-                />
+                <SearchInput value={search} onChangeText={setSearch} placeholder={t('tools.speed_checker.search_player')} />
             </View>
 
-            {/* СУБХЕДЕР */}
             <View className="flex-row justify-between items-center px-5 mb-4 z-10">
-                <Text className="text-[10px] font-bold uppercase tracking-widest text-[#A3A3A3]" style={{ fontFamily: 'Evolventa' }}>
-                    {t('tools.speed_checker.selected_count')} <Text className="text-[#FF6D00]">{selectedIds.length}</Text> {t('tools.speed_checker.from')} {players.length}
+                <Text className="text-caption font-bold uppercase tracking-widest text-text-muted font-evolventa">
+                    {t('tools.speed_checker.selected_count')} <Text className="text-brand-orange">{selectedIds.length}</Text> {t('tools.speed_checker.from')} {players.length}
                 </Text>
-
                 <TouchableOpacity onPress={toggleAll} className="active:opacity-60 py-1">
-                    <Text className="text-[10px] font-bold uppercase tracking-widest text-[#FF6D00]" style={{ fontFamily: 'Evolventa' }}>
-                        {selectedIds.length === players.length && players.length > 0
-                            ? t('tools.speed_checker.deselect_all')
-                            : t('tools.speed_checker.select_all')}
+                    <Text className="text-caption font-bold uppercase tracking-widest text-brand-orange font-evolventa">
+                        {selectedIds.length === players.length && players.length > 0 ? t('tools.speed_checker.deselect_all') : t('tools.speed_checker.select_all')}
                     </Text>
                 </TouchableOpacity>
             </View>
 
-            {/* СПИСОК ГРАВЦІВ */}
             {isLoading ? (
                 <ActivityIndicator size="large" color="#FF6D00" className="mt-10" />
             ) : (
@@ -124,25 +92,15 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                                 onPress={() => toggleSelection(item.id || '')}
                                 style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.98 : 1 }] }]}
                                 className={`p-4 rounded-3xl mb-3 border flex-row items-center justify-between transition-colors shadow-sm ${
-                                    isSelected
-                                        ? 'bg-[#FF6D00]/10 border-[#FF6D00]/50'
-                                        : 'bg-white/5 border-white/10'
+                                    isSelected ? 'bg-brand-orange/10 border-brand-orange/50' : 'bg-surface-card border-surface-border'
                                 }`}
                             >
-                                {/* Ліва частина: Просто іконка та Ім'я */}
                                 <View className="flex-row items-center flex-1 gap-3">
-                                    <PhotoIcon width={24} height={24} fill="#A3A3A3" />
-                                    <Text className="font-bold text-base text-[#F5F5F5]" style={{ fontFamily: 'Unbounded' }}>
-                                        {item.name}
-                                    </Text>
+                                    <PhotoIcon width={24} height={24} fill="#717171" />
+                                    <Text className="font-bold text-body text-text-main font-unbounded">{item.name}</Text>
                                 </View>
-
-                                {/* Права частина: Чекбокс */}
                                 <View className="ml-4" pointerEvents="none">
-                                    <Checkbox
-                                        checked={isSelected}
-                                        onChange={() => {}}
-                                    />
+                                    <Checkbox checked={isSelected} onChange={() => {}} />
                                 </View>
                             </Pressable>
                         );
@@ -150,7 +108,6 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                 />
             )}
 
-            {/* 🔥 НИЖНЯ КНОПКА (Над футером) */}
             <View className="absolute bottom-28 left-4 right-4 z-50">
                 <Button
                     variant="primary"
@@ -160,7 +117,8 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                     className="w-full shadow-xl shadow-black/50"
                 />
             </View>
-
         </View>
     );
 }
+
+const styles = StyleSheet.create({ rotateNeg90: { transform: [{ rotate: '-90deg' }] } });

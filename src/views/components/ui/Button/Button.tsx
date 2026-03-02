@@ -12,52 +12,42 @@ interface MyButtonProps extends Omit<PressableProps, 'style'> {
 }
 
 export const Button = ({
-                             title,
-                             variant = 'primary',
-                             disabled = false,
-                             isLoading = false,
-                             icon,
-                             className = '',
-                             ...props
-                         }: MyButtonProps) => {
+                           title, variant = 'primary', disabled = false, isLoading = false, icon, className = '', ...props
+                       }: MyButtonProps) => {
 
     const getContainerClasses = () => {
-        const base = "flex-row items-center justify-center px-8 py-3 rounded-lg border";
+        const base = "flex-row items-center justify-center px-8 py-4 rounded-2xl border"; // Збільшили rounded до 2xl
 
         if (variant === 'light') {
-            if (disabled) return `${base} border-transparent bg-[#DCDCDC]`;
-            return `${base} border-transparent bg-[#F5F5F5] active:bg-[#EDEDED]`;
+            if (disabled) return `${base} border-transparent bg-brand-light opacity-50`;
+            return `${base} border-transparent bg-brand-light active:bg-text-sub`;
         }
 
         if (variant === 'primary') {
-            if (disabled) return `${base} border-transparent bg-[#717171]`;
-            return `${base} border-transparent bg-[#FF6D00] active:bg-[#E65100]`;
+            if (disabled) return `${base} border-transparent bg-text-muted`;
+            return `${base} border-transparent bg-brand-orange active:bg-brand-orangeDark`;
         }
 
         if (variant === 'outline') {
             if (disabled) return `${base} bg-transparent border-white/10 opacity-50`;
-            return `${base} bg-transparent border-white/20 active:bg-white/5`;
+            return `${base} bg-transparent border-surface-border active:bg-white/5`;
         }
-
         return base;
     };
 
-    const getTextStyles = () => {
-        if (variant === 'light') {
-            return disabled ? "text-[#717171]" : "text-[#0A0A0A]";
-        }
-        if (variant === 'primary') {
-            return disabled ? "text-[#C3C3C3]" : "text-[#F5F5F5]";
-        }
-        if (variant === 'outline') {
-            return disabled ? "text-white/30" : "text-white";
-        }
+    const getTextClasses = () => {
+        const base = "text-base font-bold font-unbounded uppercase tracking-wider"; // Додали шрифт Unbounded
+        if (variant === 'light') return disabled ? "text-text-muted" : "text-surface-bg";
+        if (variant === 'primary') return disabled ? "text-brand-gray" : "text-text-main";
+        if (variant === 'outline') return disabled ? "text-text-muted" : "text-text-main";
+        return base;
     };
 
     return (
         <Pressable
             disabled={disabled || isLoading}
             className={`${getContainerClasses()} ${className}`}
+            style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.98 : 1 }] }]}
             {...props}
         >
             {isLoading ? (
@@ -65,7 +55,7 @@ export const Button = ({
             ) : (
                 <View className="flex-row items-center justify-center">
                     {icon && <View className="mr-2">{icon}</View>}
-                    <Text className={`text-base font-bold tracking-wide ${getTextStyles()}`}>
+                    <Text className={getTextClasses()}>
                         {title}
                     </Text>
                 </View>

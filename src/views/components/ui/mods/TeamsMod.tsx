@@ -1,8 +1,11 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import {BlurView} from "expo-blur";
-// import { BlurView } from 'expo-blur';
+import { BlurView } from 'expo-blur';
+
+// 🔥 Використовуємо консистентні назви та кешуємо їх
+const GRADIENT_NORMAL = ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)'] as const;
+const GRADIENT_PRESSED = ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)'] as const;
 
 interface TeamsModProps {
     teamName: string;
@@ -11,16 +14,21 @@ interface TeamsModProps {
     tags?: React.ReactNode;
     icon?: React.ReactNode;
     activeIcon?: React.ReactNode;
-    rightIcon?: React.ReactNode;       // 🔥 Додали праву іконку
-    rightActiveIcon?: React.ReactNode; // 🔥 Додали праву активну іконку
+    rightIcon?: React.ReactNode;
+    rightActiveIcon?: React.ReactNode;
     onPress?: () => void;
     className?: string;
+    optimizeForList?: boolean;
 }
 
 export const TeamsMod = ({
-                             teamName, date = '', time = '', tags, icon, activeIcon, rightIcon, rightActiveIcon, onPress, className = ''
+                             teamName, date = '', time = '', tags, icon, activeIcon,
+                             rightIcon, rightActiveIcon, onPress, className = '',
+                             optimizeForList = false
                          }: TeamsModProps) => {
+
     const isClickable = !!onPress;
+    const isAndroidTurbo = Platform.OS === 'android' && optimizeForList;
 
     return (
         <Pressable
@@ -31,61 +39,69 @@ export const TeamsMod = ({
         >
             {({ pressed }) => {
                 const isPressed = pressed && isClickable;
-                const currentIcon = isPressed && activeIcon ? activeIcon : icon;
-                const currentRightIcon = isPressed && rightActiveIcon ? rightActiveIcon : rightIcon; // 🔥 Логіка зміни правої іконки
 
                 return (
-                    <View style={styles.container} className="rounded-2xl overflow-hidden border border-[#262626] shadow-sm">
+                    <View style={styles.container} className="rounded-2xl overflow-hidden border border-surface-border shadow-sm">
 
-                        <BlurView
-                            intensity={30}
-                            tint="dark"
-                            experimentalBlurMethod="dimezisBlurView"
-                            style={StyleSheet.absoluteFill}
-                        />
-
-
-                        <LinearGradient
-                            colors={isPressed ? ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)'] : ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)']}
-                            start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
-                            style={StyleSheet.absoluteFill}
-                        />
-
-                        {isPressed && <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.2)' }]} />}
+                        {/* 🚀 АНДРОЇД ОПТИМІЗАЦІЯ (БЕЗ БЛЮРУ В СПИСКАХ) */}
+                        {isAndroidTurbo ? (
+                            <View
+                                style={StyleSheet.absoluteFill}
+                                className={isPressed ? 'bg-surface-cardPressed' : 'bg-surface-card'}
+                            />
+                        ) : (
+                            <>
+                                <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+                                <LinearGradient
+                                    colors={isPressed ? GRADIENT_PRESSED : GRADIENT_NORMAL}
+                                    start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+                                    style={StyleSheet.absoluteFill}
+                                />
+                            </>
+                        )}
 
                         <View className="p-3">
-                            {/* 🔥 Змінили структуру: додали justify-between для рознесення контенту і стрілки */}
                             <View className="flex-row items-center justify-between gap-3">
-
-                                {/* ЛІВА ЧАСТИНА (Іконка + Текст) */}
                                 <View className="flex-row items-center gap-3 flex-1">
-                                    {currentIcon && (
+                                    {/* Іконка команди */}
+                                    {icon && (
                                         <View className="p-1 items-center justify-center">
-                                            {currentIcon}
+                                            {isPressed && activeIcon ? activeIcon : icon}
                                         </View>
                                     )}
 
-                                    <View className="flex-1 flex-col justify-start items-start gap-1.5">
-                                        <Text className="text-[#F5F5F5] text-base font-bold leading-4" style={{ fontFamily: 'Unbounded' }} numberOfLines={1}>
+                                    <View className="flex-1 flex-col justify-start items-start gap-1">
+                                        {/* Назва команди: Unbounded */}
+                                        <Text className="text-text-main text-h4 font-bold font-unbounded" numberOfLines={1}>
                                             {teamName}
                                         </Text>
 
+                                        {/* Мета-дані: Evolventa */}
                                         {(date || time || tags) && (
                                             <View className="flex-row justify-start items-center gap-2 flex-wrap">
-                                                {!!date && <Text className="text-[#DCDCDC] text-sm font-normal leading-5" style={{ fontFamily: 'Evolventa' }}>{date}</Text>}
-                                                {!!date && !!time && <View className="w-1 h-1 rounded-full bg-[#DCDCDC]" />}
-                                                {!!time && <Text className="text-[#DCDCDC] text-sm font-normal leading-5" style={{ fontFamily: 'Evolventa' }}>{time}</Text>}
-
+                                                {!!date && (
+                                                    <Text className="text-text-sub text-body font-evolventa">
+                                                        {date}
+                                                    </Text>
+                                                )}
+                                                {!!date && !!time && (
+                                                    <View className="w-1 h-1 rounded-full bg-text-sub" />
+                                                )}
+                                                {!!time && (
+                                                    <Text className="text-text-sub text-body font-evolventa">
+                                                        {time}
+                                                    </Text>
+                                                )}
                                                 {tags && <>{tags}</>}
                                             </View>
                                         )}
                                     </View>
                                 </View>
 
-                                {/* 🔥 ПРАВА ЧАСТИНА (Стрілка з поворотом на 90 градусів) */}
-                                {currentRightIcon && (
-                                    <View style={{ transform: [{ rotate: '90deg' }] }} className="mr-2">
-                                        {currentRightIcon}
+                                {/* Права іконка (стрілка) */}
+                                {(rightIcon || rightActiveIcon) && (
+                                    <View style={styles.rotate90} className="mr-2">
+                                        {isPressed && rightActiveIcon ? rightActiveIcon : rightIcon}
                                     </View>
                                 )}
                             </View>
@@ -97,6 +113,12 @@ export const TeamsMod = ({
     );
 };
 
+// 🔥 ВИПРАВЛЕНО: Додано об'єкт styles
 const styles = StyleSheet.create({
-    container: { minHeight: 64 }
+    container: {
+        minHeight: 64,
+    },
+    rotate90: {
+        transform: [{ rotate: '90deg' }]
+    }
 });

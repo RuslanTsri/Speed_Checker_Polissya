@@ -2,13 +2,14 @@ import "./global.css";
 import React, { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import {View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Platform} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Platform } from 'react-native';
 // 🔥 Використовуємо нативний StatusBar
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Feather } from "@expo/vector-icons";
 import * as NavigationBar from 'expo-navigation-bar';
+
 // Блокуємо авто-хованку заставки
 SplashScreen.preventAutoHideAsync();
 
@@ -16,6 +17,7 @@ SplashScreen.preventAutoHideAsync();
 import { MainLayout } from './src/views/layout/MainLayout';
 import { TabType } from './src/views/layout/Footer';
 import { AppModal } from './src/views/components/AppModal';
+import { AppLoaderStart } from './src/views/components/ui/AppLoaderStart'; // <-- Додали імпорт лоадера
 
 // Screens
 import AuthScreen from './src/views/screens/AuthScreen';
@@ -57,22 +59,46 @@ const AppContentWrapper = () => {
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange
     } = useAppLogic();
 
-    useEffect(() => {
-        if (fontsLoaded && !isUserLoading && !isLangLoading) {
-            SplashScreen.hideAsync();
-        }
-    }, [fontsLoaded, isUserLoading, isLangLoading]);
+    // 1. Рахуємо прогрес завантаження
+    let loadProgress = 0;
+    let loadStatus = "Ініціалізація...";
 
-    if (!fontsLoaded) return null;
-
-    if (isUserLoading || isLangLoading) {
-        return (
-            <View className={`flex-1 justify-center items-center ${isDark ? 'bg-surface-bg' : 'bg-brand-light'}`}>
-                <ActivityIndicator size="large" color="#FF6D00" />
-            </View>
-        );
+    if (fontsLoaded) {
+        loadProgress += 30;
+        loadStatus = "Шрифти завантажено...";
+    }
+    if (!isLangLoading) {
+        loadProgress += 30;
+        loadStatus = "Налаштування мови...";
+    }
+    if (!isUserLoading) {
+        loadProgress += 40;
+        loadStatus = "Перевірка сесії...";
     }
 
+    // 2. Хук для навігаційної панелі Android
+    useEffect(() => {
+        if (Platform.OS === 'android') {
+            NavigationBar.setPositionAsync('absolute'); // Панель починає "плавати" поверх контенту
+            NavigationBar.setBackgroundColorAsync('#ffffff00'); // Робимо її прозорою
+            NavigationBar.setButtonStyleAsync('light'); // Робимо іконки кнопок світлими, щоб їх було видно на темному футері
+        }
+    }, []);
+
+    // 3. Хук для ховання нативного сплеш-скріна
+    useEffect(() => {
+        // Ховаємо нативний сплеш одразу, щоб передати естафету нашому кастомному лоадеру
+        SplashScreen.hideAsync();
+    }, []);
+
+    // --- ПЕРЕВІРКИ СТАНІВ ---
+
+    // Якщо хоч щось ще вантажиться — показуємо наш кастомний лоадер із прогрес-баром
+    if (!fontsLoaded || isUserLoading || isLangLoading) {
+        return <AppLoaderStart progress={loadProgress} statusText={loadStatus} />;
+    }
+
+    // Якщо все завантажилось, але юзер не залогінений
     if (!user) {
         return (
             <>
@@ -81,13 +107,7 @@ const AppContentWrapper = () => {
             </>
         );
     }
-    useEffect(() => {
-        if (Platform.OS === 'android') {
-            NavigationBar.setPositionAsync('absolute'); // Панель починає "плавати" поверх контенту
-            NavigationBar.setBackgroundColorAsync('#ffffff00'); // Робимо її прозорою
-            NavigationBar.setButtonStyleAsync('light'); // Робимо іконки кнопок світлими, щоб їх було видно на темному футері
-        }
-    }, []);
+
     const renderScreen = () => {
         switch (currentTab) {
             case 'HOME': return <HomeScreen onNavigate={handleNavigate} />;

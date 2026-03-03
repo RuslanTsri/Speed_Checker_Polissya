@@ -22,14 +22,16 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
 
     if (isEmpty) {
         return (
-            <View className="flex-1 pt-4 relative bg-surface-bg">
+            <View className="flex-1 pt-4 relative">
                 <View className="flex-row items-center justify-between px-4 mb-6">
                     <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
-                        <View style={styles.rotateNeg90}>
-                            <ArrowIcon width={28} height={28} fill="#F5F5F5" />
-                        </View>
+                        {({ pressed }) => (
+                            <View style={styles.rotateNeg90}>
+                                {pressed ? <ArrowIconActive width={28} height={28} /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                            </View>
+                        )}
                     </Pressable>
-                    <Text className="text-h3 font-bold flex-1 text-center text-text-main font-unbounded">
+                    <Text className="text-h3 flex-1 text-center text-text-main font-unbounded-bold">
                         {t('tools.speed_checker.team_empty_title')}
                     </Text>
                     <View className="w-10" />
@@ -49,14 +51,16 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
     }
 
     return (
-        <View className="flex-1 pt-4 relative bg-surface-bg">
+        <View className="flex-1 pt-4 relative">
             <View className="flex-row items-center justify-between px-4 mb-6 z-10">
-                <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
-                    <View style={styles.rotateNeg90}>
-                        <ArrowIcon width={28} height={28} fill="#F5F5F5" />
-                    </View>
+                <Pressable onPress={onBack} className="p-2 -ml-2">
+                    {({ pressed }) => (
+                        <View style={styles.rotateNeg90}>
+                            {pressed ? <ArrowIconActive width={28} height={28} /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                        </View>
+                    )}
                 </Pressable>
-                <Text className="text-h3 font-bold flex-1 text-center text-text-main font-unbounded">
+                <Text className="text-h3 flex-1 text-center text-text-main font-unbounded-bold">
                     {t('tools.speed_checker.select_players_title')}
                 </Text>
                 <View className="w-10" />
@@ -67,11 +71,11 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
             </View>
 
             <View className="flex-row justify-between items-center px-5 mb-4 z-10">
-                <Text className="text-caption font-bold uppercase tracking-widest text-text-muted font-evolventa">
+                <Text className="text-caption uppercase tracking-widest text-text-muted font-evolventa-bold">
                     {t('tools.speed_checker.selected_count')} <Text className="text-brand-orange">{selectedIds.length}</Text> {t('tools.speed_checker.from')} {players.length}
                 </Text>
                 <TouchableOpacity onPress={toggleAll} className="active:opacity-60 py-1">
-                    <Text className="text-caption font-bold uppercase tracking-widest text-brand-orange font-evolventa">
+                    <Text className="text-caption uppercase tracking-widest text-brand-orange font-evolventa-bold">
                         {selectedIds.length === players.length && players.length > 0 ? t('tools.speed_checker.deselect_all') : t('tools.speed_checker.select_all')}
                     </Text>
                 </TouchableOpacity>
@@ -97,7 +101,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                             >
                                 <View className="flex-row items-center flex-1 gap-3">
                                     <PhotoIcon width={24} height={24} fill="#717171" />
-                                    <Text className="font-bold text-body text-text-main font-unbounded">{item.name}</Text>
+                                    <Text className="text-body text-text-main font-unbounded-bold">{item.name}</Text>
                                 </View>
                                 <View className="ml-4" pointerEvents="none">
                                     <Checkbox checked={isSelected} onChange={() => {}} />
@@ -114,7 +118,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                     title={t('tools.speed_checker.btn_continue')}
                     onPress={() => onSelect(players.filter(p => selectedIds.includes(p.id || '')))}
                     disabled={selectedIds.length === 0}
-                    className="w-full shadow-xl shadow-black/50"
+                    className="w-full shadow-xl"
                 />
             </View>
         </View>

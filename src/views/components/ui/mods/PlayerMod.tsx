@@ -42,7 +42,7 @@ export const PlayerMod = ({ name, subtitle, rightIcon, onPress, onEditPress, onD
                         <View className="flex-1 flex-row items-center gap-3">
                             <PhotoIcon width={36} height={36} />
                             <View className="flex-1">
-                                <Text className="text-text-main text-h4 font-bold font-unbounded" numberOfLines={1}>{name}</Text>
+                                <Text className="text-text-main text-h4 font-unbounded-bold" numberOfLines={1}>{name}</Text>
                                 {typeof subtitle === 'string' ? (
                                     <Text className="text-text-sub text-body font-evolventa">{subtitle}</Text>
                                 ) : (subtitle)}

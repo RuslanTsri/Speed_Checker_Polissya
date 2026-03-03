@@ -38,8 +38,13 @@ module.exports = {
 
       // ✍️ СІМЕЙСТВА ШРИФТІВ
       fontFamily: {
-        unbounded: ['Unbounded', 'sans-serif'],
-        evolventa: ['Evolventa', 'sans-serif'],
+        'unbounded': ['Unbounded', 'sans-serif'],
+        'unbounded-bold': ['Unbounded-Bold', 'sans-serif'],
+        'unbounded-black': ['Unbounded-Black', 'sans-serif'],
+        'unbounded-medium': ['Unbounded-Medium', 'sans-serif'],
+        'unbounded-light': ['Unbounded-Light', 'sans-serif'],
+        'evolventa': ['Evolventa', 'sans-serif'],
+        'evolventa-bold': ['Evolventa-Bold', 'sans-serif'],
       },
 
       // 📏 ТИПОГРАФІЧНА ШКАЛА (Розмір + Міжрядковий інтервал)
@@ -48,6 +53,8 @@ module.exports = {
         'h2': ['24px', { lineHeight: '32px' }],
         'h3': ['20px', { lineHeight: '28px' }],
         'h4': ['16px', { lineHeight: '24px' }],
+        'h5': ['12px',{ lineHeight: '20px' }],
+        'h6': ['8px', { lineHeight: '16px' }],
         'body': ['14px', { lineHeight: '20px' }],
         'small': ['12px', { lineHeight: '16px' }],
         'caption': ['10px', { lineHeight: '14px' }],

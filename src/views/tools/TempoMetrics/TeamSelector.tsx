@@ -15,10 +15,16 @@ export default function TeamSelector({ onBack, onSelect }: any) {
     const { teams, search, setSearch, selectedId, setSelectedId } = useTeamSelection();
 
     return (
-        <View className="flex-1 pt-4 relative bg-surface-bg">
+        <View className="flex-1 pt-4 relative">
             <View className="flex-row items-center justify-between px-4 mb-6 z-10">
-                <Pressable onPress={onBack} className="p-2 -ml-2"><View style={styles.rotateNeg90}><ArrowIcon width={28} height={28} fill="#F5F5F5" /></View></Pressable>
-                <Text className="text-h3 font-bold flex-1 text-center text-text-main font-unbounded">{t('tools.speed_checker.select_team_title')}</Text>
+                <Pressable onPress={onBack} className="p-2 -ml-2">
+                    {({ pressed }) => (
+                        <View style={styles.rotateNeg90}>
+                            {pressed ? <ArrowIconActive width={28} height={28} /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                        </View>
+                    )}
+                </Pressable>
+                <Text className="text-h3 flex-1 text-center text-text-main font-unbounded-bold">{t('tools.speed_checker.select_team_title')}</Text>
                 <View className="w-10" />
             </View>
 
@@ -34,8 +40,15 @@ export default function TeamSelector({ onBack, onSelect }: any) {
                     return (
                         <TeamsMod
                             teamName={item.name}
-                            tags={<View className="flex-row gap-2 mt-1"><View className="flex-row items-center px-2 py-1 rounded-md border border-surface-border bg-surface-card"><Feather name="users" size={10} color="#717171" style={{ marginRight: 6 }} /><Text className="text-caption font-bold text-text-sub font-evolventa">{t('tools.speed_checker.team_players_count', { count: item.players })}</Text></View></View>}
-                            icon={<TeamsIcon width={31} height={31} fill={isSelected ? "#FF6D00" : "#F5F5F5"} />}
+                            tags={
+                                <View className="flex-row gap-2 mt-1">
+                                    <View className="flex-row items-center px-2 py-1 rounded-md border border-surface-border bg-surface-card">
+                                        <Feather name="users" size={10} color="#A3A3A3" style={{ marginRight: 6 }} />
+                                        <Text className="text-caption text-text-sub font-evolventa-bold">{t('tools.speed_checker.team_players_count', { count: item.players })}</Text>
+                                    </View>
+                                </View>
+                            }
+                            icon={isSelected ? <TeamsIconActive width={31} height={31} fill="#FF6D00" /> : <TeamsIcon width={31} height={31} fill="#F5F5F5" />}
                             rightIcon={<RadioButton selected={isSelected} onSelect={() => setSelectedId(item.id)} />}
                             onPress={() => setSelectedId(item.id)}
                             className={`mb-3 ${isSelected ? 'border-brand-orange/50 bg-brand-orange/5' : ''}`}
@@ -45,7 +58,7 @@ export default function TeamSelector({ onBack, onSelect }: any) {
             />
 
             <View className="absolute bottom-28 left-4 right-4 z-50">
-                <Button variant="primary" title={t('tools.speed_checker.btn_continue')} onPress={() => { const team = teams.find(t => t.id === selectedId); if (team) onSelect(team.id, team.name); }} disabled={!selectedId} className="w-full shadow-xl shadow-black/50" />
+                <Button variant="primary" title={t('tools.speed_checker.btn_continue')} onPress={() => { const team = teams.find(t => t.id === selectedId); if (team) onSelect(team.id, team.name); }} disabled={!selectedId} className="w-full shadow-xl" />
             </View>
         </View>
     );

@@ -37,7 +37,7 @@ export default function InfoScreen({ player, onBack, onDelete }: any) {
                         <Text className="font-black text-h2 text-brand-orange font-unbounded">#{player.number}</Text>
                     </View>
                     <View className="bg-brand-orange px-6 py-3 rounded-2xl items-center min-w-[100px] shadow-lg shadow-brand-orange/20">
-                        <Text className="text-black text-caption uppercase font-bold font-evolventa mb-1">{t('screens.player_info.label_position')}</Text>
+                        <Text className="text-black text-caption uppercase font-evolventa-bold mb-1">{t('screens.player_info.label_position')}</Text>
                         <Text className="text-black font-black text-h3 font-unbounded">{positionLabel}</Text>
                     </View>
                 </View>

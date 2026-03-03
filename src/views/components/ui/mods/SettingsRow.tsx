@@ -30,7 +30,7 @@ export const SettingsRow = ({
                         <View className="w-8 h-8 items-center justify-center">
                             {pressed && activeIcon ? activeIcon : icon}
                         </View>
-                        <Text className={`text-h4 font-bold font-evolventa ${destructive ? 'text-status-error' : 'text-text-main'}`}>
+                        <Text className={`text-h4 font-evolventa-bold ${destructive ? 'text-status-error' : 'text-text-main'}`}>
                             {title}
                         </Text>
                     </View>

@@ -59,8 +59,8 @@ const SessionItem = memo(({ item, t }: { item: any, t: any }) => {
                 optimizeForList={true}
                 subtitle={
                     <View className="mt-1">
-                        {/* Команда: brand-orange + Evolventa */}
-                        <Text className="text-caption font-bold text-brand-orange uppercase mb-1 font-evolventa">
+                        {/* 🔥 Виправлено: font-bold + font-evolventa -> font-evolventa-bold */}
+                        <Text className="text-caption text-brand-orange uppercase mb-1 font-evolventa-bold">
                             {item.teamName}
                         </Text>
                         <View className="flex-row items-center">
@@ -74,10 +74,11 @@ const SessionItem = memo(({ item, t }: { item: any, t: any }) => {
                 }
                 rightIcon={
                     <View className="items-end justify-center">
-                        {/* Головний час: Unbounded + brand-orange */}
-                        <Text className="text-h2 font-black text-brand-orange font-unbounded leading-none">
+                        {/* 🔥 Виправлено: font-black + font-unbounded -> font-unbounded-black */}
+                        <Text className="text-h2 text-brand-orange font-unbounded-black leading-none">
                             {item.totalTime.toFixed(2)}
-                            <Text className="text-small font-bold text-brand-orange/70">s</Text>
+                            {/* 🔥 Додав font-unbounded-bold для букви "s", щоб вона не випадала з дизайну */}
+                            <Text className="text-small text-brand-orange/70 font-unbounded-bold">s</Text>
                         </Text>
 
                         <View className="flex-row items-center mt-1">
@@ -101,7 +102,6 @@ export default function SessionsGeneral({ searchQuery }: Props) {
     const { generalSessions, stats } = useSessionsData(searchQuery);
     const { best, worst } = stats;
 
-    // Оптимізація функції рендеру
     const renderItem = useCallback(({ item }: { item: any }) => (
         <SessionItem item={item} t={t} />
     ), [t]);
@@ -113,7 +113,6 @@ export default function SessionsGeneral({ searchQuery }: Props) {
             contentContainerStyle={styles.listPadding}
             showsVerticalScrollIndicator={false}
 
-            // Оптимізації FlatList для великих списків
             renderItem={renderItem}
             initialNumToRender={10}
             maxToRenderPerBatch={10}
@@ -122,7 +121,6 @@ export default function SessionsGeneral({ searchQuery }: Props) {
 
             ListHeaderComponent={() => (
                 <View className="mb-6">
-                    {/* КАРТКИ СТАТИСТИКИ */}
                     <View className="flex-row justify-between mb-6">
                         <BestCard
                             title={t('tools.sessions.best') as string}
@@ -141,8 +139,8 @@ export default function SessionsGeneral({ searchQuery }: Props) {
                         />
                     </View>
 
-                    {/* Заголовок останніх заїздів */}
-                    <Text className="font-bold px-2 uppercase text-caption tracking-widest text-text-sub font-evolventa">
+                    {/* 🔥 Виправлено: font-bold + font-evolventa -> font-evolventa-bold */}
+                    <Text className="px-2 uppercase text-caption tracking-widest text-text-sub font-evolventa-bold">
                         {t('tools.sessions.latest_runs') as string}
                     </Text>
                 </View>

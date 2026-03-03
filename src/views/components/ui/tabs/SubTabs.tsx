@@ -38,7 +38,7 @@ export const SubTabs = ({ distances, selectedDistance, onSelect, optimizeForList
                             )}
 
                             <View className={`px-5 py-1.5 ${isActive ? 'bg-brand-orange/20' : 'bg-surface-card/20'}`}>
-                                <Text className={`text-small font-bold font-evolventa ${
+                                <Text className={`text-small font-evolventa-bold ${
                                     isActive ? 'text-brand-orange' : 'text-text-sub'
                                 }`}>
                                     {dist} м

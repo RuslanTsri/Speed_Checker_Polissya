@@ -1,19 +1,18 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, ScrollView, FlatList, Pressable, Animated, Easing, StyleSheet, Platform } from 'react-native';
+import { View, Text, ScrollView, FlatList, Pressable, Animated, Easing, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSpeedTestSession } from '../../../hooks/tempoMetrics/useSpeedTestSession';
 
-// 🔥 Наші UI-компоненти
+// 🔥 UI-компоненти
 import { AppModal } from '../../components/AppModal';
 import { Mod } from '../../components/ui/mods';
 import { Button } from '../../components/ui/Button';
-import { ArrowIcon } from '../../../../assets/icons';
+import { ArrowIcon, ArrowIconActive } from '../../../../assets/icons';
 
 const RunMarker = ({ position, totalDistance, label, type, triggered, timeDisplay }: any) => {
     const { t } = useTranslation();
     const percent = totalDistance > 0 ? (position / totalDistance) * 100 : (type === 'start' ? 0 : 100);
-
     const mainColor = triggered ? (type === 'start' ? '#FF6D00' : type === 'finish' ? '#34d399' : '#F5F5F5') : '#717171';
 
     return (
@@ -24,8 +23,8 @@ const RunMarker = ({ position, totalDistance, label, type, triggered, timeDispla
                         <Text className="text-text-main font-mono font-bold text-caption">{timeDisplay}</Text>
                     </View>
                 )}
-                <Text className="text-caption font-bold uppercase tracking-widest font-evolventa" style={{ color: mainColor }}>{label}</Text>
-                <Text className="text-[9px] text-text-muted font-bold font-evolventa">{position} {t('tools.speed_checker.meters_short')}</Text>
+                <Text className="text-caption uppercase tracking-widest font-evolventa-bold" style={{ color: mainColor }}>{label}</Text>
+                <Text className="text-[9px] text-text-muted font-evolventa-bold">{position} {t('tools.speed_checker.meters_short')}</Text>
             </View>
             <View className="w-[1px] h-6 rounded-full" style={{ backgroundColor: triggered ? mainColor : 'rgba(255,255,255,0.1)' }} />
             <View className="h-6 justify-center">
@@ -41,8 +40,8 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
         currentPlayerObj, teamName, currentPlayerIndex, totalPlayers, isRunning, isFinished, isReady,
         timeObj, progressPercent, activeSensors, startTraining, stopTraining, resetSession, nextPlayer,
         showIndividualModal, confirmIndividualRun, retryIndividualRun,
-        showSummaryModal, saveAllResults, restartWholeSession, isSaving,
-        localResults, currentRunResult, formatTime // ✅ Переконайся, що ці назви збігаються з хуком
+        showSummaryModal, saveAllResults, isSaving,
+        localResults, currentRunResult, formatTime
     } = useSpeedTestSession(config, onFinish);
 
     const animatedProgress = useRef(new Animated.Value(0)).current;
@@ -58,33 +57,37 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
     const timerColor = isFinished ? 'text-status-success' : isReady ? 'text-brand-orange' : 'text-text-main';
 
     return (
-        <View className="flex-1 pt-4 bg-surface-bg">
+        <View className="flex-1 pt-4">
             <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <View className="flex-row items-center justify-between mb-4 z-10">
                     <Pressable onPress={onBack} className="p-2 -ml-2">
-                        <View style={styles.rotateNeg90}><ArrowIcon width={28} height={28} fill="#F5F5F5" /></View>
+                        {({ pressed }) => (
+                            <View style={styles.rotateNeg90}>
+                                {pressed ? <ArrowIconActive width={28} height={28} /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                            </View>
+                        )}
                     </Pressable>
                     <View className="items-center flex-1">
-                        <Text className="text-h3 font-bold text-text-main font-unbounded">{t('tools.speed_checker.testing_title')}</Text>
-                        <Text className="text-caption font-bold tracking-widest text-text-sub mt-1 uppercase font-evolventa">{teamName}</Text>
+                        <Text className="text-h3 text-text-main font-unbounded-bold">{t('tools.speed_checker.testing_title')}</Text>
+                        <Text className="text-caption uppercase tracking-widest text-text-sub mt-1 font-evolventa-bold">{teamName}</Text>
                     </View>
                     <View className={`w-2.5 h-2.5 rounded-full ${isRunning ? 'bg-status-success' : 'bg-brand-orange'}`} />
                 </View>
 
                 <Mod className="mb-6">
                     <View className="flex-row justify-between mb-2">
-                        <Text className="text-caption font-bold uppercase tracking-widest text-text-muted font-evolventa">{t('tools.speed_checker.now_running')}</Text>
-                        <Text className="font-bold text-body text-text-muted font-evolventa">{currentPlayerIndex + 1} / {totalPlayers}</Text>
+                        <Text className="text-caption uppercase tracking-widest text-text-muted font-evolventa-bold">{t('tools.speed_checker.now_running')}</Text>
+                        <Text className="text-body text-text-muted font-evolventa-bold">{currentPlayerIndex + 1} / {totalPlayers}</Text>
                     </View>
-                    <Text className="font-bold text-h2 text-text-main font-unbounded">{currentPlayerObj?.name || '---'}</Text>
+                    <Text className="text-h2 text-text-main font-unbounded-bold">{currentPlayerObj?.name || '---'}</Text>
                 </Mod>
 
                 <Mod className="mb-8">
                     <View className="items-center py-6 border-b border-surface-border mb-4">
-                        <Text className="text-caption font-bold uppercase mb-2 text-text-muted font-evolventa">{isFinished ? t('tools.speed_checker.result') : t('tools.speed_checker.time')}</Text>
+                        <Text className="text-caption uppercase mb-2 text-text-muted font-evolventa-bold">{isFinished ? t('tools.speed_checker.result') : t('tools.speed_checker.time')}</Text>
                         <View className="flex-row items-baseline">
-                            <Text className={`text-h1 font-black font-mono tracking-tighter ${timerColor}`}>{timeObj.main}</Text>
-                            <Text className={`text-h3 font-black font-mono mb-1 ${timerColor}`}>{timeObj.decimal}</Text>
+                            <Text className={`text-h1 font-unbounded-black tracking-tighter ${timerColor}`}>{timeObj.main}</Text>
+                            <Text className={`text-h3 font-unbounded-bold mb-1 ${timerColor}`}>{timeObj.decimal}</Text>
                         </View>
                     </View>
 
@@ -93,13 +96,10 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                         <Animated.View className="absolute left-0 h-[2px] bg-brand-orange top-1/2 mt-[-1px] z-10" style={{ width: animatedProgress.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }) }} />
 
                         {activeSensors.map((sensor: any, index: number) => {
-                            // ✅ ВИПРАВЛЕНО TS18048: triggerTime ?? 0
                             const isTriggered = index === 0 ? (isRunning || isFinished) : (sensor.triggerTime ?? 0) > 0;
-
                             let timeDisplay = '--:--';
-                            if (index === 0 && (isRunning || isFinished)) {
-                                timeDisplay = '00:00.00';
-                            } else if (sensor.triggerTime) {
+                            if (index === 0 && (isRunning || isFinished)) timeDisplay = '00:00.00';
+                            else if (sensor.triggerTime) {
                                 const tf = formatTime(sensor.triggerTime / 1000);
                                 timeDisplay = `${tf.main}${tf.decimal}`;
                             }
@@ -131,13 +131,7 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                 </View>
             </ScrollView>
 
-            {/* ✅ ВИПРАВЛЕНО TS2304: localResults тепер доступний */}
-            <AppModal
-                visible={showSummaryModal}
-                onClose={() => {}}
-                title={t('tools.speed_checker.modal_summary', { count: localResults?.length || 0 })}
-                type="center"
-            >
+            <AppModal visible={showSummaryModal} onClose={() => {}} title={t('tools.speed_checker.modal_summary', { count: localResults?.length || 0 })} type="center">
                 <View className="h-96 w-full">
                     <FlatList
                         data={localResults || []}
@@ -145,7 +139,7 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                         renderItem={({item}) => (
                             <View className="py-3 border-b border-surface-border flex-row justify-between">
                                 <Text className="text-text-main font-evolventa">{item.player.name}</Text>
-                                <Text className="text-brand-orange font-unbounded">{item.fullTime.toFixed(3)}s</Text>
+                                <Text className="text-brand-orange font-unbounded-bold">{item.fullTime.toFixed(3)}s</Text>
                             </View>
                         )}
                     />
@@ -153,13 +147,10 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                 </View>
             </AppModal>
 
-            {/* Модалка результату заїзду */}
             <AppModal visible={showIndividualModal} onClose={() => {}} title={currentPlayerObj?.name || ''} type="center">
                 <View className="items-center py-4">
                     <Text className="text-text-sub font-evolventa mb-2">{t('tools.speed_checker.run_time')}</Text>
-                    <Text className="text-h1 font-black text-text-main font-unbounded">
-                        {currentRunResult?.fullTime.toFixed(3)}s
-                    </Text>
+                    <Text className="text-h1 text-text-main font-unbounded-black">{currentRunResult?.fullTime.toFixed(3)}s</Text>
                     <View className="flex-row gap-3 mt-8 w-full">
                         <Button variant="outline" title={t('tools.speed_checker.btn_retry')} onPress={retryIndividualRun} className="flex-1" />
                         <Button variant="primary" title={t('tools.speed_checker.btn_accept')} onPress={confirmIndividualRun} className="flex-1" />

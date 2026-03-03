@@ -14,7 +14,7 @@ export default function TimerTool({ onBack }: { onBack: () => void }) {
     const { timeObj, isActive, toggle, reset } = useStopwatch();
 
     return (
-        <View className="flex-1 pt-4 bg-surface-bg">
+        <View className="flex-1 pt-4 ">
             <View className="flex-row items-center justify-between px-4 mb-8">
                 <Pressable onPress={onBack} className="p-2 -ml-2">
                     <View style={styles.rotateNeg90}><ArrowIcon width={28} height={28} fill="#F5F5F5" /></View>

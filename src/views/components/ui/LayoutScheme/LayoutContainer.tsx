@@ -26,7 +26,7 @@ export const LayoutContainer = ({ children, title, subtitle }: LayoutContainerPr
             )}
 
             <View className="p-5">
-                <Text className="text-text-main text-h3 font-bold font-unbounded mb-1">
+                <Text className="text-text-main text-h3 font-unbounded-bold mb-1">
                     {title}
                 </Text>
                 <Text className="text-text-sub text-body font-evolventa tracking-wide mb-6">

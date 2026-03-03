@@ -50,16 +50,16 @@ export const RatingMod = ({
                     <View className="p-3 flex-row items-center justify-between">
                         <View className="flex-1 flex-row items-center gap-3">
                             <View className="w-8 items-center justify-center">
-                                <Text className="text-text-main text-h4 font-bold font-unbounded">{rank}</Text>
+                                <Text className="text-text-main text-h4 font-unbounded-bold">{rank}</Text>
                             </View>
                             <View className="flex-1">
-                                <Text className="text-text-main text-h4 font-bold font-unbounded" numberOfLines={1}>{name}</Text>
+                                <Text className="text-text-main text-h4 font-unbounded-bold" numberOfLines={1}>{name}</Text>
                                 {subtitle && <Text className="text-text-sub text-body font-evolventa">{subtitle}</Text>}
                             </View>
                         </View>
 
                         <View className="items-end">
-                            <Text className="text-text-main text-h4 font-bold font-unbounded">{resultValue}</Text>
+                            <Text className="text-text-main text-h4 font-unbounded-bold">{resultValue}</Text>
                             {secondaryValue && <Text className="text-text-sub text-caption font-evolventa">{secondaryValue}</Text>}
                         </View>
                     </View>

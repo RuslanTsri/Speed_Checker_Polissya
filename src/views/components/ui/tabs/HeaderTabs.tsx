@@ -40,7 +40,7 @@ export const HeaderTabs = ({ tabs, activeTab, onTabChange, className = '', optim
                             )}
 
                             <View className={`px-5 py-2 ${isActive ? 'bg-brand-orange/40' : 'bg-surface-card/40'}`}>
-                                <Text className={`text-body font-bold font-evolventa ${
+                                <Text className={`text-body font-evolventa-bold ${
                                     isActive ? 'text-text-main' : 'text-text-sub'
                                 }`}>
                                     {tab.label}

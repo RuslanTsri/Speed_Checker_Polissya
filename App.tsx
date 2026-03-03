@@ -2,19 +2,20 @@ import "./global.css";
 import React, { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import {View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Platform} from 'react-native';
+// 🔥 Використовуємо нативний StatusBar
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Feather } from "@expo/vector-icons";
-
+import * as NavigationBar from 'expo-navigation-bar';
 // Блокуємо авто-хованку заставки
 SplashScreen.preventAutoHideAsync();
 
 // Layouts & Components
 import { MainLayout } from './src/views/layout/MainLayout';
-import { TabType } from './src/views/layout/Footer'; // Імпортуємо тип для фіксу TS
-import { AppModal } from './src/views/components/AppModal'; // Використовуй оновлену AppModal
+import { TabType } from './src/views/layout/Footer';
+import { AppModal } from './src/views/components/AppModal';
 
 // Screens
 import AuthScreen from './src/views/screens/AuthScreen';
@@ -38,7 +39,6 @@ const AppContentWrapper = () => {
     const { isDark } = useTheme();
     const { isLangLoading } = useLanguage();
 
-    // 🔥 ЗАВАНТАЖЕННЯ ВСІХ ВАШИХ ШРИФТІВ ЗІ СКРІНШОТА
     const [fontsLoaded] = useFonts({
         'Unbounded': require('./assets/fonts/Unbounded-Regular.ttf'),
         'Unbounded-Bold': require('./assets/fonts/Unbounded-Bold.ttf'),
@@ -75,13 +75,19 @@ const AppContentWrapper = () => {
 
     if (!user) {
         return (
-            <SafeAreaProvider>
-                <StatusBar style="light" />
+            <>
+                <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
                 <AuthScreen onLogin={() => {}} />
-            </SafeAreaProvider>
+            </>
         );
     }
-
+    useEffect(() => {
+        if (Platform.OS === 'android') {
+            NavigationBar.setPositionAsync('absolute'); // Панель починає "плавати" поверх контенту
+            NavigationBar.setBackgroundColorAsync('#ffffff00'); // Робимо її прозорою
+            NavigationBar.setButtonStyleAsync('light'); // Робимо іконки кнопок світлими, щоб їх було видно на темному футері
+        }
+    }, []);
     const renderScreen = () => {
         switch (currentTab) {
             case 'HOME': return <HomeScreen onNavigate={handleNavigate} />;
@@ -104,95 +110,89 @@ const AppContentWrapper = () => {
     };
 
     return (
-        <SafeAreaProvider>
-            <BleProvider>
-                <StatusBar style="light" />
+        <BleProvider>
+            {/* 🔥 МАГІЯ ТУТ: Робимо панелі прозорими для Edge-to-Edge */}
+            <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
 
-                <MainLayout
-                    currentTab={currentTab === 'TOOLS' || currentTab === 'SETTINGS' ? 'SETTINGS' : currentTab}
-                    // ✅ ВИПРАВЛЕНО TS7006: додано тип TabType
-                    onSwitchTab={(tab: TabType) => handleNavigate(tab)}
-                    onLogout={handleLogout}
-                    onOpenPinChange={handleOpenPinModal}
-                >
-                    {renderScreen()}
-                </MainLayout>
+            <MainLayout
+                currentTab={currentTab === 'TOOLS' || currentTab === 'SETTINGS' ? 'SETTINGS' : currentTab}
+                onSwitchTab={(tab: TabType) => handleNavigate(tab)}
+                onLogout={handleLogout}
+                onOpenPinChange={handleOpenPinModal}
+            >
+                {renderScreen()}
+            </MainLayout>
 
-                {/* 🔥 ОНОВЛЕНА PIN МОДАЛКА НА ТОКЕНАХ */}
-                <AppModal
-                    visible={isPinModalVisible}
-                    onClose={() => !isPinLoading && setPinModalVisible(false)}
-                    title={t('screens.app.pin_modal_title') as string}
-                    type="bottom"
-                >
-                    <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                        <View className="p-1 gap-y-4">
-                            {/* Старий PIN */}
-                            <View>
-                                <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
-                                    {t('screens.app.old_pin_label') as string}
-                                </Text>
-                                <TextInput
-                                    value={oldPin} onChangeText={setOldPin}
-                                    keyboardType="numeric" secureTextEntry maxLength={4}
-                                    placeholder="••••" placeholderTextColor="#717171"
-                                    className={`p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded
-                                        bg-surface-card text-text-main 
-                                        ${pinError ? 'border-status-error/50' : 'border-surface-border'}`}
-                                />
-                            </View>
-
-                            {/* Новий PIN */}
-                            <View>
-                                <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
-                                    {t('screens.app.new_pin_label') as string}
-                                </Text>
-                                <TextInput
-                                    value={newPin} onChangeText={setNewPin}
-                                    keyboardType="numeric" secureTextEntry maxLength={4}
-                                    placeholder="••••" placeholderTextColor="#717171"
-                                    className="p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded bg-surface-card text-text-main border-surface-border"
-                                />
-                            </View>
-
-                            {/* Підтвердження PIN */}
-                            <View>
-                                <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
-                                    {t('screens.app.confirm_pin_label') as string}
-                                </Text>
-                                <TextInput
-                                    value={confirmPin} onChangeText={setConfirmPin}
-                                    keyboardType="numeric" secureTextEntry maxLength={4}
-                                    placeholder="••••" placeholderTextColor="#717171"
-                                    className="p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded bg-surface-card text-text-main border-surface-border"
-                                />
-                            </View>
-
-                            {pinError && (
-                                <View className="bg-status-error/10 border border-status-error/30 p-3 rounded-xl flex-row items-center justify-center">
-                                    <Feather name="alert-circle" size={16} color="#f87171" style={{ marginRight: 8 }} />
-                                    <Text className="text-status-error font-bold text-sm text-center font-evolventa">{pinError}</Text>
-                                </View>
-                            )}
-
-                            <TouchableOpacity
-                                onPress={handleSubmitPinChange}
-                                disabled={isPinLoading}
-                                className={`bg-brand-orange h-16 rounded-2xl items-center justify-center shadow-lg active:opacity-80 mt-2 ${isPinLoading ? 'opacity-50' : ''}`}
-                            >
-                                {isPinLoading ? (
-                                    <ActivityIndicator color="#000" />
-                                ) : (
-                                    <Text className="text-black font-black text-body uppercase tracking-widest font-unbounded">
-                                        {t('screens.app.btn_save_pin') as string}
-                                    </Text>
-                                )}
-                            </TouchableOpacity>
+            <AppModal
+                visible={isPinModalVisible}
+                onClose={() => !isPinLoading && setPinModalVisible(false)}
+                title={t('screens.app.pin_modal_title') as string}
+                type="bottom"
+            >
+                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    <View className="p-1 gap-y-4">
+                        <View>
+                            <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
+                                {t('screens.app.old_pin_label') as string}
+                            </Text>
+                            <TextInput
+                                value={oldPin} onChangeText={setOldPin}
+                                keyboardType="numeric" secureTextEntry maxLength={4}
+                                placeholder="••••" placeholderTextColor="#717171"
+                                className={`p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded
+                                    bg-surface-card text-text-main 
+                                    ${pinError ? 'border-status-error/50' : 'border-surface-border'}`}
+                            />
                         </View>
-                    </ScrollView>
-                </AppModal>
-            </BleProvider>
-        </SafeAreaProvider>
+
+                        <View>
+                            <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
+                                {t('screens.app.new_pin_label') as string}
+                            </Text>
+                            <TextInput
+                                value={newPin} onChangeText={setNewPin}
+                                keyboardType="numeric" secureTextEntry maxLength={4}
+                                placeholder="••••" placeholderTextColor="#717171"
+                                className="p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded bg-surface-card text-text-main border-surface-border"
+                            />
+                        </View>
+
+                        <View>
+                            <Text className="text-text-sub text-caption uppercase font-bold mb-2 ml-1 font-evolventa tracking-widest">
+                                {t('screens.app.confirm_pin_label') as string}
+                            </Text>
+                            <TextInput
+                                value={confirmPin} onChangeText={setConfirmPin}
+                                keyboardType="numeric" secureTextEntry maxLength={4}
+                                placeholder="••••" placeholderTextColor="#717171"
+                                className="p-5 rounded-2xl text-h2 tracking-[0.5em] text-center font-bold border font-unbounded bg-surface-card text-text-main border-surface-border"
+                            />
+                        </View>
+
+                        {pinError && (
+                            <View className="bg-status-error/10 border border-status-error/30 p-3 rounded-xl flex-row items-center justify-center">
+                                <Feather name="alert-circle" size={16} color="#f87171" style={{ marginRight: 8 }} />
+                                <Text className="text-status-error font-bold text-sm text-center font-evolventa">{pinError}</Text>
+                            </View>
+                        )}
+
+                        <TouchableOpacity
+                            onPress={handleSubmitPinChange}
+                            disabled={isPinLoading}
+                            className={`bg-brand-orange h-16 rounded-2xl items-center justify-center shadow-lg active:opacity-80 mt-2 ${isPinLoading ? 'opacity-50' : ''}`}
+                        >
+                            {isPinLoading ? (
+                                <ActivityIndicator color="#000" />
+                            ) : (
+                                <Text className="text-black font-black text-body uppercase tracking-widest font-unbounded">
+                                    {t('screens.app.btn_save_pin') as string}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </AppModal>
+        </BleProvider>
     );
 };
 
@@ -201,7 +201,9 @@ export default function App() {
         <LanguageProvider>
             <ThemeProvider>
                 <UserProvider>
-                    <AppContentWrapper />
+                    <SafeAreaProvider>
+                        <AppContentWrapper />
+                    </SafeAreaProvider>
                 </UserProvider>
             </ThemeProvider>
         </LanguageProvider>

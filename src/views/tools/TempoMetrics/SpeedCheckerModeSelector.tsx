@@ -22,7 +22,7 @@ const ModeCard = ({ title, subtitle, Icon, ActiveIcon, onPress }: any) => (
                         {pressed ? <ActiveIcon width={34} height={34} fill="#FF6D00" /> : <Icon width={34} height={34} fill="#F5F5F5" />}
                     </View>
                     <View className="flex-1">
-                        <Text className="text-text-main text-h4 font-bold font-unbounded leading-6">{title}</Text>
+                        <Text className="text-text-main text-h4 font-unbounded-bold leading-6">{title}</Text>
                         <Text className="text-text-sub text-body font-evolventa leading-5 tracking-wide">{subtitle}</Text>
                     </View>
                 </View>
@@ -39,17 +39,23 @@ export default function SpeedCheckerModeSelector({ onBack, onSelect, onOpenBluet
     const { connected } = useBle();
 
     return (
-        <View className="flex-1 pt-4 bg-surface-bg">
+        <View className="flex-1 pt-4 relative">
             <View className="flex-row items-center justify-between px-4 mb-8 z-10">
-                <Pressable onPress={onBack} className="p-2 -ml-2"><View style={styles.rotateNeg90}><ArrowIcon width={28} height={28} fill="#F5F5F5" /></View></Pressable>
-                <Text className="text-h3 font-bold flex-1 text-center text-text-main font-unbounded">{t('tools.speed_checker.mode_select_title')}</Text>
+                <Pressable onPress={onBack} className="p-2 -ml-2">
+                    {({ pressed }) => (
+                        <View style={styles.rotateNeg90}>
+                            {pressed ? <ArrowIconActive width={28} height={28} /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                        </View>
+                    )}
+                </Pressable>
+                <Text className="text-h3 flex-1 text-center text-text-main font-unbounded-bold">{t('tools.speed_checker.mode_select_title')}</Text>
                 <View className="w-10" />
             </View>
 
             <View className="px-4">
                 <Mod className="mb-8" variant="ghost">
                     <View className="items-center py-2">
-                        <Text className={`${connected ? 'text-status-success' : 'text-status-error'} text-h2 font-bold text-center mb-1 font-unbounded`}>
+                        <Text className={`${connected ? 'text-status-success' : 'text-status-error'} text-h2 text-center mb-1 font-unbounded-bold`}>
                             {connected ? t('tools.speed_checker.status_ready') : t('tools.speed_checker.status_not_connected')}
                         </Text>
                         <Text className="text-text-sub text-body text-center mb-4 font-evolventa">

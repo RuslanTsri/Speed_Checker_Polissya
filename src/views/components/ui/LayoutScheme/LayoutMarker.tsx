@@ -30,7 +30,7 @@ export const LayoutMarker = ({ position, totalDistance, label, type }: LayoutMar
             {/* 1. МЕТРАЖ (використовуємо caption для гейтів і small для старт/фініш) */}
             {!isStart && !isFinish ? (
                 <View className="mb-2 bg-surface-card/80 px-2 py-0.5 rounded-full border border-surface-border">
-                    <Text className="text-text-main text-caption font-bold font-evolventa">
+                    <Text className="text-text-main text-caption font-evolventa-bold">
                         {position} м
                     </Text>
                 </View>
@@ -52,7 +52,7 @@ export const LayoutMarker = ({ position, totalDistance, label, type }: LayoutMar
             />
 
             {/* 3. ПІДПИС (Start / Finish / Gate X) */}
-            <Text className={`mt-2 text-small font-bold font-evolventa ${textColorClass}`}>
+            <Text className={`mt-2 text-small font-evolventa-bold ${textColorClass}`}>
                 {label}
             </Text>
         </View>

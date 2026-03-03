@@ -24,7 +24,7 @@ const AdjustButton = ({ direction, onPress }: { direction: 'left' | 'right', onP
     </Pressable>
 );
 
-export default function QuickTestConfig({ onBack, onStart, playerCount, testType, onOpenBluetooth }: any) {
+export default function QuickTestConfig({ onBack, onStart, onOpenBluetooth }: any) {
     const { t } = useTranslation();
     const { distance, setDistance, splitPositions, adjustSplit, sensorsCount, intermediateCount } = useTestConfiguration();
     const { connected } = useBle();
@@ -36,10 +36,16 @@ export default function QuickTestConfig({ onBack, onStart, playerCount, testType
     ];
 
     return (
-        <View className="flex-1 pt-4 relative bg-surface-bg">
+        <View className="flex-1 pt-4 relative">
             <View className="flex-row items-center justify-between px-4 mb-2 z-10">
-                <Pressable onPress={onBack} className="p-2 -ml-2"><View style={styles.rotateNeg90}><ArrowIcon width={28} height={28} fill="#F5F5F5" /></View></Pressable>
-                <Text className="text-h3 font-bold text-text-main font-unbounded">{t('tools.speed_checker.quick_test_title')}</Text>
+                <Pressable onPress={onBack} className="p-2 -ml-2">
+                    {({ pressed }) => (
+                        <View style={styles.rotateNeg90}>
+                            {pressed ? <ArrowIconActive width={28} height={28} /> : <ArrowIcon width={28} height={28} fill="#F5F5F5" />}
+                        </View>
+                    )}
+                </Pressable>
+                <Text className="text-h3 text-text-main font-unbounded-bold">{t('tools.speed_checker.quick_test_title')}</Text>
                 <View className="w-10" />
             </View>
 
@@ -65,7 +71,7 @@ export default function QuickTestConfig({ onBack, onStart, playerCount, testType
 
                 {intermediateCount > 0 && (
                     <View className="mb-6">
-                        <Text className="text-caption font-bold tracking-widest uppercase mb-4 ml-1 text-text-muted font-evolventa">{t('tools.speed_checker.split_settings')}</Text>
+                        <Text className="text-caption uppercase mb-4 ml-1 text-text-muted font-evolventa-bold tracking-widest">{t('tools.speed_checker.split_settings')}</Text>
                         {splitPositions.map((pos, index) => (
                             <View key={index} className="flex-row items-center gap-3 mb-2">
                                 <View className="flex-1"><TextField label={t('tools.speed_checker.gate_meters_label', { number: index + 1 })} value={pos.toString()} editable={false} /></View>

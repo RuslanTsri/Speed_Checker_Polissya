@@ -65,7 +65,7 @@ export const Mod = ({
                                 <View className="flex-row items-center gap-4 flex-1">
                                     {pressed && activeIcon ? activeIcon : icon}
                                     <View className="flex-1">
-                                        <Text className="text-text-main text-h3 font-bold font-unbounded">{title}</Text>
+                                        <Text className="text-text-main text-h3 font-unbounded-bold">{title}</Text>
                                         {subtitle && <Text className="text-text-sub text-body font-evolventa">{subtitle}</Text>}
                                     </View>
                                 </View>

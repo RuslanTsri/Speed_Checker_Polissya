@@ -4,10 +4,10 @@
     "slug": "tempo-metrics",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0A0A0A"
     },
@@ -20,9 +20,13 @@
         "NSLocationWhenInUseUsageDescription": "Додаток використовує геолокацію для пошуку Bluetooth пристроїв поблизу."
       }
     },
+    "androidNavigationBar": {
+      "backgroundColor": "#00000000",
+      "barStyle": "light-content"
+    },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0A0A"
       },
       "package": "com.yourname.tempometrics",
@@ -31,12 +35,34 @@
         "BLUETOOTH_ADMIN",
         "BLUETOOTH_SCAN",
         "BLUETOOTH_CONNECT",
-        "ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION"
       ]
     },
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
+            "kotlinVersion": "2.1.20",
+            "configurations": {
+              "all": {
+                "resolutionStrategy": {
+                  "force": [
+                    "androidx.core:core:1.15.0",
+                    "androidx.core:core-ktx:1.15.0",
+                    "androidx.activity:activity:1.9.3",
+                    "androidx.fragment:fragment:1.8.5",
+                    "androidx.annotation:annotation:1.9.0"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
       [
         "expo-font",
         {
@@ -61,8 +87,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "5e27b0d6-942f-4b0f-8f91-66493751ed81"
+        "projectId": "1f49de81-20be-4d3d-955d-c08af4d41bbd"
       }
-    }
+    },
+    "owner": "ruslan_tsri"
   }
 }

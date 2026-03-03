@@ -72,7 +72,7 @@ export const TeamsMod = ({
 
                                     <View className="flex-1 flex-col justify-start items-start gap-1">
                                         {/* Назва команди: Unbounded */}
-                                        <Text className="text-text-main text-h4 font-bold font-unbounded" numberOfLines={1}>
+                                        <Text className="text-text-main text-h4 font-unbounded-bold" numberOfLines={1}>
                                             {teamName}
                                         </Text>
 

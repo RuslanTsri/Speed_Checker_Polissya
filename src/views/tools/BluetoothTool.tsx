@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Platform, Pressable, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useBle } from '../../context/BleContext';
 
+// Утиліти та Компоненти
 import { formatTime } from '../../utils/time';
 import { AppModal } from '../components/AppModal';
 import { Button } from '../components/ui/Button';
+import { TextField } from '../components/ui/TextField';
 import { SensorCard } from '../components/SensorCard';
-import { ArrowIcon, ArrowIconActive, BleIcon, ConnectionIcon, ConnectionIconActive } from '../../../assets/icons';
+import {
+    ArrowIcon, ArrowIconActive,
+    BleIcon,
+    ConnectionIcon, ConnectionIconActive
+} from '../../../assets/icons';
 
 export default function BluetoothTool({ onBack }: { onBack: () => void }) {
     const { t } = useTranslation();
@@ -25,6 +31,10 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
     const isModalVisible = ['discovering', 'connecting', 'initializing_sensors'].includes(state);
 
     useEffect(() => {
+        if (state === 'connecting') setConfigStep('select');
+    }, [state]);
+
+    useEffect(() => {
         let interval: NodeJS.Timeout;
         if (state === 'initializing_sensors' && configStep === 'select') {
             interval = setInterval(() => setIsIconActive(prev => !prev), 500);
@@ -36,8 +46,15 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
     const foundSensors = Math.max(0, sensors.length - 1);
     const progressPercent = Math.min((foundSensors / requiredSensors) * 100, 100);
 
+    const handleCloseModal = () => {
+        if (state === 'connecting') cancelConnecting();
+        else if (state === 'discovering') stopScanning();
+        else disconnect();
+    };
+
     return (
-        <View className="flex-1 pt-4 relative bg-surface-bg">
+        <View className="flex-1 pt-4 relative">
+            {/* HEADER */}
             <View className="flex-row items-center justify-between px-4 mb-6 z-10">
                 <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
                     {({ pressed }) => (
@@ -46,7 +63,7 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                         </View>
                     )}
                 </Pressable>
-                <Text className="text-h3 font-bold flex-1 text-center text-text-main font-unbounded">
+                <Text className="text-h3 flex-1 text-center text-text-main font-unbounded-bold">
                     {t('tools.bluetooth.title')}
                 </Text>
                 <View className="w-10" />
@@ -64,13 +81,13 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                                     <BleIcon width={24} height={24} fill={connected ? "#34d399" : "#717171"} />
                                 </View>
                                 <View className="flex-1">
-                                    <Text className="text-body font-bold text-text-main font-unbounded">
+                                    <Text className="text-body text-text-main font-unbounded-bold">
                                         {connected ? t('tools.bluetooth.master_connected') : t('tools.bluetooth.ble_disconnected')}
                                     </Text>
                                 </View>
                             </View>
                             {connected && (
-                                <TouchableOpacity onPress={disconnect} className="p-3 rounded-2xl bg-status-error/10 border border-status-error/20">
+                                <TouchableOpacity onPress={disconnect} className="p-3 rounded-2xl bg-status-error/10 border border-status-error/20 active:bg-status-error/20">
                                     <Feather name="log-out" size={18} color="#f87171" />
                                 </TouchableOpacity>
                             )}
@@ -78,11 +95,11 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
 
                         {['ready', 'active', 'finished'].includes(state) && (
                             <View className="mb-6">
-                                <Text className="text-text-muted text-caption font-bold tracking-widest uppercase mb-3 ml-2 font-evolventa">
+                                <Text className="text-text-sub text-caption uppercase mb-3 ml-2 tracking-widest font-evolventa-bold">
                                     {t('tools.timer.title')}
                                 </Text>
                                 <View className="p-6 rounded-3xl border border-surface-border bg-surface-card items-center shadow-sm">
-                                    <Text className="text-brand-orange text-h1 font-black tracking-tighter" style={{ fontFamily: 'monospace' }}>
+                                    <Text className="text-brand-orange text-h1 tracking-tighter font-unbounded-black">
                                         {formatTime(elapsedTime)}
                                     </Text>
                                 </View>
@@ -91,6 +108,16 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                     </View>
                 }
                 renderItem={({ item }) => <SensorCard item={item} optimizeForList={true} />}
+                ListEmptyComponent={
+                    !connected ? (
+                        <View className="items-center justify-center py-10 opacity-50">
+                            <MaterialCommunityIcons name="radar" size={48} color="#A3A3A3" />
+                            <Text className="mt-4 text-text-sub font-evolventa">
+                                {t('tools.bluetooth.no_devices')}
+                            </Text>
+                        </View>
+                    ) : null
+                }
             />
 
             <View className="absolute bottom-28 left-4 right-4 z-50">
@@ -105,27 +132,106 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                 )}
             </View>
 
-            <AppModal visible={isModalVisible} onClose={() => {}} title={state === 'discovering' ? t('tools.bluetooth.searching') : t('tools.bluetooth.connecting_title')}>
-                <View className="min-h-[300px]">
+            <AppModal
+                visible={isModalVisible}
+                onClose={handleCloseModal}
+                title={state === 'discovering' ? t('tools.bluetooth.searching') : t('tools.bluetooth.connecting_title')}
+                type="bottom"
+            >
+                <View className="min-h-[350px] mt-2">
                     {state === 'discovering' && (
-                        <FlatList
-                            data={scannedDevices}
-                            keyExtractor={item => item.id}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity onPress={() => connectToDevice(item)} className="p-5 mb-3 rounded-2xl border border-surface-border bg-surface-card flex-row justify-between items-center">
-                                    <View>
-                                        <Text className="font-bold text-body text-text-main font-unbounded">{item.name}</Text>
-                                        <Text className="text-text-muted text-caption font-evolventa">{item.id}</Text>
-                                    </View>
-                                    <Feather name="chevron-right" size={24} color="#FF6D00" />
-                                </TouchableOpacity>
-                            )}
-                        />
+                        <View className="flex-1">
+                            <View className="flex-row items-center mb-4 ml-1">
+                                <ActivityIndicator size="small" color="#FF6D00" className="mr-3" />
+                                <Text className="text-text-sub font-evolventa">{t('tools.bluetooth.search_a_free_systems')}</Text>
+                            </View>
+                            <FlatList
+                                data={scannedDevices}
+                                keyExtractor={item => item.id}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        onPress={() => connectToDevice(item)}
+                                        className="p-5 mb-3 rounded-2xl border border-surface-border bg-surface-card flex-row justify-between items-center active:bg-surface-card/80"
+                                    >
+                                        <View>
+                                            <Text className="text-text-main text-body font-unbounded-bold">{item.name}</Text>
+                                            <Text className="text-text-muted text-caption font-mono mt-1">{item.id}</Text>
+                                        </View>
+                                        <Feather name="chevron-right" size={24} color="#FF6D00" />
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
                     )}
+
                     {state === 'connecting' && (
                         <View className="items-center py-10">
                             <ActivityIndicator size="large" color="#FF6D00" />
-                            <Text className="text-text-main font-bold text-h4 mt-6 font-unbounded">{t('tools.bluetooth.connecting_to_device')}</Text>
+                            <Text className="text-text-main text-h4 mt-6 font-unbounded-bold">{t('tools.bluetooth.connecting_to_device')}</Text>
+                            <Text className="text-text-sub text-body mt-2 font-evolventa">{t('tools.bluetooth.stay_close')}</Text>
+                        </View>
+                    )}
+
+                    {state === 'initializing_sensors' && (
+                        <View className="flex-1">
+                            {configStep === 'select' ? (
+                                <View className="items-center">
+                                    <View className="w-20 h-20 bg-status-success/10 rounded-full items-center justify-center mb-6 border border-status-success/30">
+                                        {isIconActive ? (
+                                            <ConnectionIconActive width={32} height={32} fill="#34d399" />
+                                        ) : (
+                                            <ConnectionIcon width={32} height={32} fill="#34d399" />
+                                        )}
+                                    </View>
+                                    <Text className="text-h3 text-text-main mb-2 text-center font-unbounded-bold">{t('tools.bluetooth.master_connected')}</Text>
+                                    <Text className="text-text-sub mb-8 text-center font-evolventa">{t('tools.bluetooth.use_gates_configuration')}</Text>
+
+                                    <Text className="text-text-sub text-caption uppercase font-bold tracking-widest self-start mb-3 ml-1 font-evolventa">{t('tools.bluetooth.gates_config')}</Text>
+                                    <View className="flex-row gap-3 mb-8 w-full">
+                                        <Button
+                                            variant={targetGates === 2 ? 'light' : 'outline'}
+                                            title={t("tools.bluetooth.two_gates")}
+                                            onPress={() => setTargetGates(2)}
+                                            className="flex-1"
+                                            icon={targetGates === 2 ? <ConnectionIconActive width={20} height={20} fill="#0A0A0A" /> : <ConnectionIcon width={20} height={20} fill="#F5F5F5" />}
+                                        />
+                                        <Button
+                                            variant={targetGates === 3 ? 'light' : 'outline'}
+                                            title={t("tools.bluetooth.three_gates")}
+                                            onPress={() => setTargetGates(3)}
+                                            className="flex-1"
+                                            icon={targetGates === 3 ? <ConnectionIconActive width={20} height={20} fill="#0A0A0A" /> : <ConnectionIcon width={20} height={20} fill="#F5F5F5" />}
+                                        />
+                                    </View>
+                                    <Button variant="primary" title={t('tools.speed_checker.btn_continue')} onPress={() => setConfigStep('check')} className="w-full" />
+                                </View>
+                            ) : (
+                                <View>
+                                    <Text className="text-h3 text-text-main mb-1 font-unbounded-bold">{t('tools.bluetooth.check_gates')}</Text>
+                                    <Text className="text-text-sub mb-8 font-evolventa">{t('tools.bluetooth.task_gates')}</Text>
+
+                                    <View className="p-5 rounded-3xl border border-surface-border bg-surface-card mb-8">
+                                        <View className="flex-row justify-between mb-4">
+                                            <Text className="text-text-main font-evolventa-bold">{t('tools.bluetooth.system')}</Text>
+                                            <Text className="text-brand-orange font-evolventa-bold">
+                                                {t('tools.bluetooth.gate_id', { id: `${foundSensors} / ${requiredSensors}` })}
+                                            </Text>
+                                        </View>
+                                        <View className="h-2.5 w-full bg-surface-bg rounded-full overflow-hidden mb-4">
+                                            <View className="h-full bg-brand-orange rounded-full" style={{ width: `${progressPercent}%` }} />
+                                        </View>
+                                        <View className="flex-row items-center justify-center gap-2">
+                                            <ActivityIndicator size="small" color="#A3A3A3" />
+                                            <Text className="text-text-sub text-caption font-evolventa-bold">{t('tools.bluetooth.status_waiting')}</Text>
+                                        </View>
+                                    </View>
+
+                                    <View className="flex-row gap-3">
+                                        <Button variant="light" title={t('tools.bluetooth.finish_setup')} onPress={finishInitialization} disabled={foundSensors < requiredSensors} className="flex-1" />
+                                        <Button variant="outline" title={t('tools.speed_checker.btn_go_back')} onPress={disconnect} className="flex-1" />
+                                    </View>
+                                </View>
+                            )}
                         </View>
                     )}
                 </View>

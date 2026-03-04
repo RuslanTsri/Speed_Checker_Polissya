@@ -1,5 +1,5 @@
 import React from 'react';
-import { View,Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -15,15 +15,19 @@ export const LayoutContainer = ({ children, title, subtitle }: LayoutContainerPr
     const isAndroid = Platform.OS === 'android';
 
     return (
-        <View className="rounded-3xl overflow-hidden border border-surface-border shadow-sm mb-6 min-h-[160px]">
-            {!isAndroid ? (
-                <>
-                    <BlurView intensity={30} tint="dark" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
-                    <LinearGradient colors={GRADIENT_BG} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
-                </>
-            ) : (
-                <View style={StyleSheet.absoluteFill} className="bg-surface-card" />
-            )}
+        // 🔥 Прибрали overflow-hidden з головного контейнера, щоб маркери 0% і 100% не обрізались
+        <View className="rounded-3xl border border-surface-border shadow-sm mb-6 min-h-[160px]">
+            {/* Фон з overflow-hidden робимо окремим шаром */}
+            <View className="absolute inset-0 rounded-3xl overflow-hidden">
+                {!isAndroid ? (
+                    <>
+                        <BlurView intensity={30} tint="dark" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
+                        <LinearGradient colors={GRADIENT_BG} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
+                    </>
+                ) : (
+                    <View style={StyleSheet.absoluteFill} className="bg-surface-card" />
+                )}
+            </View>
 
             <View className="p-5">
                 <Text className="text-text-main text-h3 font-unbounded-bold mb-1">
@@ -33,6 +37,7 @@ export const LayoutContainer = ({ children, title, subtitle }: LayoutContainerPr
                     {subtitle}
                 </Text>
 
+                {/* Трек для маркерів */}
                 <View className="h-20 justify-center relative mx-4">
                     {children}
                 </View>

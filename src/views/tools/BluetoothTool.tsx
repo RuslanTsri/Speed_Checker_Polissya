@@ -8,7 +8,6 @@ import { useBle } from '../../context/BleContext';
 import { formatTime } from '../../utils/time';
 import { AppModal } from '../components/AppModal';
 import { Button } from '../components/ui/Button';
-import { TextField } from '../components/ui/TextField';
 import { SensorCard } from '../components/SensorCard';
 import {
     ArrowIcon, ArrowIconActive,
@@ -21,7 +20,7 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
     const {
         connected, state, sensors, elapsedTime, scannedDevices,
         startDiscovery, stopScanning, connectToDevice, disconnect, cancelConnecting,
-        finishInitialization, startTraining, stopTraining, resetSession, simulateWebTrigger
+        finishInitialization, startTraining, stopTraining, resetSession
     } = useBle();
 
     const [configStep, setConfigStep] = useState<'select' | 'check'>('select');
@@ -42,9 +41,10 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
         return () => clearInterval(interval);
     }, [state, configStep]);
 
-    const requiredSensors = targetGates - 1;
-    const foundSensors = Math.max(0, sensors.length - 1);
-    const progressPercent = Math.min((foundSensors / requiredSensors) * 100, 100);
+    // 🔥 ОНОВЛЕНА ЛОГІКА ПІДРАХУНКУ (Тепер враховуємо і Мастер, і Слейви)
+    const requiredTotalSensors = targetGates; // Якщо вибрали 2 ворота, значить чекаємо 2 датчики (Мастер + 1 Слейв)
+    const foundTotalSensors = sensors.length; // Починається з 0
+    const progressPercent = Math.min((foundTotalSensors / requiredTotalSensors) * 100, 100);
 
     const handleCloseModal = () => {
         if (state === 'connecting') cancelConnecting();
@@ -183,7 +183,7 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                                             <ConnectionIcon width={32} height={32} fill="#34d399" />
                                         )}
                                     </View>
-                                    <Text className="text-h3 text-text-main mb-2 text-center font-unbounded-bold">{t('tools.bluetooth.master_connected')}</Text>
+                                    <Text className="text-h3 text-text-main mb-2 text-center font-unbounded-bold">Система підключена</Text>
                                     <Text className="text-text-sub mb-8 text-center font-evolventa">{t('tools.bluetooth.use_gates_configuration')}</Text>
 
                                     <Text className="text-text-sub text-caption uppercase font-bold tracking-widest self-start mb-3 ml-1 font-evolventa">{t('tools.bluetooth.gates_config')}</Text>
@@ -207,28 +207,56 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                                 </View>
                             ) : (
                                 <View>
-                                    <Text className="text-h3 text-text-main mb-1 font-unbounded-bold">{t('tools.bluetooth.check_gates')}</Text>
-                                    <Text className="text-text-sub mb-8 font-evolventa">{t('tools.bluetooth.task_gates')}</Text>
+                                    <Text className="text-h3 text-text-main mb-2 font-unbounded-bold">
+                                        Ініціалізація воріт
+                                    </Text>
+
+                                    {/* 🔥 ДИНАМІЧНА ПІДКАЗКА */}
+                                    <Text className="text-text-sub mb-8 font-evolventa text-body">
+                                        {foundTotalSensors === 0
+                                            ? "Проведіть рукою повз головний МАЙСТЕР-датчик (Старт)."
+                                            : foundTotalSensors < requiredTotalSensors
+                                                ? `Тепер проведіть рукою повз ДАТЧИК ${foundTotalSensors} (Ворота ${foundTotalSensors}).`
+                                                : "✅ Всі датчики успішно ініціалізовано!"
+                                        }
+                                    </Text>
 
                                     <View className="p-5 rounded-3xl border border-surface-border bg-surface-card mb-8">
                                         <View className="flex-row justify-between mb-4">
                                             <Text className="text-text-main font-evolventa-bold">{t('tools.bluetooth.system')}</Text>
-                                            <Text className="text-brand-orange font-evolventa-bold">
-                                                {t('tools.bluetooth.gate_id', { id: `${foundSensors} / ${requiredSensors}` })}
+                                            <Text className="text-brand-orange font-evolventa-bold text-h4">
+                                                {`${foundTotalSensors} / ${requiredTotalSensors}`}
                                             </Text>
                                         </View>
-                                        <View className="h-2.5 w-full bg-surface-bg rounded-full overflow-hidden mb-4">
+
+                                        <View className="h-3 w-full bg-surface-bg rounded-full overflow-hidden mb-5">
                                             <View className="h-full bg-brand-orange rounded-full" style={{ width: `${progressPercent}%` }} />
                                         </View>
+
                                         <View className="flex-row items-center justify-center gap-2">
-                                            <ActivityIndicator size="small" color="#A3A3A3" />
-                                            <Text className="text-text-sub text-caption font-evolventa-bold">{t('tools.bluetooth.status_waiting')}</Text>
+                                            {foundTotalSensors < requiredTotalSensors ? (
+                                                <>
+                                                    <ActivityIndicator size="small" color="#A3A3A3" />
+                                                    <Text className="text-text-sub text-caption font-evolventa-bold">{t('tools.bluetooth.status_waiting')}</Text>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Feather name="check-circle" size={18} color="#34d399" />
+                                                    <Text className="text-status-success text-body font-evolventa-bold">Готово до роботи</Text>
+                                                </>
+                                            )}
                                         </View>
                                     </View>
 
                                     <View className="flex-row gap-3">
-                                        <Button variant="light" title={t('tools.bluetooth.finish_setup')} onPress={finishInitialization} disabled={foundSensors < requiredSensors} className="flex-1" />
-                                        <Button variant="outline" title={t('tools.speed_checker.btn_go_back')} onPress={disconnect} className="flex-1" />
+                                        <Button
+                                            variant="light"
+                                            title={t('tools.bluetooth.finish_setup')}
+                                            onPress={finishInitialization}
+                                            disabled={foundTotalSensors < requiredTotalSensors}
+                                            className="flex-1"
+                                        />
+                                        <Button variant="outline" title={t('tools.speed_checker.btn_go_back')} onPress={disconnect} className="flex-1 border-surface-border" />
                                     </View>
                                 </View>
                             )}

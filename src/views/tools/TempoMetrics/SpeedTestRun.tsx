@@ -12,7 +12,28 @@ import { ArrowIcon, ArrowIconActive } from '../../../../assets/icons';
 
 const RunMarker = ({ position, totalDistance, label, type, triggered, timeDisplay }: any) => {
     const { t } = useTranslation();
-    const percent = totalDistance > 0 ? (position / totalDistance) * 100 : (type === 'start' ? 0 : 100);
+
+    // 🔥 ЗАЛІЗОБЕТОННА МАТЕМАТИКА
+    const safePos = parseFloat(position) || 0;
+    const safeTotal = parseFloat(totalDistance) || 0;
+
+    let percent = 0;
+    if (type === 'start') {
+        percent = 0;
+    } else if (type === 'finish') {
+        percent = 100;
+    } else {
+        if (safeTotal > 0) {
+            percent = (safePos / safeTotal) * 100;
+        } else {
+            percent = 50; // Якщо totalDistance = 0, ставить по центру
+        }
+    }
+    percent = Math.max(0, Math.min(100, percent));
+
+    // 🐞 ЛОГ ДЛЯ КОЖНОГО МАРКЕРА
+    console.log(`[RunMarker] ${type.toUpperCase()} | Label: ${label} | Pos: ${position} | Total: ${totalDistance} | %: ${percent}`);
+
     const mainColor = triggered ? (type === 'start' ? '#FF6D00' : type === 'finish' ? '#34d399' : '#F5F5F5') : '#717171';
 
     return (
@@ -24,7 +45,7 @@ const RunMarker = ({ position, totalDistance, label, type, triggered, timeDispla
                     </View>
                 )}
                 <Text className="text-caption uppercase tracking-widest font-evolventa-bold" style={{ color: mainColor }}>{label}</Text>
-                <Text className="text-[9px] text-text-muted font-evolventa-bold">{position} {t('tools.speed_checker.meters_short')}</Text>
+                <Text className="text-[9px] text-text-muted font-evolventa-bold">{safePos} {t('tools.speed_checker.meters_short')}</Text>
             </View>
             <View className="w-[1px] h-6 rounded-full" style={{ backgroundColor: triggered ? mainColor : 'rgba(255,255,255,0.1)' }} />
             <View className="h-6 justify-center">
@@ -36,6 +57,15 @@ const RunMarker = ({ position, totalDistance, label, type, triggered, timeDispla
 
 export default function SpeedTestRun({ config, onBack, onFinish }: any) {
     const { t } = useTranslation();
+
+    // 🐞 ЛОГ ПРИ ВХОДІ НА ЕКРАН
+    useEffect(() => {
+        console.log("==========================================");
+        console.log("🚀 ЕКРАН SPEED_TEST_RUN ЗАВАНТАЖЕНО!");
+        console.log("📦 Отриманий config:", JSON.stringify(config, null, 2));
+        console.log("==========================================");
+    }, [config]);
+
     const {
         currentPlayerObj, teamName, currentPlayerIndex, totalPlayers, isRunning, isFinished, isReady,
         timeObj, progressPercent, activeSensors, startTraining, stopTraining, resetSession, nextPlayer,
@@ -43,6 +73,11 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
         showSummaryModal, saveAllResults, isSaving,
         localResults, currentRunResult, formatTime
     } = useSpeedTestSession(config, onFinish);
+
+    // 🐞 ЛОГ СЕНСОРІВ
+    useEffect(() => {
+        console.log(`🔌 Кількість активних сенсорів (activeSensors): ${activeSensors.length}`);
+    }, [activeSensors.length]);
 
     const animatedProgress = useRef(new Animated.Value(0)).current;
     useEffect(() => {
@@ -111,6 +146,7 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                                     totalDistance={config.distance}
                                     triggered={isTriggered}
                                     timeDisplay={timeDisplay}
+                                    type={index === 0 ? 'start' : index === activeSensors.length - 1 ? 'finish' : 'gate'}
                                     label={index === 0 ? t('tools.speed_checker.start_label') : index === activeSensors.length - 1 ? t('tools.speed_checker.finish_label') : t('tools.speed_checker.gate_label', { number: index })}
                                 />
                             );

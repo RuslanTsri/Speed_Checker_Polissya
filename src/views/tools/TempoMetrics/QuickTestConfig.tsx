@@ -88,7 +88,7 @@ export default function QuickTestConfig({ onBack, onStart, onOpenBluetooth }: an
                     </View>
                 )}
 
-                <Button variant="primary" title={t('tools.speed_checker.btn_start_test')} onPress={() => onStart(distance)} disabled={!connected} className="w-full mb-4" />
+                <Button variant="primary" title={t('tools.speed_checker.btn_start_test')} onPress={() => onStart({ distance, splitPositions })} disabled={!connected} className="w-full mb-4" />
                 <Button variant="outline" title={t('tools.speed_checker.go_to_connection')} onPress={onOpenBluetooth} className="w-full mb-10" />
             </ScrollView>
         </View>

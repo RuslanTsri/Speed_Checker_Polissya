@@ -217,9 +217,29 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         return lastIdx;
     }, -1);
 
-    const progressPercent = totalSensors > 1
-        ? (Math.max(0, lastTriggeredIndex) / (totalSensors - 1)) * 100
-        : 0;
+    // 🔥 НОВИЙ РОЗРАХУНОК ПРОГРЕСУ (В ЗАЛЕЖНОСТІ ВІД МЕТРАЖУ)
+    let progressPercent = 0;
+
+    if (lastTriggeredIndex === 0) {
+        progressPercent = 0; // Тільки стартували
+    } else if (lastTriggeredIndex === totalSensors - 1) {
+        progressPercent = 100; // Фінішували
+    } else if (lastTriggeredIndex > 0) {
+        // Це проміжний гейт. Беремо його реальну дистанцію
+        const safeTotalDistance = Number(config.distance) || 0;
+        // -1, бо в масиві сплітів немає Старту
+        const gatePosition = config.splitPositions?.[lastTriggeredIndex - 1];
+
+        if (safeTotalDistance > 0 && gatePosition !== undefined) {
+            progressPercent = (Number(gatePosition) / safeTotalDistance) * 100;
+        } else {
+            // Запасний варіант (фолбек), якщо щось піде не так з конфігом
+            progressPercent = (lastTriggeredIndex / (totalSensors - 1)) * 100;
+        }
+    }
+
+    // Запобіжник, щоб лінія не вилетіла за межі
+    progressPercent = Math.max(0, Math.min(100, progressPercent));
 
     // --- СПЛІТОВІ РЯДКИ ---
     const splitRows = useMemo(() => {

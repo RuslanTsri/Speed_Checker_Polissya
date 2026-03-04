@@ -6,7 +6,7 @@ export type SpeedCheckerScreen = 'MODE_SELECT' | 'QUICK_CONFIG' | 'TEAM_SELECT' 
 
 export interface TestConfig {
     mode: 'DEVICE' | 'MANUAL'; type: 'QUICK' | 'TEAM'; distance: number; teamId: string | null; teamName: string; selectedPlayers: Player[];
-}
+    splitPositions?: number[];}
 
 export const useSpeedCheckerRouter = () => {
     const { t } = useTranslation();
@@ -14,7 +14,7 @@ export const useSpeedCheckerRouter = () => {
 
     // 🔥 Використовуємо функцію-ініціалізатор, щоб переклад підтягнувся коректно
     const [testConfig, setTestConfig] = useState<TestConfig>(() => ({
-        mode: 'DEVICE', type: 'QUICK', distance: 30, teamId: null,
+        mode: 'DEVICE', type: 'QUICK', distance: 30, splitPositions: [], teamId: null,
         teamName: t('tools.speed_checker.free_training') as string,
         selectedPlayers: []
     }));
@@ -36,11 +36,12 @@ export const useSpeedCheckerRouter = () => {
         setCurrentScreen('QUICK_CONFIG');
     };
 
-    const handleStartTest = (distance: number) => {
+    const handleStartTest = ({ distance, splitPositions }: { distance: number, splitPositions?: number[] }) => {
         if (testConfig.type === 'QUICK' && testConfig.selectedPlayers.length === 0) {
             setTestConfig(prev => ({
-                ...prev, distance,
-                selectedPlayers: [{ id: 'guest', name: t('tools.speed_checker.guest') as string, team_id: '' }]
+                ...prev,
+                distance,
+                splitPositions // 🔥 ДОДАЛИ СЮДИ ТЕЖ!
             }));
         } else {
             setTestConfig(prev => ({ ...prev, distance }));

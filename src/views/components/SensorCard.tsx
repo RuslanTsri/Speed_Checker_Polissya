@@ -6,37 +6,44 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { formatTime } from '../../utils/time';
 
-// Градієнти підтягуємо під твою палітру (status-success та surface-card)
+// Градієнти підтягуємо під твою палітру
 const GRAD_ACTIVE = ['rgba(52, 211, 153, 0.12)', 'rgba(52, 211, 153, 0.03)'] as const;
 const GRAD_INACTIVE = ['rgba(28, 28, 30, 0.6)', 'rgba(10, 10, 10, 0.8)'] as const;
+const GRAD_LOST = ['rgba(248, 113, 113, 0.15)', 'rgba(248, 113, 113, 0.05)'] as const; // 🔥 Додано червоний градієнт
 
 export const SensorCard = memo(({ item, optimizeForList = false }: { item: any, optimizeForList?: boolean }) => {
     const { t } = useTranslation();
-    const isAndroid = Platform.OS === 'android'; // NativeWind вже добре оптимізує стилі
+    const isAndroid = Platform.OS === 'android';
     const isActive = item.status === 'active';
     const isLost = item.status === 'timeout';
 
+    // Визначаємо стилі на основі статусу
+    const currentGradient = isActive ? GRAD_ACTIVE : (isLost ? GRAD_LOST : GRAD_INACTIVE);
+    const currentBg = isActive ? 'bg-surface-card' : (isLost ? 'bg-status-error/10' : 'bg-surface-card/80');
+    const currentBorder = isActive ? 'border-status-success/40 shadow-lg shadow-status-success/10' : (isLost ? 'border-status-error/40 shadow-lg shadow-status-error/10' : 'border-surface-border');
+    const dotColor = isActive ? 'bg-status-success shadow-sm shadow-status-success' : (isLost ? 'bg-status-error shadow-sm shadow-status-error' : 'bg-text-muted/30');
+
     return (
-        <View className={`mb-3 rounded-3xl overflow-hidden border ${isActive ? 'border-status-success/40 shadow-lg shadow-status-success/10' : 'border-surface-border'} min-h-[85px]`}>
-            {/* ФОНОВІ ЕФЕКТИ (Blur для iOS/Web, чистий колір для Android) */}
+        <View className={`mb-3 rounded-3xl overflow-hidden border ${currentBorder} min-h-[85px]`}>
+            {/* ФОНОВІ ЕФЕКТИ */}
             {!isAndroid ? (
                 <>
                     <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
                     <LinearGradient
-                        colors={isActive ? GRAD_ACTIVE : GRAD_INACTIVE}
+                        colors={currentGradient}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                         style={StyleSheet.absoluteFill}
                     />
                 </>
             ) : (
-                <View style={StyleSheet.absoluteFill} className={isActive ? 'bg-surface-card' : 'bg-surface-card/80'} />
+                <View style={StyleSheet.absoluteFill} className={currentBg} />
             )}
 
             <View className="p-4">
                 {/* ВЕРХНЯ ЧАСТИНА: ІКОНКА ТА НАЗВА */}
                 <View className="flex-row justify-between items-center mb-4">
                     <View className="flex-row items-center gap-3">
-                        <View className={`w-9 h-9 rounded-2xl items-center justify-center border ${isActive ? 'bg-status-success/20 border-status-success/50' : 'bg-surface-bg border-surface-border'}`}>
+                        <View className={`w-9 h-9 rounded-2xl items-center justify-center border ${isActive ? 'bg-status-success/20 border-status-success/50' : (isLost ? 'bg-status-error/20 border-status-error/50' : 'bg-surface-bg border-surface-border')}`}>
                             <Feather
                                 name={isActive ? "check" : (isLost ? "alert-circle" : "radio")}
                                 size={16}
@@ -49,24 +56,33 @@ export const SensorCard = memo(({ item, optimizeForList = false }: { item: any, 
                     </View>
 
                     {/* СТАТУСНИЙ ТОЧКОВИЙ ІНДИКАТОР */}
-                    <View className={`w-2 h-2 rounded-full ${isActive ? 'bg-status-success shadow-sm shadow-status-success' : 'bg-text-muted/30'}`} />
+                    <View className={`w-2 h-2 rounded-full ${dotColor}`} />
                 </View>
 
                 {/* НИЖНЯ ЧАСТИНА: RSSI ТА ЧАС ТРИГЕРА */}
                 <View className="flex-row justify-between items-end">
                     <View className="flex-row items-center pb-1 gap-1.5">
-                        <Feather name="wifi" size={14} color="#717171" />
+                        <Feather name="wifi" size={14} color={isLost ? "#f87171" : "#717171"} />
                         <Text className="text-caption text-text-sub font-evolventa">
-                            {t('tools.bluetooth.signal')} <Text className="text-text-main font-evolventa-bold">{item.rssi ?? '--'} dBm</Text>
+                            {t('tools.bluetooth.signal')} <Text className={`font-evolventa-bold ${isLost ? 'text-status-error' : 'text-text-main'}`}>{item.rssi ?? '--'} dBm</Text>
                         </Text>
                     </View>
 
-                    {/* 🔥 ЧАС: Unbounded Black для максимальної читаємості */}
                     <Text className="text-h2 tracking-tighter text-text-main font-unbounded-black">
                         {item.triggerTime !== undefined ? formatTime(item.triggerTime) : '--:--:--'}
                         <Text className="text-small text-text-muted font-unbounded-medium">s</Text>
                     </Text>
                 </View>
+
+                {/* 🔥 ТЕКСТ ПРИ ВТРАТІ ЗВ'ЯЗКУ */}
+                {isLost && (
+                    <View className="mt-4 pt-3 border-t border-status-error/20 flex-row items-start gap-2">
+                        <Feather name="info" size={14} color="#f87171" style={{ marginTop: 2 }} />
+                        <Text className="text-status-error text-caption font-evolventa flex-1 leading-tight">
+                            Зв'язок втрачено. Перевірте живлення датчика та переініціалізуйте систему.
+                        </Text>
+                    </View>
+                )}
             </View>
         </View>
     );

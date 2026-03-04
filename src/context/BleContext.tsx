@@ -12,13 +12,13 @@ export interface BleContextType {
     session: TrainingSession | null;
     pingProgress: string;
     device: any;
-    cancelConnecting: () => Promise<void>;
     canFinish: boolean;
+    cancelConnecting: () => Promise<void>;
     startDiscovery: () => Promise<void>;
     stopScanning: () => void;
     connectToDevice: (target: any) => Promise<void>;
     disconnect: () => Promise<void>;
-    pingMaster: () => Promise<boolean>;
+    // pingMaster прибрано, бо тепер працює автоматичний Watchdog!
     finishInitialization: () => void;
     startTraining: () => void;
     stopTraining: () => void;
@@ -32,7 +32,6 @@ export const BleProvider = ({ children }: { children: ReactNode }) => {
     const bleLogic = useTrainingBle();
 
     return (
-        // Кастимо до BleContextType, щоб TS не лаявся на ReturnType
         <BleContext.Provider value={bleLogic as unknown as BleContextType}>
             {children}
         </BleContext.Provider>

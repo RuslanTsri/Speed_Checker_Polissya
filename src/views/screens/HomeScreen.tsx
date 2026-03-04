@@ -31,7 +31,10 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
     if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} onOpenBluetooth={openBluetooth} />;
     if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={handleClose} />;
 
-    const activeSensorsCount = sensors && sensors.length > 0 ? sensors.length - 1 : 0;
+    // 🔥 Фільтруємо датчики, залишаємо ТІЛЬКИ ГЕЙТИ (без Мастера)
+    const gateSensors = sensors ? sensors.filter((s: any) => s.id !== 0) : [];
+    // Завжди показуємо мінімум 2 слоти
+    const displaySlotsCount = Math.max(2, gateSensors.length);
 
     return (
         <ScrollView
@@ -45,21 +48,39 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                     <View className="mt-2">
                         {connected ? (
                             <View className="gap-3">
-                                {/* ІНДИКАТОРИ ЛАЗЕРІВ */}
+                                {/* 🔥 РОЗУМНІ ІНДИКАТОРИ ЛАЗЕРІВ */}
                                 <View className="flex-row items-center justify-center gap-3 mb-3">
-                                    {Array.from({ length: Math.max(2, activeSensorsCount) }).map((_, idx) => {
-                                        const isActive = idx < activeSensorsCount;
+                                    {Array.from({ length: displaySlotsCount }).map((_, idx) => {
+                                        const gate = gateSensors[idx];
+
+                                        // Дефолтні кольори (Сірий - не підключено)
+                                        let bgColorClass = 'bg-surface-card';
+                                        let borderClass = 'border-surface-border';
+                                        let iconColor = '#717171';
+
+                                        if (gate) {
+                                            if (gate.status === 'active') {
+                                                // Зелений - все супер
+                                                bgColorClass = 'bg-status-success/10';
+                                                borderClass = 'border-status-success/40';
+                                                iconColor = '#34d399';
+                                            } else if (gate.status === 'timeout') {
+                                                // Червоний - відвалився (Watchdog)
+                                                bgColorClass = 'bg-status-error/10';
+                                                borderClass = 'border-status-error/40';
+                                                iconColor = '#f87171';
+                                            }
+                                        }
+
                                         return (
                                             <View
                                                 key={idx}
-                                                className={`w-8 h-8 rounded-xl items-center justify-center border ${
-                                                    isActive ? 'bg-status-success/10 border-status-success/40' : 'bg-surface-card border-surface-border'
-                                                }`}
+                                                className={`w-8 h-8 rounded-xl items-center justify-center border ${bgColorClass} ${borderClass}`}
                                             >
                                                 <MaterialCommunityIcons
                                                     name="laser-pointer"
                                                     size={12}
-                                                    color={isActive ? "#34d399" : "#717171"}
+                                                    color={iconColor}
                                                     style={{ transform: [{ rotate: '-45deg' }] }}
                                                 />
                                             </View>
@@ -73,7 +94,6 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                                     title={status.btnText}
                                     onPress={openBluetooth}
                                     className="w-full py-2.5"
-                                    // Текст влізає за рахунок text-h5 та прибраного tracking
                                 />
                                 <Button
                                     variant="outline"
@@ -91,8 +111,7 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                                     title={t('screens.home.status_btn_connect')}
                                     onPress={openBluetooth}
                                     icon={<Feather name="bluetooth" size={14} color="#0A0A0A" />}
-                                    className="flex-1 py-2.5 px-0" // px-0 дає максимум місця
-                                    // Форсуємо дрібний шрифт та стиснення
+                                    className="flex-1 py-2.5 px-0"
                                     style={{ fontSize: 10, letterSpacing: -0.5 }}
                                 />
 

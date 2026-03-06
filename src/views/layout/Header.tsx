@@ -41,22 +41,38 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
     };
 
     return (
-        <View className="z-50 py-4 px-6 flex-row justify-between items-center bg-transparent">
+        // 1. Зменшили px-6 до px-4 (це дасть додаткові 16px вільного місця)
+        <View className="z-50 py-4 px-4 flex-row justify-between items-center bg-transparent w-full">
+
             {/* ЛОГОТИП */}
-            <TouchableOpacity onPress={onGoHome} activeOpacity={0.6}>
-                <Text className="text-h4 tracking-[0.2em] uppercase italic text-brand-orange font-unbounded-black">
+            {/* 2. Додали flex-1 та mr-2, щоб він не виштовхував праву частину */}
+            <TouchableOpacity onPress={onGoHome} activeOpacity={0.6} className="flex-1 mr-2 justify-center">
+                {/* 3. Додали adjustsFontSizeToFit - iOS сам зменшить шрифт на SE */}
+                <Text
+                    className="text-xl tracking-[0.15em] uppercase italic text-brand-orange font-unbounded-black"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={true}
+                    minimumFontScale={0.6}
+                >
                     Tempo Metrics
                 </Text>
-                <Text className="text-[9px] tracking-[0.3em] uppercase mt-0.5 ml-0.5 text-text-sub font-evolventa-bold">
+                <Text
+                    className="text-[9px] tracking-[0.2em] uppercase mt-0.5 ml-0.5 text-text-sub font-evolventa-bold"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={true}
+                >
                     {t('layouts.header.preview_version')}
                 </Text>
             </TouchableOpacity>
 
-            <View className="flex-row items-center gap-3">
+            {/* ПРАВА ЧАСТИНА (Статус + Аватарка) */}
+            {/* 4. gap-2 замість gap-3, і головне - shrink-0 (забороняємо стискатися) */}
+            <View className="flex-row items-center gap-2 shrink-0">
+
                 {/* СТАТУС ІНТЕРНЕТУ */}
-                <View className="items-end justify-center mr-1">
+                <View className="items-end justify-center">
                     <View className="w-[100px] h-[32px] overflow-hidden rounded-xl">
-                        <View style={{ width: 145, transform: [{ scale: 0.65 }], marginTop: -11 }}>
+                        <View style={{ width: 145, transform: [{ scale: 0.65 }], marginTop: -11, marginLeft: -15 }}>
                             <TextField
                                 disabled={true}
                                 value={isOnline ? t('layouts.header.status_online') : t('layouts.header.status_offline')}
@@ -89,7 +105,7 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
                         )}
                     </TouchableOpacity>
 
-                    {/* ВИПАДАЮЧЕ МЕНЮ */}
+                    {/* ВИПАДАЮЧЕ МЕНЮ (Без змін) */}
                     <Modal transparent visible={isMenuOpen} animationType="fade" onRequestClose={() => setIsMenuOpen(false)}>
                         <Pressable className="flex-1" onPress={() => setIsMenuOpen(false)}>
                             <Pressable
@@ -105,7 +121,6 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
                                     </Text>
                                 </View>
 
-                                {/* Кнопка зміни ПІН-коду */}
                                 <TouchableOpacity onPress={handlePinChange} className="flex-row items-center px-4 py-3 active:bg-white/5">
                                     <Feather name="lock" size={16} color="#A3A3A3" />
                                     <Text className="ml-3 text-sm text-text-main font-evolventa">
@@ -113,7 +128,6 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
                                     </Text>
                                 </TouchableOpacity>
 
-                                {/* Кнопка виходу */}
                                 <TouchableOpacity onPress={handleLogout} className="flex-row items-center px-4 py-3 border-t border-surface-border/30 mt-1 active:bg-status-error/10">
                                     <Feather name="log-out" size={16} color="#f87171" />
                                     <Text className="text-status-error ml-3 text-sm font-evolventa">

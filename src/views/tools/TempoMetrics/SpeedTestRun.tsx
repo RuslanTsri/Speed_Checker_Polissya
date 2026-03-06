@@ -31,9 +31,6 @@ const RunMarker = ({ position, totalDistance, label, type, triggered, timeDispla
     }
     percent = Math.max(0, Math.min(100, percent));
 
-    // 🐞 ЛОГ ДЛЯ КОЖНОГО МАРКЕРА
-    console.log(`[RunMarker] ${type.toUpperCase()} | Label: ${label} | Pos: ${position} | Total: ${totalDistance} | %: ${percent}`);
-
     const mainColor = triggered ? (type === 'start' ? '#FF6D00' : type === 'finish' ? '#34d399' : '#F5F5F5') : '#717171';
 
     return (
@@ -58,28 +55,18 @@ const RunMarker = ({ position, totalDistance, label, type, triggered, timeDispla
 export default function SpeedTestRun({ config, onBack, onFinish }: any) {
     const { t } = useTranslation();
 
-    // 🐞 ЛОГ ПРИ ВХОДІ НА ЕКРАН
-    useEffect(() => {
-        console.log("==========================================");
-        console.log("🚀 ЕКРАН SPEED_TEST_RUN ЗАВАНТАЖЕНО!");
-        console.log("📦 Отриманий config:", JSON.stringify(config, null, 2));
-        console.log("==========================================");
-    }, [config]);
-
+    // 🔥 ДОДАНО restartWholeSession в деструктуризацію
     const {
         currentPlayerObj, teamName, currentPlayerIndex, totalPlayers, isRunning, isFinished, isReady,
         timeObj, progressPercent, activeSensors, startTraining, stopTraining, resetSession, nextPlayer,
         showIndividualModal, confirmIndividualRun, retryIndividualRun,
         showSummaryModal, saveAllResults, isSaving,
-        localResults, currentRunResult, formatTime
+        localResults, currentRunResult, formatTime,
+        restartWholeSession
     } = useSpeedTestSession(config, onFinish);
 
-    // 🐞 ЛОГ СЕНСОРІВ
-    useEffect(() => {
-        console.log(`🔌 Кількість активних сенсорів (activeSensors): ${activeSensors.length}`);
-    }, [activeSensors.length]);
-
     const animatedProgress = useRef(new Animated.Value(0)).current;
+
     useEffect(() => {
         Animated.timing(animatedProgress, {
             toValue: progressPercent,
@@ -167,7 +154,15 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                 </View>
             </ScrollView>
 
-            <AppModal visible={showSummaryModal} onClose={() => {}} title={t('tools.speed_checker.modal_summary', { count: localResults?.length || 0 })} type="center">
+            {/* 🔥 МОДАЛКА ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТІВ */}
+            <AppModal
+                visible={showSummaryModal}
+                // 🔥 ВИПРАВЛЕНО: Тільки скидаємо сесію, без onFinish()
+                // Це залишить нас на екрані тестування і почне забіг з 1-го гравця
+                onClose={restartWholeSession}
+                title={t('tools.speed_checker.modal_summary', { count: localResults?.length || 0 })}
+                type="center"
+            >
                 <View className="h-96 w-full">
                     <FlatList
                         data={localResults || []}
@@ -179,11 +174,31 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                             </View>
                         )}
                     />
-                    <Button variant="primary" title={t('tools.speed_checker.btn_save_db')} onPress={saveAllResults} isLoading={isSaving} className="mt-4" />
+                    <Button
+                        variant="primary"
+                        title={t('tools.speed_checker.btn_save_db')}
+                        onPress={saveAllResults}
+                        isLoading={isSaving}
+                        className="mt-4"
+                    />
+                    {/* Можна також додати кнопку для явного скасування/перебіжки, якщо юзер не здогадається клікнути на фон */}
+                    <Button
+                        variant="outline"
+                        title={t('tools.speed_checker.btn_retry_team', 'Перебігти всім')}
+                        onPress={restartWholeSession}
+                        className="mt-2 border-status-error/30 bg-status-error/10"
+                    />
                 </View>
             </AppModal>
 
-            <AppModal visible={showIndividualModal} onClose={() => {}} title={currentPlayerObj?.name || ''} type="center">
+            {/* 🔥 МОДАЛКА КОНКРЕТНОГО ГРАВЦЯ */}
+            <AppModal
+                visible={showIndividualModal}
+                // Якщо закрили модалку гравця — це рівноцінно "Перебігти" (скасувати спробу)
+                onClose={retryIndividualRun}
+                title={currentPlayerObj?.name || ''}
+                type="center"
+            >
                 <View className="items-center py-4">
                     <Text className="text-text-sub font-evolventa mb-2">{t('tools.speed_checker.run_time')}</Text>
                     <Text className="text-h1 text-text-main font-unbounded-black">{currentRunResult?.fullTime.toFixed(3)}s</Text>

@@ -9,14 +9,15 @@ export const MainLayout = ({ children, currentTab, onSwitchTab, ...props }: any)
     const [activeTool, setActiveTool] = React.useState<string | null>(null);
     const insets = useSafeAreaInsets();
 
-    // 🔥 Динамічна висота відступу знизу (Футер + Навігаційна панель)
     const FOOTER_HEIGHT = 92 + insets.bottom;
 
-    const handleSwitch = (tab: TabType) => {
-        if (tab === ('SPEEDCHECK' as any)) {
-            setActiveTool('SPEEDCHECK');
-            onSwitchTab('HOME');
+    const handleSwitch = (tab: string) => {
+        // Якщо це один з інструментів, що відкриваються поверх Home
+        if (['SPEEDCHECK', 'BLUETOOTH', 'TIMER'].includes(tab)) {
+            setActiveTool(tab);
+            onSwitchTab('HOME'); // Футер підсвітить HOME (або центральну кнопку для SPEEDCHECK)
         } else {
+            // Якщо це звичайний таб
             setActiveTool(null);
             onSwitchTab(tab);
         }
@@ -29,16 +30,25 @@ export const MainLayout = ({ children, currentTab, onSwitchTab, ...props }: any)
                     <Header {...props} onGoHome={() => handleSwitch('HOME')} />
                 </SafeAreaView>
 
-                {/* Додаємо paddingBottom, щоб списки скролилися до кінця */}
                 <View className="flex-1" style={{ paddingBottom: FOOTER_HEIGHT }}>
                     {React.Children.map(children, child =>
                         React.isValidElement(child)
-                            ? React.cloneElement(child as any, { externalTool: activeTool, setExternalTool: setActiveTool })
+                            // 🔥 Передаємо handleSwitch вниз, щоб екрани могли ним керувати
+                            ? React.cloneElement(child as any, {
+                                externalTool: activeTool,
+                                setExternalTool: setActiveTool,
+                                onNavigateLayout: handleSwitch
+                            })
                             : child
                     )}
                 </View>
 
-                <Footer activeTab={currentTab} onSwitch={handleSwitch} isToolActive={activeTool === 'SPEEDCHECK'} />
+                {/* Якщо activeTool === 'SPEEDCHECK', підсвічуємо центральну кнопку */}
+                <Footer
+                    activeTab={currentTab}
+                    onSwitch={handleSwitch as any}
+                    isToolActive={activeTool === 'SPEEDCHECK'}
+                />
             </View>
         </AppBackground>
     );

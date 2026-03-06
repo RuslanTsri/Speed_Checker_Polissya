@@ -1,8 +1,7 @@
 import React from 'react';
-// 🔥 Додали StyleProp та TextStyle сюди
 import { Text, Pressable, PressableProps, View, ActivityIndicator, StyleProp, TextStyle } from 'react-native';
 
-type ButtonVariant = 'light' | 'primary' | 'outline' | 'danger'; // Додав danger для повноти картини
+type ButtonVariant = 'light' | 'primary' | 'outline' | 'danger';
 
 interface MyButtonProps extends Omit<PressableProps, 'style'> {
     title: string;
@@ -51,7 +50,6 @@ export const Button = ({
     };
 
     const getTextClasses = () => {
-        // Використовуємо font-unbounded-bold згідно з конфігом для Android-фіксу
         const base = "text-body font-unbounded-bold uppercase tracking-widest";
 
         if (variant === 'light') return `${base} ${disabled ? "text-text-muted" : "text-surface-bg"}`;
@@ -61,6 +59,10 @@ export const Button = ({
 
         return base;
     };
+
+    // 🔥 КЛЮЧОВА ЛОГІКА АДАПТИВНОСТІ:
+    // Перевіряємо, чи складається title з одного слова (чи немає всередині пробілів)
+    const isSingleWord = !title.trim().includes(' ');
 
     return (
         <Pressable
@@ -73,13 +75,20 @@ export const Button = ({
         >
             {isLoading ? (
                 <ActivityIndicator
-                    // Використовуємо кольори прямо з твого об'єкта brand
                     color={variant === 'primary' || variant === 'danger' ? '#F5F5F5' : '#FF6D00'}
                 />
             ) : (
-                <View className="flex-row items-center justify-center">
+                <View className="flex-row items-center justify-center flex-1">
                     {icon && <View className="mr-3">{icon}</View>}
-                    <Text className={getTextClasses()} style={style}>
+
+                    {/* 🔥 ДОДАЛИ ПРОПСИ ДЛЯ ТЕКСТУ */}
+                    <Text
+                        className={getTextClasses()}
+                        style={[style, { textAlign: 'center' }]} // Центруємо текст, якщо він розіб'ється на 2 рядки
+                        numberOfLines={isSingleWord ? 1 : 2}
+                        adjustsFontSizeToFit={true}
+                        minimumFontScale={isSingleWord ? 0.4 : 0.8}
+                    >
                         {title}
                     </Text>
                 </View>

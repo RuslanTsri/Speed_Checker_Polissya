@@ -28,6 +28,9 @@ export const Mod = ({
     const hasHeader = title && title.length > 0;
     const isAndroid = Platform.OS === 'android' && optimizeForList;
 
+    // 🔥 Перевірка на одне слово для заголовка
+    const isSingleWordTitle = title ? !title.trim().includes(' ') : false;
+
     return (
         <Pressable
             onPress={onPress}
@@ -61,15 +64,22 @@ export const Mod = ({
 
                     <View className={hasHeader ? "p-5" : "px-5 py-2"}>
                         {hasHeader && (
-                            <View className="flex-row items-center justify-between w-full">
+                            <View className="flex-row items-center justify-between w-full gap-2">
                                 <View className="flex-row items-center gap-4 flex-1">
                                     {pressed && activeIcon ? activeIcon : icon}
                                     <View className="flex-1">
-                                        <Text className="text-text-main text-h3 font-unbounded-bold">{title}</Text>
+                                        <Text
+                                            className="text-text-main text-h3 font-unbounded-bold"
+                                            numberOfLines={isSingleWordTitle ? 1 : 2}
+                                            adjustsFontSizeToFit={true}
+                                            minimumFontScale={isSingleWordTitle ? 0.5 : 0.8}
+                                        >
+                                            {title}
+                                        </Text>
                                         {subtitle && <Text className="text-text-sub text-body font-evolventa">{subtitle}</Text>}
                                     </View>
                                 </View>
-                                {rightHeader && <View className="ml-3">{rightHeader}</View>}
+                                {rightHeader && <View className="ml-3 shrink-0">{rightHeader}</View>}
                             </View>
                         )}
                         {children && <View className={hasHeader ? "mt-2 w-full" : "w-full"}>{children}</View>}

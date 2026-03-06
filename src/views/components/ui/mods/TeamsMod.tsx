@@ -3,7 +3,6 @@ import { Pressable, View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
-// 🔥 Використовуємо консистентні назви та кешуємо їх
 const GRADIENT_NORMAL = ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)'] as const;
 const GRADIENT_PRESSED = ['rgba(0, 0, 0, 0.7)', 'rgba(64, 64, 64, 0.6)'] as const;
 
@@ -30,6 +29,9 @@ export const TeamsMod = ({
     const isClickable = !!onPress;
     const isAndroidTurbo = Platform.OS === 'android' && optimizeForList;
 
+    // 🔥 Перевірка на одне слово для назви команди
+    const isSingleWordTeam = teamName ? !teamName.trim().includes(' ') : false;
+
     return (
         <Pressable
             onPress={onPress}
@@ -42,8 +44,6 @@ export const TeamsMod = ({
 
                 return (
                     <View style={styles.container} className="rounded-2xl overflow-hidden border border-surface-border shadow-sm">
-
-                        {/* 🚀 АНДРОЇД ОПТИМІЗАЦІЯ (БЕЗ БЛЮРУ В СПИСКАХ) */}
                         {isAndroidTurbo ? (
                             <View
                                 style={StyleSheet.absoluteFill}
@@ -63,7 +63,6 @@ export const TeamsMod = ({
                         <View className="p-3">
                             <View className="flex-row items-center justify-between gap-3">
                                 <View className="flex-row items-center gap-3 flex-1">
-                                    {/* Іконка команди */}
                                     {icon && (
                                         <View className="p-1 items-center justify-center">
                                             {isPressed && activeIcon ? activeIcon : icon}
@@ -71,36 +70,28 @@ export const TeamsMod = ({
                                     )}
 
                                     <View className="flex-1 flex-col justify-start items-start gap-1">
-                                        {/* Назва команди: Unbounded */}
-                                        <Text className="text-text-main text-h4 font-unbounded-bold" numberOfLines={1}>
+                                        <Text
+                                            className="text-text-main text-h4 font-unbounded-bold"
+                                            numberOfLines={isSingleWordTeam ? 1 : 2}
+                                            adjustsFontSizeToFit={true}
+                                            minimumFontScale={isSingleWordTeam ? 0.5 : 0.8}
+                                        >
                                             {teamName}
                                         </Text>
 
-                                        {/* Мета-дані: Evolventa */}
                                         {(date || time || tags) && (
                                             <View className="flex-row justify-start items-center gap-2 flex-wrap">
-                                                {!!date && (
-                                                    <Text className="text-text-sub text-body font-evolventa">
-                                                        {date}
-                                                    </Text>
-                                                )}
-                                                {!!date && !!time && (
-                                                    <View className="w-1 h-1 rounded-full bg-text-sub" />
-                                                )}
-                                                {!!time && (
-                                                    <Text className="text-text-sub text-body font-evolventa">
-                                                        {time}
-                                                    </Text>
-                                                )}
+                                                {!!date && <Text className="text-text-sub text-body font-evolventa">{date}</Text>}
+                                                {!!date && !!time && <View className="w-1 h-1 rounded-full bg-text-sub" />}
+                                                {!!time && <Text className="text-text-sub text-body font-evolventa">{time}</Text>}
                                                 {tags && <>{tags}</>}
                                             </View>
                                         )}
                                     </View>
                                 </View>
 
-                                {/* Права іконка (стрілка) */}
                                 {(rightIcon || rightActiveIcon) && (
-                                    <View style={styles.rotate90} className="mr-2">
+                                    <View style={styles.rotate90} className="mr-2 shrink-0">
                                         {isPressed && rightActiveIcon ? rightActiveIcon : rightIcon}
                                     </View>
                                 )}
@@ -113,12 +104,7 @@ export const TeamsMod = ({
     );
 };
 
-// 🔥 ВИПРАВЛЕНО: Додано об'єкт styles
 const styles = StyleSheet.create({
-    container: {
-        minHeight: 64,
-    },
-    rotate90: {
-        transform: [{ rotate: '90deg' }]
-    }
+    container: { minHeight: 64 },
+    rotate90: { transform: [{ rotate: '90deg' }] }
 });

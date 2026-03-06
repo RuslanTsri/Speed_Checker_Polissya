@@ -3,7 +3,6 @@ import { Pressable, View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
-// 🔥 Кольори градієнта в константах — це +5 до карми та швидкості рендеру
 const GRAD_COLORS = ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)'] as const;
 
 interface RatingModProps {
@@ -29,6 +28,9 @@ export const RatingMod = ({
                           }: RatingModProps) => {
     const isAndroid = Platform.OS === 'android' && optimizeForList;
 
+    // 🔥 Перевірка на одне слово для імені в рейтингу
+    const isSingleWordName = name ? !name.trim().includes(' ') : false;
+
     return (
         <Pressable
             onPress={onPress}
@@ -36,7 +38,6 @@ export const RatingMod = ({
             className={`w-full ${className}`}
         >
             {({ pressed }) => (
-                // ✅ ВИПРАВЛЕНО: Просто styles.container
                 <View style={styles.container} className="rounded-2xl overflow-hidden border border-surface-border">
                     {isAndroid ? (
                         <View style={StyleSheet.absoluteFill} className={pressed ? 'bg-surface-cardPressed' : 'bg-surface-card'} />
@@ -47,18 +48,25 @@ export const RatingMod = ({
                         </>
                     )}
 
-                    <View className="p-3 flex-row items-center justify-between">
+                    <View className="p-3 flex-row items-center justify-between gap-2">
                         <View className="flex-1 flex-row items-center gap-3">
-                            <View className="w-8 items-center justify-center">
+                            <View className="w-8 items-center justify-center shrink-0">
                                 <Text className="text-text-main text-h4 font-unbounded-bold">{rank}</Text>
                             </View>
                             <View className="flex-1">
-                                <Text className="text-text-main text-h4 font-unbounded-bold" numberOfLines={1}>{name}</Text>
+                                <Text
+                                    className="text-text-main text-h4 font-unbounded-bold"
+                                    numberOfLines={isSingleWordName ? 1 : 2}
+                                    adjustsFontSizeToFit={true}
+                                    minimumFontScale={isSingleWordName ? 0.5 : 0.8}
+                                >
+                                    {name}
+                                </Text>
                                 {subtitle && <Text className="text-text-sub text-body font-evolventa">{subtitle}</Text>}
                             </View>
                         </View>
 
-                        <View className="items-end">
+                        <View className="items-end shrink-0">
                             <Text className="text-text-main text-h4 font-unbounded-bold">{resultValue}</Text>
                             {secondaryValue && <Text className="text-text-sub text-caption font-evolventa">{secondaryValue}</Text>}
                         </View>
@@ -69,7 +77,6 @@ export const RatingMod = ({
     );
 };
 
-// 🔥 Створюємо об'єкт стилів один раз
 const styles = StyleSheet.create({
     container: {
         minHeight: 64,

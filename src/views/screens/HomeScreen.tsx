@@ -11,7 +11,8 @@ import { Mod } from '../components/ui/mods';
 import { Button } from '../components/ui/Button';
 import { StartIcon, StartIconActive, TeamsIcon, TeamsIconActive } from '../../../assets/icons';
 
-export default function HomeScreen({ onNavigate, externalTool, setExternalTool }: any) {
+// 🔥 Додано onNavigateLayout
+export default function HomeScreen({ onNavigate, externalTool, setExternalTool, onNavigateLayout }: any) {
     const { t } = useTranslation();
     const {
         currentTool, connected, status, recentActivity, sensors,
@@ -19,111 +20,91 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
         goToPlayers, goToSessions, openRecentActivity,
     } = useHomeScreen(onNavigate);
 
-    // Синхронізація футера
+    // Синхронізація футера та внутрішнього стану HomeScreen
     React.useEffect(() => {
-        if (externalTool === 'SPEEDCHECK' && currentTool !== 'SPEEDCHECK') openSpeedCheck();
-        else if (externalTool === null && currentTool === 'SPEEDCHECK') handleClose();
+        if (externalTool && currentTool !== externalTool) {
+            // Якщо футер сказав відкрити тул - відкриваємо
+            if (externalTool === 'SPEEDCHECK') openSpeedCheck();
+            if (externalTool === 'BLUETOOTH') openBluetooth();
+            if (externalTool === 'TIMER') openTimer();
+        } else if (externalTool === null && currentTool !== null) {
+            // Якщо футер скинув тул (натиснули на звичайний таб) - закриваємо
+            closeTool();
+        }
     }, [externalTool]);
 
-    const handleClose = () => { closeTool(); if (setExternalTool) setExternalTool(null); };
+    // Коли ми закриваємо тул зсередини екрана (кнопка Назад)
+    const handleClose = () => {
+        closeTool();
+        if (setExternalTool) setExternalTool(null);
+    };
+
+    // 🔥 Коли ми відкриваємо інструменти КНОПКАМИ НА ЕКРАНІ
+    const handleOpenSpeedCheck = () => {
+        if (onNavigateLayout) onNavigateLayout('SPEEDCHECK');
+        else openSpeedCheck();
+    };
+
+    const handleOpenBluetooth = () => {
+        if (onNavigateLayout) onNavigateLayout('BLUETOOTH');
+        else openBluetooth();
+    };
+
+    const handleOpenTimer = () => {
+        if (onNavigateLayout) onNavigateLayout('TIMER');
+        else openTimer();
+    };
 
     if (currentTool === 'TIMER') return <TimerTool onBack={handleClose} />;
-    if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} onOpenBluetooth={openBluetooth} />;
+
+    // 🔥 Прокидаємо handleOpenBluetooth у SpeedCheckerTool (щоб він міг відкрити блютуз)
+    if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} onOpenBluetooth={handleOpenBluetooth} />;
+
     if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={handleClose} />;
 
-    // 🔥 Фільтруємо датчики, залишаємо ТІЛЬКИ ГЕЙТИ (без Мастера)
     const gateSensors = sensors ? sensors.filter((s: any) => s.id !== 0) : [];
-    // Завжди показуємо мінімум 2 слоти
     const displaySlotsCount = Math.max(2, gateSensors.length);
 
     return (
-        <ScrollView
-            className="flex-1"
-            contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
-            showsVerticalScrollIndicator={false}
-        >
+        <ScrollView className="flex-1" contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
             {/* БЛОК СТАТУСУ */}
             <View className="mx-4 mt-2">
                 <Mod title={status.title} subtitle={status.desc}>
                     <View className="mt-2">
                         {connected ? (
                             <View className="gap-3">
-                                {/* 🔥 РОЗУМНІ ІНДИКАТОРИ ЛАЗЕРІВ */}
+                                {/* ІНДИКАТОРИ ЛАЗЕРІВ (Без змін) */}
                                 <View className="flex-row items-center justify-center gap-3 mb-3">
                                     {Array.from({ length: displaySlotsCount }).map((_, idx) => {
                                         const gate = gateSensors[idx];
-
-                                        // Дефолтні кольори (Сірий - не підключено)
                                         let bgColorClass = 'bg-surface-card';
                                         let borderClass = 'border-surface-border';
                                         let iconColor = '#717171';
 
                                         if (gate) {
                                             if (gate.status === 'active') {
-                                                // Зелений - все супер
-                                                bgColorClass = 'bg-status-success/10';
-                                                borderClass = 'border-status-success/40';
-                                                iconColor = '#34d399';
+                                                bgColorClass = 'bg-status-success/10'; borderClass = 'border-status-success/40'; iconColor = '#34d399';
                                             } else if (gate.status === 'timeout') {
-                                                // Червоний - відвалився (Watchdog)
-                                                bgColorClass = 'bg-status-error/10';
-                                                borderClass = 'border-status-error/40';
-                                                iconColor = '#f87171';
+                                                bgColorClass = 'bg-status-error/10'; borderClass = 'border-status-error/40'; iconColor = '#f87171';
                                             }
                                         }
 
                                         return (
-                                            <View
-                                                key={idx}
-                                                className={`w-8 h-8 rounded-xl items-center justify-center border ${bgColorClass} ${borderClass}`}
-                                            >
-                                                <MaterialCommunityIcons
-                                                    name="laser-pointer"
-                                                    size={12}
-                                                    color={iconColor}
-                                                    style={{ transform: [{ rotate: '-45deg' }] }}
-                                                />
+                                            <View key={idx} className={`w-8 h-8 rounded-xl items-center justify-center border ${bgColorClass} ${borderClass}`}>
+                                                <MaterialCommunityIcons name="laser-pointer" size={12} color={iconColor} style={{ transform: [{ rotate: '-45deg' }] }} />
                                             </View>
                                         );
                                     })}
                                 </View>
-
-                                {/* КНОПКИ ПРИ ПІДКЛЮЧЕНОМУ СТАНІ */}
-                                <Button
-                                    variant="light"
-                                    title={status.btnText}
-                                    onPress={openBluetooth}
-                                    className="w-full py-2.5"
-                                />
-                                <Button
-                                    variant="outline"
-                                    title={t('screens.home.stopwatch')}
-                                    onPress={openTimer}
-                                    icon={<Feather name="clock" size={14} color="#F5F5F5" />}
-                                    className="w-full py-2.5"
-                                />
+                                {/* 🔥 Використовуємо нові хендлери */}
+                                <Button variant="light" title={status.btnText} onPress={handleOpenBluetooth} className="w-full py-2.5" />
+                                <Button variant="outline" title={t('screens.home.stopwatch')} onPress={handleOpenTimer} icon={<Feather name="clock" size={14} color="#F5F5F5" />} className="w-full py-2.5" />
                             </View>
                         ) : (
                             <View className="flex-row gap-1.5">
-                                {/* ПІДКЛЮЧИТИСЯ */}
-                                <Button
-                                    variant="light"
-                                    title={t('screens.home.status_btn_connect')}
-                                    onPress={openBluetooth}
-                                    icon={<Feather name="bluetooth" size={14} color="#0A0A0A" />}
-                                    className="flex-1 py-2.5 px-0"
-                                    style={{ fontSize: 10, letterSpacing: -0.5 }}
-                                />
-
-                                {/* СЕКУНДОМІР */}
-                                <Button
-                                    variant="outline"
-                                    title={t('screens.home.stopwatch')}
-                                    onPress={openTimer}
-                                    icon={<Feather name="clock" size={14} color="#F5F5F5" />}
-                                    className="flex-1 py-2.5 px-0"
-                                    style={{ fontSize: 10, letterSpacing: -0.5 }}
-                                />
+                                {/* 🔥 Використовуємо нові хендлери */}
+                                <Button variant="light" title={t('screens.home.status_btn_connect')} onPress={handleOpenBluetooth} icon={<Feather name="bluetooth" size={14} color="#0A0A0A" />} className="flex-1 py-2.5 px-0" style={{ fontSize: 10, letterSpacing: -0.5 }} />
+                                <Button variant="outline" title={t('screens.home.stopwatch')} onPress={handleOpenTimer} icon={<Feather name="clock" size={14} color="#F5F5F5" />} className="flex-1 py-2.5 px-0" style={{ fontSize: 10, letterSpacing: -0.5 }} />
                             </View>
                         )}
                     </View>
@@ -135,12 +116,13 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                 <Text className="text-text-sub text-caption tracking-widest uppercase mb-4 ml-2 font-evolventa-bold">
                     {t('screens.home.quick_actions')}
                 </Text>
+                {/* 🔥 Використовуємо новий хендлер */}
                 <Mod
                     title={t('screens.home.start_test')}
                     subtitle={t('screens.home.start_test_desc')}
                     icon={<StartIcon width={32} height={32} fill="#F5F5F5" />}
                     activeIcon={<StartIconActive width={32} height={32} fill="#FF6D00" />}
-                    onPress={openSpeedCheck}
+                    onPress={handleOpenSpeedCheck}
                     className="mb-3"
                 />
                 <View className="flex-row gap-3">
@@ -149,25 +131,17 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool }
                 </View>
             </View>
 
-            {/* ОСТАННЯ АКТИВНІСТЬ */}
+            {/* ОСТАННЯ АКТИВНІСТЬ (Без змін) */}
             <View className="mx-4 mt-6 mb-10">
                 <Text className="text-text-sub text-caption tracking-widest uppercase mb-4 ml-2 font-evolventa-bold">
                     {t('screens.home.recent_activity')}
                 </Text>
                 {recentActivity ? (
-                    <Mod
-                        title={recentActivity.teamName}
-                        subtitle={`${recentActivity.date} • ${recentActivity.time}`}
-                        icon={<TeamsIcon width={28} height={28} fill="#F5F5F5" />}
-                        activeIcon={<TeamsIconActive width={28} height={28} fill="#FF6D00" />}
-                        onPress={openRecentActivity}
-                    />
+                    <Mod title={recentActivity.teamName} subtitle={`${recentActivity.date} • ${recentActivity.time}`} icon={<TeamsIcon width={28} height={28} fill="#F5F5F5" />} activeIcon={<TeamsIconActive width={28} height={28} fill="#FF6D00" />} onPress={openRecentActivity} />
                 ) : (
                     <View className="p-8 rounded-3xl items-center justify-center border border-surface-border bg-surface-card/40">
                         <Feather name="inbox" size={24} color="#717171" />
-                        <Text className="text-h5 text-text-sub mt-2 font-evolventa">
-                            {t('screens.home.empty_activity')}
-                        </Text>
+                        <Text className="text-h5 text-text-sub mt-2 font-evolventa">{t('screens.home.empty_activity')}</Text>
                     </View>
                 )}
             </View>

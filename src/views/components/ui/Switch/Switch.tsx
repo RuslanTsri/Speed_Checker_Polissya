@@ -24,14 +24,14 @@ export const Switch = ({ active, onChange }: SwitchProps) => {
         <Pressable
             onPress={() => onChange(!active)}
             style={styles.switchContainer}
-            className="justify-center"
+            className="justify-center shrink-0"
         >
             {active ? (
                 <LinearGradient
                     colors={SWITCH_GRADIENT}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={styles.background}
-                    className="w-full h-full justify-center"
+                    // 🔥 Перенесли розміри в style
+                    style={[styles.background, { width: '100%', height: '100%', justifyContent: 'center' }]}
                 >
                     <Animated.View
                         style={{ transform: [{ translateX }] }}

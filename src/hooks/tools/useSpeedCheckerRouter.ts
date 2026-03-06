@@ -5,16 +5,25 @@ import { Player } from '../../services/playerService';
 export type SpeedCheckerScreen = 'MODE_SELECT' | 'QUICK_CONFIG' | 'TEAM_SELECT' | 'PLAYER_SELECT' | 'TEST_RUN';
 
 export interface TestConfig {
-    mode: 'DEVICE' | 'MANUAL'; type: 'QUICK' | 'TEAM'; distance: number; teamId: string | null; teamName: string; selectedPlayers: Player[];
-    splitPositions?: number[];}
+    mode: 'DEVICE' | 'MANUAL';
+    type: 'QUICK' | 'TEAM';
+    distance: number;
+    teamId: string | null;
+    teamName: string;
+    selectedPlayers: Player[];
+    splitPositions?: number[];
+}
 
 export const useSpeedCheckerRouter = () => {
     const { t } = useTranslation();
     const [currentScreen, setCurrentScreen] = useState<SpeedCheckerScreen>('MODE_SELECT');
 
-    // 🔥 Використовуємо функцію-ініціалізатор, щоб переклад підтягнувся коректно
     const [testConfig, setTestConfig] = useState<TestConfig>(() => ({
-        mode: 'DEVICE', type: 'QUICK', distance: 30, splitPositions: [], teamId: null,
+        mode: 'DEVICE',
+        type: 'QUICK',
+        distance: 30,
+        splitPositions: [],
+        teamId: null,
         teamName: t('tools.speed_checker.free_training') as string,
         selectedPlayers: []
     }));
@@ -22,7 +31,18 @@ export const useSpeedCheckerRouter = () => {
     const goToModeSelect = () => setCurrentScreen('MODE_SELECT');
 
     const handleModeSelect = (mode: 'DEVICE' | 'MANUAL', type: 'QUICK' | 'TEAM') => {
-        setTestConfig(prev => ({ ...prev, mode, type }));
+        // 🔥 ПРИМУСОВЕ СКИДАННЯ КОНФІГУРАЦІЇ ПРИ ЗМІНІ РЕЖИМУ
+        setTestConfig(prev => ({
+            ...prev,
+            mode,
+            type,
+            // Скидаємо все, що стосується конкретного забігу
+            distance: 30,
+            splitPositions: [],
+            selectedPlayers: [],
+            teamId: null,
+            teamName: type === 'QUICK' ? t('tools.speed_checker.free_training') as string : prev.teamName
+        }));
         setCurrentScreen(type === 'QUICK' ? 'QUICK_CONFIG' : 'TEAM_SELECT');
     };
 
@@ -37,15 +57,12 @@ export const useSpeedCheckerRouter = () => {
     };
 
     const handleStartTest = ({ distance, splitPositions }: { distance: number, splitPositions?: number[] }) => {
-        if (testConfig.type === 'QUICK' && testConfig.selectedPlayers.length === 0) {
-            setTestConfig(prev => ({
-                ...prev,
-                distance,
-                splitPositions // 🔥 ДОДАЛИ СЮДИ ТЕЖ!
-            }));
-        } else {
-            setTestConfig(prev => ({ ...prev, distance }));
-        }
+        // Завжди оновлюємо і distance, і splitPositions, незалежно від типу тесту
+        setTestConfig(prev => ({
+            ...prev,
+            distance,
+            splitPositions: splitPositions || [] // гарантуємо, що масив завжди є
+        }));
         setCurrentScreen('TEST_RUN');
     };
 

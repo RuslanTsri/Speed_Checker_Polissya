@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from 'react';
 import { Pressable, View, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// Кольори градієнта з твого конфігу
 const CHECKED_GRADIENT = ['#CA4402', '#FF6D00', '#FCAE0E', '#FFF958'] as const;
 
 interface CheckboxProps {
@@ -25,13 +24,14 @@ export const Checkbox = ({ checked, onChange, disabled = false }: CheckboxProps)
     return (
         <Pressable
             onPress={() => !disabled && onChange(!checked)}
-            className="items-center justify-center w-5 h-5"
+            className="items-center justify-center w-5 h-5 shrink-0"
         >
             {checked ? (
                 <LinearGradient
                     colors={CHECKED_GRADIENT}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    className="w-full h-full items-center justify-center rounded-[4px]"
+                    // 🔥 Перенесли розміри та центрування в style
+                    style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}
                 >
                     <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: fadeAnim }] }}>
                         {/* Галочка */}

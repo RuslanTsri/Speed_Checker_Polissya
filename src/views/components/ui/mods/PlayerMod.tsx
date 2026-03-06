@@ -20,6 +20,9 @@ interface PlayerModProps {
 export const PlayerMod = ({ name, subtitle, rightIcon, onPress, onEditPress, onDeletePress, className = '', optimizeForList = false }: PlayerModProps) => {
     const isAndroid = Platform.OS === 'android' && optimizeForList;
 
+    // 🔥 Перевірка на одне слово для імені
+    const isSingleWordName = name ? !name.trim().includes(' ') : false;
+
     return (
         <Pressable
             onPress={onPress}
@@ -38,18 +41,25 @@ export const PlayerMod = ({ name, subtitle, rightIcon, onPress, onEditPress, onD
                         <View style={StyleSheet.absoluteFill} className="bg-surface-card" />
                     )}
 
-                    <View className="p-3 flex-row items-center justify-between z-10">
+                    <View className="p-3 flex-row items-center justify-between z-10 gap-2">
                         <View className="flex-1 flex-row items-center gap-3">
                             <PhotoIcon width={36} height={36} />
                             <View className="flex-1">
-                                <Text className="text-text-main text-h4 font-unbounded-bold" numberOfLines={1}>{name}</Text>
+                                <Text
+                                    className="text-text-main text-h4 font-unbounded-bold"
+                                    numberOfLines={isSingleWordName ? 1 : 2}
+                                    adjustsFontSizeToFit={true}
+                                    minimumFontScale={isSingleWordName ? 0.5 : 0.8}
+                                >
+                                    {name}
+                                </Text>
                                 {typeof subtitle === 'string' ? (
                                     <Text className="text-text-sub text-body font-evolventa">{subtitle}</Text>
                                 ) : (subtitle)}
                             </View>
                         </View>
 
-                        <View className="flex-row items-center gap-1">
+                        <View className="flex-row items-center gap-1 shrink-0">
                             {rightIcon || (
                                 <>
                                     {onEditPress && (

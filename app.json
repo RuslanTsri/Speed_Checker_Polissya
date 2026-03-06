@@ -17,8 +17,11 @@
       "infoPlist": {
         "NSBluetoothAlwaysUsageDescription": "Додаток використовує Bluetooth для підключення до системи хронометражу.",
         "NSBluetoothPeripheralUsageDescription": "Додаток використовує Bluetooth для обміну даними з датчиками.",
-        "NSLocationWhenInUseUsageDescription": "Додаток використовує геолокацію для пошуку Bluetooth пристроїв поблизу."
+        "NSLocationWhenInUseUsageDescription": "Додаток використовує геолокацію для пошуку Bluetooth пристроїв поблизу.",
+        "UIBackgroundModes": [
+          "bluetooth-central"]
       }
+
     },
     "androidNavigationBar": {
       "backgroundColor": "#00000000",

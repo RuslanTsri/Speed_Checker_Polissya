@@ -23,15 +23,15 @@ export const RadioButton = ({ selected, onSelect }: RadioButtonProps) => {
     return (
         <Pressable
             onPress={onSelect}
-            className="items-center justify-center"
+            className="items-center justify-center shrink-0"
             style={styles.radioWrapper}
         >
             {selected ? (
                 <LinearGradient
                     colors={RADIO_GRADIENT}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={styles.radioCircle}
-                    className="w-full h-full items-center justify-center"
+                    // 🔥 Перенесли розміри в style
+                    style={[styles.radioCircle, { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }]}
                 >
                     <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: fadeAnim }] }}>
                         <View className="w-2.5 h-2.5 bg-text-main rounded-full" />

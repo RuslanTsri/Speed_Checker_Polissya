@@ -25,7 +25,7 @@ export const AppLoaderStart = ({ progress, statusText }: AppLoaderStartProps) =>
 
             {/* Твоє лого (має бути те саме, що і в app.json) */}
             <Image
-                source={require('../../../../assets/splash-icon.png')}
+                source={require('../../../../assets/tempo_metrics_logo.png')}
                 style={{ width: 150, height: 150, resizeMode: 'contain' }}
             />
 

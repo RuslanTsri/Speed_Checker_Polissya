@@ -7,23 +7,24 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import i18n from "i18next";
 
+// 1. Додаємо onOpenSupport до інтерфейсу
 interface UseSettingsProps {
     onOpenPinChange: () => void;
     onOpenBluetooth: () => void;
+    onOpenSupport: () => void;
 }
 
-export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSettingsProps) => {
+// 2. Дістаємо onOpenSupport з пропсів
+export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth, onOpenSupport }: UseSettingsProps) => {
     const { profile, refreshProfile } = useUser();
     const [isLoading, setIsLoading] = useState(false);
 
-    // 🔥 Беремо тему та функцію перемикання з нашого контексту
     const { isDark, toggleTheme } = useTheme();
     const { language, changeLanguage } = useLanguage();
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [tempName, setTempName] = useState('');
     const [tempAvatar, setTempAvatar] = useState('');
 
-    // Додали стейт для сповіщень, якого не вистачало раніше
     const [isNotifEnabled, setIsNotifEnabled] = useState(true);
 
     useEffect(() => {
@@ -40,10 +41,12 @@ export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSetti
         setIsNotifEnabled(newValue);
         await storage.setItem('app_notifications', String(newValue));
     };
+
     const toggleLanguage = () => {
         const nextLang = language === 'uk' ? 'en' : 'uk';
         changeLanguage(nextLang);
     };
+
     const openEditModal = () => {
         setTempName(profile?.full_name || '');
         setTempAvatar(profile?.avatar_url || '');
@@ -95,7 +98,10 @@ export const useSettingsScreen = ({ onOpenPinChange, onOpenBluetooth }: UseSetti
         currentLang: language,
         handleConnectionPress: onOpenBluetooth,
         startPinChange: onOpenPinChange,
-        handleFAQ: () => Alert.alert("FAQ", "Розділ у розробці"),
+
+        // 3. Замінюємо Alert на виклик нашого колбеку
+        handleFAQ: onOpenSupport,
+
         handleExport: () => Alert.alert("Експорт", "Формування PDF...")
     };
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,9 @@ import { Switch } from '../components/ui/Switch';
 import { Mod, SettingsRow } from "../components/ui/mods";
 import { Button } from '../components/ui/Button';
 import { TextField } from '../components/ui/TextField';
+
+// 🔥 Імпортуємо наш новий екран (перевір, щоб шлях співпадав з тим, де ти його створив)
+import SupportScreen from './SupportScreen';
 
 // Іконки
 import {
@@ -33,20 +36,35 @@ const PRESET_AVATARS = [
 
 export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBluetooth }: any) {
     const { t } = useTranslation();
+
+    // 🔥 1. Створюємо стейт, який знає, чи відкритий зараз екран підтримки
+    const [isSupportVisible, setSupportVisible] = useState(false);
+
     const {
         isLoading, userProfile, isNotifEnabled, isDark, setIsDarkMode, toggleNotif,
         isEditModalVisible, setEditModalVisible, tempName, setTempName, tempAvatar, setTempAvatar, currentLang,
         openEditModal, handleSaveProfile, handleConnectionPress, handleFAQ, toggleLanguage
-    } = useSettingsScreen({ onOpenPinChange, onOpenBluetooth });
+    } = useSettingsScreen({
+        onOpenPinChange,
+        onOpenBluetooth,
+        onOpenSupport: () => setSupportVisible(true) // 🔥 2. Кажемо хуку відкривати стейт
+    });
 
     if (isLoading) {
         return (
-            <View className="flex-1 items-center justify-center bg-surface-bg">
+            <View className="flex-1 items-center justify-center">
                 <ActivityIndicator size="large" color="#FF6D00" />
             </View>
         );
     }
 
+    // 🔥 3. Магія тут: якщо стейт true, ми ВЗАГАЛІ не рендеримо налаштування,
+    // а показуємо зверху екран підтримки. Коли там натиснуть "назад", стейт стане false.
+    if (isSupportVisible) {
+        return <SupportScreen onBack={() => setSupportVisible(false)} />;
+    }
+
+    // Якщо isSupportVisible === false, показується звичайний екран налаштувань:
     return (
         <View className="flex-1 pt-4 relative">
             {/* Header */}
@@ -142,7 +160,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 </Mod>
             </ScrollView>
 
-            {/* 🔥 МОДАЛКА РЕДАГУВАННЯ ЧЕРЕЗ AppModal */}
+            {/* МОДАЛКА РЕДАГУВАННЯ */}
             <AppModal
                 type="bottom"
                 visible={isEditModalVisible}
@@ -179,21 +197,16 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
 
                         {/* Поля вводу та кнопка */}
                         <View className="w-full gap-y-4">
-
-                            {/* Ім'я */}
                             <TextField
                                 label={t('screens.settings.edit_name_label')}
                                 value={tempName}
                                 onChangeText={setTempName}
                             />
-
-                            {/* Роль (вимкнене поле) */}
                             <TextField
                                 label={t('screens.settings.edit_role_label') || "Роль у команді"}
                                 value={userProfile.role}
                                 disabled={true}
                             />
-
                             <View className="mt-4">
                                 <Button
                                     variant="primary"

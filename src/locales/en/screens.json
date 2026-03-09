@@ -156,5 +156,58 @@
     "pos_def": "Defender",
     "pos_mid": "Midfielder",
     "pos_fwd": "Forward"
+  },
+  "support": {
+    "title": "FAQ & Support",
+    "faq_section": "FREQUENTLY ASKED QUESTIONS",
+    "contact_section": "CONTACT US",
+    "email_btn": "Write an Email",
+    "faqs": [
+      {
+        "q": "How to connect Tempo Metrics sensors?",
+        "a": "Make sure the sensors are turned on (Master is main). Go to the \"Connection\" tab, connect to your \"Master\" via Bluetooth. Once connected, select the configuration and initialize the sensor order (preferably Master should be first)."
+      },
+      {
+        "q": "What to do if connection is lost?",
+        "a": "Check the module's battery level. Try restarting Bluetooth on your phone and re-initialize the sensors."
+      },
+      {
+        "q": "Where are the metrics stored?",
+        "a": "All your results are stored locally on your device in the \"Results\" section."
+      },
+      {
+        "q": "How to export results?",
+        "a": "To export a team's results, go to \"Results\" - \"Teams\" - \"Select a team\". Choose the distance results you want to export and click the \"arrow\" icon in the top panel."
+      },
+      {
+        "q": "What if the Internet is not working?",
+        "a": "The app features an 'Offline' mode allowing you to use basic functions. However, it is in Beta testing and may cause unexpected errors."
+      },
+      {
+        "q": "The app is in a language I don't understand.",
+        "a": "Go to the settings tab and change the app language (currently available: EN, UA)."
+      },
+      {
+        "q": "An unexpected error occurred. What should I do?",
+        "a": "The best option is to contact us."
+      },
+      {
+        "q": "Where to buy a sensor kit?",
+        "a": "Contact the Innovation Hub of Zhytomyr Polytechnic State University."
+      },
+      {
+        "q": "How can I thank the developers?",
+        "a": "No need to thank us, we are always happy to help our users =)"
+      }
+    ],
+    "email_template": {
+      "subject": "Tech Support Request: Tempo Metrics",
+      "body": "Hello, Tempo Team!\n\nPlease fill out the information below so we can help you faster:\n\n1. Full Name: \n[Enter your first and last name]\n\n2. Device and OS: \n{{osName}} (Version: {{osVersion}})\n\n3. Description of the issue: \n[Describe the problem in detail: what were you doing, and what went wrong?]\n\n4. Date and time of the issue: \n[For example: 07.03.2026, 14:30]\n\n5. Screenshots: \n[If possible, just attach screenshots or a screen recording to this email]\n\n-------------------\nTechnical Info (do not delete):\nApp Version: {{appVersion}}\n"
+    },
+    "errors": {
+      "title": "Error",
+      "no_mail_app": "Could not find an email app on your device. Please write to us at: {{email}}",
+      "open_mail_failed": "Something went wrong while opening the email app."
+    }
   }
 }

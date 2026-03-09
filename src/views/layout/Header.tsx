@@ -48,14 +48,7 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
             {/* 2. Додали flex-1 та mr-2, щоб він не виштовхував праву частину */}
             <TouchableOpacity onPress={onGoHome} activeOpacity={0.6} className="flex-1 mr-2 justify-center">
                 {/* 3. Додали adjustsFontSizeToFit - iOS сам зменшить шрифт на SE */}
-                <Text
-                    className="text-xl tracking-[0.15em] uppercase italic text-brand-orange font-unbounded-black"
-                    numberOfLines={1}
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.6}
-                >
-                    Tempo Metrics
-                </Text>
+
                 <Text
                     className="text-[9px] tracking-[0.2em] uppercase mt-0.5 ml-0.5 text-text-sub font-evolventa-bold"
                     numberOfLines={1}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import {View, Text, KeyboardAvoidingView, Platform, ScrollView, Linking} from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
@@ -104,6 +104,17 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                             onPress={toggleMode}
                             className="w-full"
                         />
+                    </View>
+                    <View className="mt-8 mb-4 items-center px-4">
+                        <Text className="text-text-muted text-xs text-center font-evolventa leading-5">
+                            Продовжуючи, ви погоджуєтесь з нашою{' '}
+                            <Text
+                                className="text-brand-orange underline font-evolventa-bold"
+                                onPress={() => Linking.openURL('https://bejewelled-sorbet-f2399d.netlify.app')}
+                            >
+                                Політикою конфіденційності
+                            </Text>
+                        </Text>
                     </View>
                 </ScrollView>
 

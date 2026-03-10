@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, TouchableOpacity, Animated, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TouchableOpacity, Animated, LayoutAnimation, UIManager, Platform, Linking } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
@@ -136,7 +136,12 @@ export default function SupportScreen({ onBack }: { onBack: () => void }) {
                         isLast
                     />
                 </Mod>
-
+                <SettingsRow
+                    title="Політика конфіденційності"
+                    icon={<Feather name="shield" size={22} color="#A3A3A3" />}
+                    onPress={() => Linking.openURL('https://bejewelled-sorbet-f2399d.netlify.app')}
+                    isLast // Тепер він останній, щоб не було зайвої лінії знизу
+                />
                 {/* Підвал з версією */}
                 <View className="items-center mt-8 opacity-50">
                     <Text className="text-text-sub font-unbounded text-xs">Tempo Metrics {appVersion}</Text>

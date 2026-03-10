@@ -10,10 +10,10 @@ let appIdentifier = "com.yourname.tempometrics";
 // Підставляємо потрібні імена та ідентифікатори залежно від версії
 if (variant === "development") {
   appName = "Tempo DEV";
-  appIdentifier = "com.scienceparkztu.tempometrics.dev";
+  appIdentifier = "com.citye.scienceparkztu.tempometrics.dev";
 } else if (variant === "preview") {
   appName = "Tempo Metrics";
-  appIdentifier = "com.scienceparkztu.tempometrics";
+  appIdentifier = "com.citye.scienceparkztu.tempometrics";
 }
 
 const withAndroidResolutionStrategy = (config) => {

@@ -7,7 +7,6 @@ import PlayerSelector from './TempoMetrics/PlayerSelector';
 import SpeedTestRun from './TempoMetrics/SpeedTestRun';
 import { useSpeedCheckerRouter } from '../../hooks/tools/useSpeedCheckerRouter';
 
-// 🔥 Динамічний контейнер (без фону, щоб працював твій глобальний бекграунд)
 const ScreenContainer = ({ children }: { children: React.ReactNode }) => (
     <View className="flex-1">{children}</View>
 );
@@ -26,7 +25,7 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: 
                     <SpeedCheckerModeSelector
                         onBack={onBack}
                         onSelect={handleModeSelect}
-                        onOpenBluetooth={onOpenBluetooth} // 🔥 Тепер тут реальна функція, а не помилка
+                        onOpenBluetooth={onOpenBluetooth}
                     />
                 </ScreenContainer>
             );

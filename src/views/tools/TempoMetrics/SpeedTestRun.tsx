@@ -4,7 +4,6 @@ import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSpeedTestSession } from '../../../hooks/tempoMetrics/useSpeedTestSession';
 
-// 🔥 UI-компоненти
 import { AppModal } from '../../components/AppModal';
 import { Mod } from '../../components/ui/mods';
 import { Button } from '../../components/ui/Button';
@@ -13,7 +12,6 @@ import { ArrowIcon, ArrowIconActive } from '../../../../assets/icons';
 const RunMarker = ({ position, totalDistance, label, type, triggered, timeDisplay }: any) => {
     const { t } = useTranslation();
 
-    // 🔥 ЗАЛІЗОБЕТОННА МАТЕМАТИКА
     const safePos = parseFloat(position) || 0;
     const safeTotal = parseFloat(totalDistance) || 0;
 
@@ -55,7 +53,6 @@ const RunMarker = ({ position, totalDistance, label, type, triggered, timeDispla
 export default function SpeedTestRun({ config, onBack, onFinish }: any) {
     const { t } = useTranslation();
 
-    // 🔥 ДОДАНО restartWholeSession в деструктуризацію
     const {
         currentPlayerObj, teamName, currentPlayerIndex, totalPlayers, isRunning, isFinished, isReady,
         timeObj, progressPercent, activeSensors, startTraining, stopTraining, resetSession, nextPlayer,
@@ -154,11 +151,8 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                 </View>
             </ScrollView>
 
-            {/* 🔥 МОДАЛКА ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТІВ */}
             <AppModal
                 visible={showSummaryModal}
-                // 🔥 ВИПРАВЛЕНО: Тільки скидаємо сесію, без onFinish()
-                // Це залишить нас на екрані тестування і почне забіг з 1-го гравця
                 onClose={restartWholeSession}
                 title={t('tools.speed_checker.modal_summary', { count: localResults?.length || 0 })}
                 type="center"
@@ -181,7 +175,6 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                         isLoading={isSaving}
                         className="mt-4"
                     />
-                    {/* Можна також додати кнопку для явного скасування/перебіжки, якщо юзер не здогадається клікнути на фон */}
                     <Button
                         variant="outline"
                         title={t('tools.speed_checker.btn_retry_team', 'Перебігти всім')}
@@ -191,10 +184,8 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                 </View>
             </AppModal>
 
-            {/* 🔥 МОДАЛКА КОНКРЕТНОГО ГРАВЦЯ */}
             <AppModal
                 visible={showIndividualModal}
-                // Якщо закрили модалку гравця — це рівноцінно "Перебігти" (скасувати спробу)
                 onClose={retryIndividualRun}
                 title={currentPlayerObj?.name || ''}
                 type="center"

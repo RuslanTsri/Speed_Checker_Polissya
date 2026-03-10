@@ -107,12 +107,12 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     </View>
                     <View className="mt-8 mb-4 items-center px-4">
                         <Text className="text-text-muted text-xs text-center font-evolventa leading-5">
-                            Продовжуючи, ви погоджуєтесь з нашою{' '}
+                            {t('screens.auth.if_you_continued_privacy_policy')}{' '}
                             <Text
                                 className="text-brand-orange underline font-evolventa-bold"
                                 onPress={() => Linking.openURL('https://bejewelled-sorbet-f2399d.netlify.app')}
                             >
-                                Політикою конфіденційності
+                                {t('screens.auth.privacy_policyes')}
                             </Text>
                         </Text>
                     </View>

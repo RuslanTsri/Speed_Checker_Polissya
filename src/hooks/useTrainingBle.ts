@@ -9,6 +9,7 @@ const TAG = '[BLE-DEBUG] 🔵';
 let globalBleManager: any = null;
 
 export const useTrainingBle = () => {
+    // 🔥 Підключаємо обидва словники
     const { t } = useTranslation();
 
     // --- СТАН (STATE) ---
@@ -58,7 +59,7 @@ export const useTrainingBle = () => {
         };
     }, []);
 
-    // 🔥 НОВА ФУНКЦІЯ: ЗАПИТ ДОЗВОЛІВ (PERMISSIONS)
+    // 🔥 ЗАПИТ ДОЗВОЛІВ (PERMISSIONS)
     const requestPermissions = async (): Promise<boolean> => {
         if (Platform.OS === 'android') {
             const apiLevel = parseInt(Platform.Version.toString(), 10);
@@ -86,7 +87,6 @@ export const useTrainingBle = () => {
                 return false;
             }
         }
-        // На iOS дозволи запитуються автоматично при спробі використання
         return true;
     };
 
@@ -96,9 +96,9 @@ export const useTrainingBle = () => {
             const hasPermissions = await requestPermissions();
             if (!hasPermissions) {
                 Alert.alert(
-                    "Бракує дозволів",
-                    "Для пошуку датчиків додатку потрібен доступ до Bluetooth та Геолокації.",
-                    [{ text: "ОК" }]
+                    t('screens.ble.perm_title'),
+                    t('logs.errors.ble.missing_permissions'),
+                    [{ text: t('screens.common.ok') }]
                 );
                 return false;
             }
@@ -106,10 +106,14 @@ export const useTrainingBle = () => {
             const btState = await bleManager.current.state();
             if (btState === 'PoweredOn') return true;
             if (btState === 'PoweredOff') {
-                Alert.alert("Bluetooth вимкнено", "Для роботи з системою потрібно увімкнути Bluetooth.", [
-                    { text: "Скасувати", style: "cancel" },
-                    { text: "Налаштування", onPress: () => Platform.OS === 'android' ? Linking.sendIntent('android.settings.BLUETOOTH_SETTINGS').catch(() => Linking.openSettings()) : Linking.openURL('App-Prefs:Bluetooth') }
-                ]);
+                Alert.alert(
+                    t('screens.ble.bt_off_title'),
+                    t('logs.errors.ble.bt_is_off'),
+                    [
+                        { text: t('screens.common.cancel'), style: "cancel" },
+                        { text: t('screens.common.settings'), onPress: () => Platform.OS === 'android' ? Linking.sendIntent('android.settings.BLUETOOTH_SETTINGS').catch(() => Linking.openSettings()) : Linking.openURL('App-Prefs:Bluetooth') }
+                    ]
+                );
                 return false;
             }
             return false;
@@ -118,10 +122,8 @@ export const useTrainingBle = () => {
 
     // --- ДОПОМІЖНІ ФУНКЦІЇ ---
     const handleMasterDisconnect = useCallback(async (intentional = false) => {
-        // Якщо це НЕ ручне відключення, тоді б'ємо на сполох
         if (!intentional) {
             console.log(`${TAG} 💀 МАСТЕР ВІДКЛЮЧИВСЯ (ОБРИВ BLE)!`);
-
         } else {
             console.log(`${TAG} 👋 КОРИСТУВАЧ ВІДКЛЮЧИВСЯ САМОСТІЙНО.`);
         }
@@ -140,6 +142,7 @@ export const useTrainingBle = () => {
         setElapsedTime(0);
         lastSeenRef.current = {};
     }, []);
+
     const sendCommand = async (command: CommandType | any, specificDevice?: any) => {
         const currentDevice = specificDevice || deviceRef.current;
         if (!currentDevice || Platform.OS === 'web') return;
@@ -150,15 +153,13 @@ export const useTrainingBle = () => {
             if (command.type !== 22) console.log(`${TAG} 📤 ВІДПРАВЛЕНО: ${jsonStr}`);
         } catch (e: any) {
             console.log(`${TAG} ❌ ПОМИЛКА ВІДПРАВКИ:`, e.message);
-            // Якщо помилка при відправці, швидше за все Мастер відвалився
             if (e.message?.includes('not connected') || e.message?.includes('disconnected')) {
                 handleMasterDisconnect();
             }
         }
     };
 
-    // 🔥 WATCHDOG: ПЕРЕВІРКА ЖИВУЧОСТІ ТІЛЬКИ ДЛЯ ГЕЙТІВ
-    // 🔥 WATCHDOG: ПЕРЕВІРКА ЖИВУЧОСТІ ТІЛЬКИ ДЛЯ ГЕЙТІВ
+    // 🔥 WATCHDOG
     useEffect(() => {
         if (!connected) return;
 
@@ -178,13 +179,11 @@ export const useTrainingBle = () => {
 
             const updatedSensors = sensorsRef.current.map(s => {
                 if (s.id === 0) return s;
-
                 const lastSeen = lastSeenRef.current[s.id] || now;
 
                 if (now - lastSeen > 25000 && s.status === 'active') {
                     console.log(`${TAG} 💀 ГЕЙТ ${s.id} ВІДКЛЮЧИВСЯ (ТАЙМАУТ)!`);
                     isChanged = true;
-                    // 🔥 Алерт прибрано, картка сенсора сама все покаже
                     return { ...s, status: 'timeout' as 'timeout' };
                 }
                 return s;
@@ -204,15 +203,12 @@ export const useTrainingBle = () => {
         const triggeredId = data.sensor;
         const triggerTime = data.time || 0;
         const nowMs = Date.now() % 10000;
-
         const currentState = stateRef.current;
-        console.log(`\n[${nowMs}] ${TAG} ⚡ ТРИГЕР ВИКЛИКАНО: Sensor=${triggeredId}, Time=${triggerTime}, State=${currentState}`);
 
         lastSeenRef.current[triggeredId] = Date.now();
 
         if (triggeredId === 0) {
             if (['armed', 'ready'].includes(currentState)) {
-                console.log(`[${nowMs}] ${TAG} 🟢 МАСТЕР СТАРТ. Оновлюємо state -> active.`);
                 stateRef.current = 'active';
                 setState('active');
                 setElapsedTime(0);
@@ -233,15 +229,10 @@ export const useTrainingBle = () => {
         if (stateRef.current === 'active') {
             const activeSensors = sensorsRef.current.filter(s => s.status === 'active' && s.id !== 0);
             const finishSensorId = activeSensors.length > 0 ? Math.max(...activeSensors.map(s => s.id)) : 0;
-
             const currentSensor = sensorsRef.current.find(s => s.id === triggeredId);
 
-            if (currentSensor?.triggerTime !== undefined) {
-                console.log(`[${nowMs}] ${TAG} ⚠️ ПРАВИЛО 1 ДОТИКУ: Датчик ${triggeredId} вже зафіксовано. Ігноруємо!`);
-                return;
-            }
+            if (currentSensor?.triggerTime !== undefined) return;
 
-            console.log(`[${nowMs}] ${TAG} ✅ Оновлюємо час для Сенсора ${triggeredId} -> ${triggerTime}`);
             const newSensors = sensorsRef.current.map(s =>
                 s.id === triggeredId ? { ...s, triggerTime, splitTime: data.split, status: 'active' as 'active' } : s
             );
@@ -260,20 +251,17 @@ export const useTrainingBle = () => {
             }
 
             if (triggeredId === finishSensorId) {
-                console.log(`[${nowMs}] ${TAG} 🛑 ФІНІШ ДОСЯГНУТО (Сенсор ${triggeredId})`);
                 stateRef.current = 'finished';
                 setState('finished');
                 setElapsedTime(triggerTime);
-                setPingProgress('Фініш!');
+                setPingProgress(t('screens.ble.status_finish')); // 🔥 Локалізація
                 sendCommand({ type: 21 });
             }
         }
-    }, []);
+    }, [t]);
 
     // --- ОБРОБКА ДАНИХ З ПЛАТИ ---
     const handleMasterResponse = useCallback((data: any) => {
-        if (data.type !== 31 && data.type !== 22) console.log(`${TAG} 📥 ПАРСИНГ УСПІШНИЙ:`, JSON.stringify(data));
-
         switch (data.type) {
             case 31: setElapsedTime(data.elapsed); break;
             case 26:
@@ -288,7 +276,10 @@ export const useTrainingBle = () => {
                         sensorsRef.current = newSensors;
                         setSensors(newSensors);
                     }
-                    setPingProgress(data.assigned_id === 0 ? 'Мастер ініціалізовано' : `Сенсор ${data.assigned_id} знайдено`);
+                    // 🔥 Локалізація з параметрами
+                    setPingProgress(data.assigned_id === 0
+                        ? t('screens.ble.status_master_init')
+                        : t('screens.ble.status_sensor_found', { id: data.assigned_id }));
                 }
                 break;
             case 22:
@@ -296,13 +287,14 @@ export const useTrainingBle = () => {
                     lastPingedSensorId.current = data.sensor;
                     lastSeenRef.current[data.sensor] = Date.now();
 
-                    const isRevived = sensorsRef.current.find(s => s.id === data.sensor)?.status === 'timeout';
-                    if (isRevived) console.log(`${TAG} ⚡ ДАТЧИК ${data.sensor} ПОВЕРНУВСЯ В СТРІЙ!`);
-
                     const newSensors = sensorsRef.current.map(s => s.id === data.sensor ? { ...s, status: 'active' as 'active' } : s);
                     sensorsRef.current = newSensors;
                     setSensors([...newSensors]);
-                    setPingProgress(data.sensor === 0 ? 'Мастер OK...' : `Сенсор ${data.sensor} OK...`);
+
+                    // 🔥 Локалізація з параметрами
+                    setPingProgress(data.sensor === 0
+                        ? t('screens.ble.status_master_ok')
+                        : t('screens.ble.status_sensor_ok', { id: data.sensor }));
                 } else if (data.rssi !== undefined) {
                     const newSensors = sensorsRef.current.map(s => s.id === lastPingedSensorId.current ? { ...s, rssi: data.rssi } : s);
                     sensorsRef.current = newSensors;
@@ -313,19 +305,19 @@ export const useTrainingBle = () => {
                 if (data.status === 'FINISHED') {
                     stateRef.current = 'finished';
                     setState('finished');
-                    setPingProgress('Фініш!');
+                    setPingProgress(t('screens.ble.status_finish'));
                 }
                 break;
             case 20:
                 stateRef.current = 'armed';
                 setState('armed');
-                setPingProgress('Очікування старту');
+                setPingProgress(t('screens.ble.status_waiting_start'));
                 break;
             case 30:
                 handleTrigger(data);
                 break;
         }
-    }, [handleTrigger]);
+    }, [handleTrigger, t]);
 
     // --- ПІДКЛЮЧЕННЯ ---
     const connectToDevice = async (target: any) => {
@@ -357,23 +349,14 @@ export const useTrainingBle = () => {
                 await conn.discoverAllServicesAndCharacteristics();
                 if (!isConnecting.current) { await conn.cancelConnection().catch(() => {}); return; }
 
-                // 🔥 ВІДСТЕЖЕННЯ РОЗРИВУ З'ЄДНАННЯ З МАСТЕРОМ
                 conn.onDisconnected((error: any) => {
-                    console.log(`${TAG} Подія onDisconnected спрацювала`);
-                    if (!isIntentionalDisconnect.current) {
-                        handleMasterDisconnect(false);
-                    }
+                    if (!isIntentionalDisconnect.current) handleMasterDisconnect(false);
                 });
 
                 subscriptionRef.current = conn.monitorCharacteristicForService(
                     BLE_CONFIG.SERVICE_UUID, BLE_CONFIG.RX_CHARACTERISTIC_UUID,
                     (err: any, char: any) => {
-                        if (err) {
-                            console.log(`${TAG} Помилка в monitorCharacteristic:`, err.message);
-                            // Якщо обрив під час моніторингу
-                            handleMasterDisconnect();
-                            return;
-                        }
+                        if (err) { handleMasterDisconnect(); return; }
 
                         if (char?.value) {
                             const chunk = Buffer.from(char.value, 'base64').toString('utf-8');
@@ -388,28 +371,19 @@ export const useTrainingBle = () => {
                                     if (rxBuffer.current[i] === '{') braceCount++;
                                     else if (rxBuffer.current[i] === '}') {
                                         braceCount--;
-                                        if (braceCount === 0) {
-                                            endIndex = i;
-                                            break;
-                                        }
+                                        if (braceCount === 0) { endIndex = i; break; }
                                     }
                                 }
 
                                 if (endIndex !== -1) {
                                     const jsonStr = rxBuffer.current.substring(startIndex, endIndex + 1);
                                     rxBuffer.current = rxBuffer.current.substring(endIndex + 1);
-
                                     try {
                                         const parsed = JSON.parse(jsonStr);
                                         handleMasterResponse(parsed);
-                                    } catch (e) {
-                                        console.error(`${TAG} ❌ Помилка парсингу склеєного JSON:`, jsonStr);
-                                    }
-
+                                    } catch (e) {}
                                     startIndex = rxBuffer.current.indexOf('{');
-                                } else {
-                                    break;
-                                }
+                                } else { break; }
                             }
                         }
                     }
@@ -426,7 +400,7 @@ export const useTrainingBle = () => {
             if (isConnecting.current) {
                 stateRef.current = 'idle';
                 setState('idle');
-                Alert.alert("Помилка", "Не вдалося підключитися. Спробуйте ще раз.");
+                Alert.alert(t('screens.common.error'), t('logs.errors.ble.connect_failed')); // 🔥 Локалізація
             }
         } finally {
             isConnecting.current = false;
@@ -466,7 +440,7 @@ export const useTrainingBle = () => {
 
                 stateRef.current = 'discovering';
                 setState('discovering');
-                setPingProgress('Перевірка...');
+                setPingProgress(t('screens.ble.status_checking')); // 🔥 Локалізація
                 sendCommand({ type: 22 });
                 if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
                 pingTimeoutRef.current = setTimeout(() => {
@@ -502,14 +476,13 @@ export const useTrainingBle = () => {
         cancelConnecting,
 
         disconnect: async () => {
-            isIntentionalDisconnect.current = true; // 🔥 Свідоме відключення
+            isIntentionalDisconnect.current = true;
             await handleMasterDisconnect(true);
-
         },
 
         finishInitialization: () => {
             if (sensorsRef.current.length < 2) {
-                Alert.alert("Помилка", "Потрібно мінімум 2 датчики");
+                Alert.alert(t('screens.common.error'), t('logs.errors.ble.min_sensors')); // 🔥 Локалізація
                 return;
             }
             sendCommand({ type: 23, sensors: sensorsRef.current.length - 1 });
@@ -528,7 +501,7 @@ export const useTrainingBle = () => {
             sendCommand({ type: 21 });
             stateRef.current = 'finished';
             setState('finished');
-            setPingProgress('Зупинено');
+            setPingProgress(t('screens.ble.status_stopped')); // 🔥 Локалізація
         },
 
         resetSession: () => {
@@ -536,10 +509,8 @@ export const useTrainingBle = () => {
             stateRef.current = 'ready';
             setState('ready');
             setElapsedTime(0);
-
             sessionRef.current = null;
             setSession(null);
-
             const newSensors = sensorsRef.current.map(s => ({ ...s, triggerTime: undefined, splitTime: undefined }));
             sensorsRef.current = newSensors;
             setSensors(newSensors);

@@ -3,11 +3,12 @@ import { BaseService } from './BaseService';
 import { supabase } from '../lib/supabase';
 import NetInfo from '@react-native-community/netinfo';
 import { syncManager } from './SyncManager';
-
+import i18n from 'i18next'; // 🔥 Імпортуємо глобальний i18next
 
 export const TeamSchema = z.object({
     id: z.string().optional(),
-    name: z.string().min(1, "Назва команди обов'язкова"),
+    // 🔥 Локалізуємо повідомлення Zod-валідації
+    name: z.string().min(1, { message: i18n.t('logs.errors.validation.team_name_required') }),
     coach_id: z.string().optional()
 });
 
@@ -21,7 +22,7 @@ class TeamService extends BaseService<Team> {
     async create(team: { name: string }) {
         console.log(`🚀 [TeamService] Створення команди: ${team.name}`);
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) throw new Error("User not found");
+        if (!session?.user) throw new Error(i18n.t('logs.errors.auth.user_not_found'));
 
         return super.create({
             name: team.name,
@@ -32,7 +33,7 @@ class TeamService extends BaseService<Team> {
     async getMyTeams() {
         console.log("🔍 [TeamService] Запит getMyTeams...");
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return { data: [], error: 'No user' };
+        if (!session?.user) return { data: [], error: i18n.t('logs.errors.auth.user_not_found') };
 
         const state = await NetInfo.fetch();
 
@@ -78,7 +79,7 @@ class TeamService extends BaseService<Team> {
     async getMyTeamsWithStatus() {
         console.log("🔍 [TeamService] Запит getMyTeamsWithStatus...");
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return { data: [], error: 'No user' };
+        if (!session?.user) return { data: [], error: i18n.t('logs.errors.auth.user_not_found') };
 
         const state = await NetInfo.fetch();
 
@@ -129,7 +130,7 @@ class TeamService extends BaseService<Team> {
 
         const combined = [...pendingTeams, ...serverFormatted];
         const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
-            .filter(item => !deletedIds.includes(item.id)); // 🔥 Відкидаємо видалені
+            .filter(item => !deletedIds.includes(item.id));
 
         return { data: unique, error: null };
     }

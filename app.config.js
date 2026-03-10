@@ -42,10 +42,10 @@ export default {
     slug: "tempo-metrics",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/tempo_metrics_logo.png",
+    icon: "./assets/tempometrics_black.png",
     userInterfaceStyle: "dark",
     splash: {
-      image: "./assets/tempo_metrics_logo.png",
+      image: "./assets/tempometrics_white_nobackground.png",
       resizeMode: "contain",
       backgroundColor: "#0A0A0A"
     },
@@ -67,7 +67,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/tempo_metrics_logo.png",
+        foregroundImage: "./assets/tempometrics_white_nobackground.png",
         backgroundColor: "#0A0A0A",
         resizeMode: "cover"
       },

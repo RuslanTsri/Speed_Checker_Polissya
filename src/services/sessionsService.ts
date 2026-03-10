@@ -3,13 +3,14 @@ import { BaseService, ServiceResponse } from './BaseService';
 import { supabase } from '../lib/supabase';
 import NetInfo from '@react-native-community/netinfo';
 import { syncManager } from './SyncManager';
+import i18n from 'i18next';
 
 export const SessionSchema = z.object({
     id: z.string().optional(),
     created_at: z.string().optional(),
     coach_id: z.string().optional(),
     team_id: z.string().nullable().optional(),
-    name: z.string().min(1, "Назва обов'язкова"),
+    name: z.string().min(1, { message: i18n.t('logs.errors.validation.name_required') }),
     total_distance: z.number().positive(),
     test_type: z.string(),
     splits_config: z.any().optional()
@@ -46,7 +47,9 @@ class SessionsService extends BaseService<Session> {
                 id: item.id,
                 date: new Date(item.created_at || Date.now()).toLocaleDateString(),
                 time: new Date(item.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                teamName: item.team_id ? 'Синхронізація...' : 'Вільне тренування',
+                teamName: item.team_id
+                    ? i18n.t('screens.sessions.syncing')
+                    : i18n.t('screens.sessions.free_training'),
                 testType: item.test_type,
                 playerCount: 0,
                 distance: item.total_distance
@@ -68,7 +71,7 @@ class SessionsService extends BaseService<Session> {
                         id: item.id,
                         date: new Date(item.created_at).toLocaleDateString(),
                         time: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        teamName: item.teams?.name || 'Вільне тренування',
+                        teamName: item.teams?.name || i18n.t('screens.sessions.free_training'),
                         testType: item.test_type,
                         playerCount: item.results?.[0]?.count || 0,
                         distance: item.total_distance

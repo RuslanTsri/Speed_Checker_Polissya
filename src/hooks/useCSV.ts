@@ -2,6 +2,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Alert, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next'; // 🔥 Імпортуємо хук
 
 // Хак для TypeScript, щоб не сварився на legacy
 const fs = FileSystem as any;
@@ -12,6 +13,8 @@ export interface CSVPlayer {
 }
 
 export const useCSV = () => {
+    // Підключаємо два словники
+    const { t } = useTranslation();
 
     // === ДОПОМІЖНА ФУНКЦІЯ ДЛЯ WEB ===
     const saveFileOnWeb = (content: string, fileName: string) => {
@@ -22,7 +25,6 @@ export const useCSV = () => {
         link.href = url;
         link.download = fileName;
 
-        // Емулюємо клік для скачування
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -33,11 +35,15 @@ export const useCSV = () => {
     const exportResultsToCSV = async (results: any[], teamName: string) => {
         try {
             if (!results || results.length === 0) {
-                Alert.alert("Інфо", "Немає даних для експорту");
+                Alert.alert(
+                    t('screens.common.info'),
+                    t('logs.warns.csv.no_data')
+                );
                 return;
             }
 
-            let csvContent = "Team,Player,Date,Type,Distance(m),Time(s),Splits\n";
+            // 🔥 Локалізуємо заголовки стовпців CSV
+            let csvContent = `${t('screens.csv.export_headers')}\n`;
 
             results.forEach((res) => {
                 const timeStr = res.time.toFixed(2);
@@ -45,13 +51,12 @@ export const useCSV = () => {
                 const dateStr = res.date || '-';
                 const typeStr = res.testType || 'Sprint';
 
-                // Витягуємо дистанцію (якщо раптом її немає, ставимо прочерк)
+                // Витягуємо дистанцію
                 const distanceStr = res.distance ? res.distance.toString() : '-';
 
                 csvContent += `${teamName},${res.playerName},${dateStr},${typeStr},${distanceStr},${timeStr},${splitsStr}\n`;
             });
 
-            // Назва файлу
             const fileName = `Results_${teamName.replace(/\s+/g, '_')}_${Date.now()}.csv`;
 
             if (Platform.OS === 'web') {
@@ -68,25 +73,26 @@ export const useCSV = () => {
             if (await Sharing.isAvailableAsync()) {
                 await Sharing.shareAsync(fileUri, {
                     mimeType: 'text/csv',
-                    dialogTitle: `Export: ${teamName}`,
+                    dialogTitle: `${t('screens.csv.export_dialog')}: ${teamName}`,
                     UTI: 'public.comma-separated-values-text'
                 });
             } else {
-                Alert.alert("Помилка", "Поширення недоступне на цьому пристрої");
+                Alert.alert(t('screens.common.error'), t('logs.errors.csv.sharing_unavailable'));
             }
         } catch (error) {
             console.error("Export Error:", error);
-            Alert.alert("Помилка", "Не вдалося згенерувати файл");
+            Alert.alert(t('screens.common.error'), t('logs.errors.csv.generate_failed'));
         }
     };
 
     // --- 2. ЗАВАНТАЖЕННЯ ШАБЛОНУ ---
     const downloadPlayersTemplate = async () => {
         try {
-            const header = "Прізвище та Ім'я";
-            const example1 = "Шевченко Андрій";
-            const example2 = "Забарний Ілля";
-            const example3 = "Мудрик Михайло";
+            // 🔥 Локалізований шаблон гравців
+            const header = t('screens.csv.template_header');
+            const example1 = t('screens.csv.template_ex1');
+            const example2 = t('screens.csv.template_ex2');
+            const example3 = t('screens.csv.template_ex3');
 
             const csvContent = `\uFEFF${header}\n${example1}\n${example2}\n${example3}`;
             const fileName = 'tempo_players_simple.csv';
@@ -104,15 +110,15 @@ export const useCSV = () => {
             if (await Sharing.isAvailableAsync()) {
                 await Sharing.shareAsync(fileUri, {
                     mimeType: 'text/csv',
-                    dialogTitle: 'Шаблон списку гравців',
+                    dialogTitle: t('screens.csv.template_dialog'),
                     UTI: 'public.comma-separated-values-text'
                 });
             } else {
-                Alert.alert("Увага", "Функція 'Поділитися' недоступна");
+                Alert.alert(t('screens.common.warning'), t('logs.errors.csv.sharing_unavailable'));
             }
         } catch (e: any) {
             console.error("Template Error:", e);
-            Alert.alert("Помилка", "Не вдалося створити шаблон");
+            Alert.alert(t('screens.common.error'), t('logs.errors.csv.template_failed'));
         }
     };
 
@@ -155,18 +161,22 @@ export const useCSV = () => {
                 }
             }
 
-            if (parsedPlayers.length === 0) throw new Error("Файл пустий");
+            if (parsedPlayers.length === 0) throw new Error(t('logs.errors.csv.file_empty') as string);
 
             return parsedPlayers;
 
         } catch (e: any) {
             console.error("CSV Parse Error:", e);
-            throw new Error("Не вдалося прочитати файл");
+            // Перехоплюємо нашу власну помилку про порожній файл, або віддаємо загальну
+            if (e.message === t('logs.errors.csv.file_empty')) {
+                throw e;
+            }
+            throw new Error(t('logs.errors.csv.parse_failed') as string);
         }
     };
 
     const importFromCSV = async () => {
-        Alert.alert("Інфо", "Використовуйте кнопку у модалці");
+        Alert.alert(t('screens.common.info'), t('screens.csv.use_modal_btn'));
     };
 
     return {

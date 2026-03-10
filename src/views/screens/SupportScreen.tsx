@@ -137,7 +137,7 @@ export default function SupportScreen({ onBack }: { onBack: () => void }) {
                     />
                 </Mod>
                 <SettingsRow
-                    title="Політика конфіденційності"
+                    title={t('screens.support.privacy_policy')}
                     icon={<Feather name="shield" size={22} color="#A3A3A3" />}
                     onPress={() => Linking.openURL('https://bejewelled-sorbet-f2399d.netlify.app')}
                     isLast // Тепер він останній, щоб не було зайвої лінії знизу

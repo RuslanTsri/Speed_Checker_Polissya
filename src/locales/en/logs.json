@@ -1,0 +1,43 @@
+{
+  "errors": {
+    "validation": {
+      "name_required": "Name is required",
+      "team_name_required": "Team name is required"
+    },
+    "auth": {
+      "rate_limit": "Too many requests. Please wait a moment and try again.",
+      "server_connection": "Failed to connect to the database server.",
+      "user_not_found": "User with these credentials was not found."
+    },
+    "ble": {
+      "missing_permissions": "The app requires Bluetooth and Location permissions to scan for sensors.",
+      "bt_is_off": "Bluetooth must be turned on to connect to the system.",
+      "connect_failed": "Failed to connect. Please try again.",
+      "min_sensors": "At least 2 sensors are required to start."
+    },
+    "app": {
+      "no_internet_pin": "Internet connection is required to change PIN",
+      "pin_length": "All fields must contain exactly 4 digits",
+      "pin_incorrect": "Current PIN is incorrect",
+      "pin_mismatch": "New PINs do not match",
+      "pin_same": "New PIN must be different from the old one",
+      "pin_update_failed": "Failed to update PIN. Please try again later."
+    },
+    "csv": {
+      "sharing_unavailable": "Sharing is not available on this device.",
+      "generate_failed": "Failed to generate the file.",
+      "template_failed": "Failed to create the template.",
+      "file_empty": "The file is empty or formatted incorrectly.",
+      "parse_failed": "Failed to read the file."
+    },
+    "settings": {
+      "name_short": "Name is too short (minimum 2 characters).",
+      "save_failed": "Failed to save changes. Please try again later."
+    }
+  },
+  "warns": {
+    "csv": {
+      "no_data": "No data available for export."
+    }
+  }
+}

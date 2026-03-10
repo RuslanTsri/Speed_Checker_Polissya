@@ -37,7 +37,8 @@
     "system": "System",
     "connecting_to_device": "Establishing connection",
     "search_a_free_systems": "Searching for available devices...",
-    "anything_search": "Nothing found yet"
+    "anything_search": "Nothing found yet",
+    "connection_lost_msg": "Connection lost. Please check the sensor's power and reinitialize the system."
   },
   "sessions": {
     "results_title": "Results",

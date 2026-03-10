@@ -1,4 +1,45 @@
 {
+  "common": {
+    "info": "Info",
+    "error": "Error",
+    "warning": "Warning",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "settings": "Settings"
+  },
+  "bluetooth": {
+    "master_node": "Мастер",
+    "gate_id": "Гейт {{id}}",
+    "signal": "Сигнал:",
+    "connection_lost_msg": "Зв'язок втрачено. Перевірте живлення датчика та переініціалізуйте систему."
+  },
+  "loader": {
+    "default_status": "Loading...",
+    "syncing_db": "Syncing database...",
+    "checking_auth": "Checking authorization..."
+  },
+  "ble": {
+    "perm_title": "Permissions Required",
+    "bt_off_title": "Bluetooth is Off",
+    "status_finish": "Finished!",
+    "status_master_init": "Master initialized",
+    "status_sensor_found": "Sensor {{id}} found",
+    "status_master_ok": "Master OK...",
+    "status_sensor_ok": "Sensor {{id}} OK...",
+    "status_waiting_start": "Waiting for start",
+    "status_checking": "Checking...",
+    "status_stopped": "Stopped"
+  },
+  "csv": {
+    "export_headers": "Team,Player,Date,Type,Distance(m),Time(s),Splits",
+    "export_dialog": "Export",
+    "template_header": "Full Name",
+    "template_ex1": "John Doe",
+    "template_ex2": "Mike Smith",
+    "template_ex3": "Alex Johnson",
+    "template_dialog": "Players Template",
+    "use_modal_btn": "Please use the button in the modal"
+  },
   "auth": {
     "title": "Tempo Metrics",
     "login_subtitle": "Login to system",
@@ -24,7 +65,10 @@
     "error_invalid_name": "Enter full name (minimum 2 letters)",
     "error_already_registered": "This email is already registered. Please login.",
     "error_invalid_login": "Invalid Email or PIN code",
-    "error_unknown": "An unknown error occurred"
+    "error_unknown": "An unknown error occurred",
+    "if_you_continued_privacy_policy": "By continuing, you agree to our",
+    "privacy_policyes": "Privacy Policy"
+
   },
   "home": {
     "conn_status": "CONNECTION STATUS",
@@ -65,13 +109,20 @@
     "edit_avatar": "Choose avatar",
     "edit_name_label": "Coach Full Name",
     "edit_role_label": "Your Role (ID)",
-    "edit_btn_save": "Save changes"
+    "edit_btn_save": "Save changes",
+    "default_name": "Coach",
+    "default_role": "COACH",
+    "export_title": "Export",
+    "export_msg": "Generating PDF..."
+
   },
   "sessions": {
     "title": "Reports",
     "tab_team": "Team",
     "tab_general": "General / Quick",
-    "search_placeholder": "Search by team or player`s name"
+    "search_placeholder": "Search by team or player`s name",
+    "syncing": "Syncing...",
+    "free_training": "Free Training"
   },
   "players": {
     "title": "Teams",
@@ -136,7 +187,13 @@
     "old_pin_label": "Current PIN",
     "new_pin_label": "New PIN",
     "confirm_pin_label": "Confirm new PIN",
-    "btn_save_pin": "Save new PIN"
+    "btn_save_pin": "Save new PIN",
+    "logout_title": "Log Out",
+    "logout_msg": "Are you sure you want to log out?",
+    "btn_cancel": "Cancel",
+    "btn_logout": "Log Out",
+    "pin_success_title": "Success",
+    "pin_success_msg": "PIN successfully changed!"
   },
   "player_info": {
     "back": "Back",
@@ -162,6 +219,7 @@
     "faq_section": "FREQUENTLY ASKED QUESTIONS",
     "contact_section": "CONTACT US",
     "email_btn": "Write an Email",
+    "privacy_policy": "Privacy Policy",
     "faqs": [
       {
         "q": "How to connect Tempo Metrics sensors?",

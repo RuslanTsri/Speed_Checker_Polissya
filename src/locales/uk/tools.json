@@ -41,7 +41,9 @@
     "system": "Система",
     "connecting_to_device": "Встановлення зв'язку",
     "search_a_free_systems": "Шукаємо доступні пристрої...",
-    "anything_search": "Поки нічого не знайдено"
+    "anything_search": "Поки нічого не знайдено",
+    "connection_lost_msg": "Зв'язок втрачено. Перевірте живлення датчика та переініціалізуйте систему."
+
   },
   "sessions": {
     "results_title": "Результати",

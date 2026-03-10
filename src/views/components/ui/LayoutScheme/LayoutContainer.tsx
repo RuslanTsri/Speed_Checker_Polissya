@@ -15,9 +15,7 @@ export const LayoutContainer = ({ children, title, subtitle }: LayoutContainerPr
     const isAndroid = Platform.OS === 'android';
 
     return (
-        // 🔥 Прибрали overflow-hidden з головного контейнера, щоб маркери 0% і 100% не обрізались
         <View className="rounded-3xl border border-surface-border shadow-sm mb-6 min-h-[160px]">
-            {/* Фон з overflow-hidden робимо окремим шаром */}
             <View className="absolute inset-0 rounded-3xl overflow-hidden">
                 {!isAndroid ? (
                     <>

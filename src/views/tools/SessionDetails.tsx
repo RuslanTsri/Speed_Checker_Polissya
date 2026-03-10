@@ -5,7 +5,6 @@ import { useSessionDetails } from '../../hooks/sessions/useSessionDetails';
 
 import { Mod, RatingMod } from '../components/ui/mods';
 import { HeaderTabs, SubTabs } from '../components/ui/tabs/';
-// 🔥 Не забудь імпортувати ArrowIconActive
 import { ExportIcon, ArrowIcon, ArrowIconActive } from '../../../assets/icons';
 
 export default function SessionDetails({ session, onBack }: any) {
@@ -24,7 +23,6 @@ export default function SessionDetails({ session, onBack }: any) {
         <View className="flex-1 pt-4">
             <View className="flex-row items-center justify-between px-4 mb-6">
 
-                {/* 🔥 Кнопка НАЗАД з активним станом і поворотом */}
                 <Pressable onPress={onBack} className="p-2 -ml-2">
                     {({ pressed }) => (
                         <View style={styles.rotateRight}>

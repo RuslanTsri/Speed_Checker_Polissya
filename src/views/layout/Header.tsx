@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { useUser } from '../../context/UserContext';
 import { TextField } from '../components/ui/TextField';
 
-// 🔥 Додали onOpenPinChange, бо саме так цей пропс називається в App.js
+import LogoSvg from '../../../assets/tempometrics_white_nobackground.svg';
+
 export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any) => {
     const { t } = useTranslation();
     const { profile } = useUser();
@@ -28,7 +29,6 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
             : (names[0][0] + names[names.length - 1][0]).toUpperCase();
     }, [profile?.full_name]);
 
-    // Універсальний обробник для ПІН-коду
     const handlePinChange = () => {
         setIsMenuOpen(false);
         if (onOpenPinChange) onOpenPinChange();
@@ -41,25 +41,26 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
     };
 
     return (
-        // 1. Зменшили px-6 до px-4 (це дасть додаткові 16px вільного місця)
         <View className="z-50 py-4 px-4 flex-row justify-between items-center bg-transparent w-full">
 
             {/* ЛОГОТИП */}
-            {/* 2. Додали flex-1 та mr-2, щоб він не виштовхував праву частину */}
-            <TouchableOpacity onPress={onGoHome} activeOpacity={0.6} className="flex-1 mr-2 justify-center">
-                {/* 3. Додали adjustsFontSizeToFit - iOS сам зменшить шрифт на SE */}
 
-                <Text
-                    className="text-[9px] tracking-[0.2em] uppercase mt-0.5 ml-0.5 text-text-sub font-evolventa-bold"
-                    numberOfLines={1}
-                    adjustsFontSizeToFit={true}
-                >
-                    {t('layouts.header.preview_version')}
-                </Text>
+            {/* 🔥 Додали items-start, щоб і лого, і текст гарантовано рівнялися по лівому краю */}
+            <TouchableOpacity onPress={onGoHome} activeOpacity={0.6} className="flex-1 mr-2 justify-center items-start">
+
+                <LogoSvg
+                    width={145}
+                    height={70}
+                    style={{
+                        marginBottom: -30,
+                        marginLeft: -30,
+                        marginTop: -25,
+                }}
+                />
+
             </TouchableOpacity>
 
             {/* ПРАВА ЧАСТИНА (Статус + Аватарка) */}
-            {/* 4. gap-2 замість gap-3, і головне - shrink-0 (забороняємо стискатися) */}
             <View className="flex-row items-center gap-2 shrink-0">
 
                 {/* СТАТУС ІНТЕРНЕТУ */}
@@ -98,7 +99,7 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
                         )}
                     </TouchableOpacity>
 
-                    {/* ВИПАДАЮЧЕ МЕНЮ (Без змін) */}
+                    {/* ВИПАДАЮЧЕ МЕНЮ */}
                     <Modal transparent visible={isMenuOpen} animationType="fade" onRequestClose={() => setIsMenuOpen(false)}>
                         <Pressable className="flex-1" onPress={() => setIsMenuOpen(false)}>
                             <Pressable

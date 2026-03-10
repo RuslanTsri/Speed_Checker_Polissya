@@ -41,7 +41,6 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
         return () => clearInterval(interval);
     }, [state, configStep]);
 
-    // 🔥 ОНОВЛЕНА ЛОГІКА ПІДРАХУНКУ (Тепер враховуємо і Мастер, і Слейви)
     const requiredTotalSensors = targetGates; // Якщо вибрали 2 ворота, значить чекаємо 2 датчики (Мастер + 1 Слейв)
     const foundTotalSensors = sensors.length; // Починається з 0
     const progressPercent = Math.min((foundTotalSensors / requiredTotalSensors) * 100, 100);

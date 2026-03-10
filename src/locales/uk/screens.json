@@ -1,4 +1,39 @@
 {
+  "common": {
+    "info": "Інфо",
+    "error": "Помилка",
+    "warning": "Увага",
+    "ok": "ОК",
+    "cancel": "Скасувати",
+    "settings": "Налаштування"
+  },
+  "loader": {
+    "default_status": "Завантаження...",
+    "syncing_db": "Синхронізація бази даних...",
+    "checking_auth": "Перевірка авторизації..."
+  },
+  "ble": {
+    "perm_title": "Бракує дозволів",
+    "bt_off_title": "Bluetooth вимкнено",
+    "status_finish": "Фініш!",
+    "status_master_init": "Мастер ініціалізовано",
+    "status_sensor_found": "Сенсор {{id}} знайдено",
+    "status_master_ok": "Мастер OK...",
+    "status_sensor_ok": "Сенсор {{id}} OK...",
+    "status_waiting_start": "Очікування старту",
+    "status_checking": "Перевірка...",
+    "status_stopped": "Зупинено"
+  },
+  "csv": {
+    "export_headers": "Команда,Гравець,Дата,Тип,Дистанція(м),Час(с),Спліти",
+    "export_dialog": "Експорт",
+    "template_header": "Прізвище та Ім'я",
+    "template_ex1": "Шевченко Андрій",
+    "template_ex2": "Забарний Ілля",
+    "template_ex3": "Мудрик Михайло",
+    "template_dialog": "Шаблон списку гравців",
+    "use_modal_btn": "Використовуйте кнопку у модалці"
+  },
   "auth": {
     "title": "Tempo Metrics",
     "login_subtitle": "Вхід до системи",
@@ -24,7 +59,9 @@
     "error_invalid_name": "Введіть повне ім'я (мінімум 2 літери)",
     "error_already_registered": "Ця пошта вже зареєстрована. Увійдіть.",
     "error_invalid_login": "Невірний Email або PIN-код",
-    "error_unknown": "Сталася невідома помилка"
+    "error_unknown": "Сталася невідома помилка",
+    "if_you_continued_privacy_policy": "Продовжуючи, ви погоджуєтесь з нашою",
+    "privacy_policyes": "Політикою конфіденційності"
   },
   "home": {
     "conn_status": "СТАТУС ПІДКЛЮЧЕННЯ",
@@ -65,20 +102,32 @@
     "edit_avatar": "Оберіть аватар",
     "edit_name_label": "ПІБ Тренера",
     "edit_role_label": "Ваша Роль (ID)",
-    "edit_btn_save": "Зберегти зміни"
+    "edit_btn_save": "Зберегти зміни",
+    "default_name": "Тренер",
+    "default_role": "COACH",
+    "export_title": "Експорт",
+    "export_msg": "Формування PDF..."
   },
   "sessions": {
     "title": "Звіти",
     "tab_team": "Командні",
     "tab_general": "Загальні / Швидкі",
-    "search_placeholder": "Пошук за командою або іменем гравця"
+    "search_placeholder": "Пошук за командою або іменем гравця",
+    "syncing": "Синхронізація...",
+    "free_training": "Вільне тренування"
   },
   "app": {
     "pin_modal_title": "Безпека",
     "old_pin_label": "Поточний PIN",
     "new_pin_label": "Новий PIN",
     "confirm_pin_label": "Повторіть новий PIN",
-    "btn_save_pin": "Зберегти новий PIN"
+    "btn_save_pin": "Зберегти новий PIN",
+    "logout_title": "Вихід",
+    "logout_msg": "Ви впевнені, що хочете вийти з акаунту?",
+    "btn_cancel": "Скасувати",
+    "btn_logout": "Вийти",
+    "pin_success_title": "Успіх",
+    "pin_success_msg": "PIN-код успішно змінено!"
   },
   "players": {
     "title": "Команди",
@@ -163,6 +212,7 @@
     "faq_section": "ЧАСТІ ЗАПИТАННЯ",
     "contact_section": "ЗВ'ЯЗОК З НАМИ",
     "email_btn": "Написати на Email",
+    "privacy_policy": "Політика конфіденційності",
     "faqs": [
       {
         "q": "Як підключити датчики Tempo Metrics?",

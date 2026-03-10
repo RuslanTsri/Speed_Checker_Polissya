@@ -7,11 +7,15 @@ import { supabase } from '../lib/supabase';
 import { TabType } from '../views/layout/Footer';
 // @ts-ignore
 import { SessionTabType } from '../views/screens/SessionsScreen';
+import { useTranslation } from 'react-i18next'; // 🔥 Додали імпорт
 
 export type AppTab = TabType | 'TOOLS' | 'SETTINGS';
 const PIN_SALT = "tempo_metrics_secure_v1";
 
 export const useAppLogic = () => {
+    // 🔥 Підключаємо обидва словники
+    const { t } = useTranslation();
+
     const { profile, refreshProfile, logout } = useUser();
 
     // --- NAV STATE ---
@@ -28,17 +32,22 @@ export const useAppLogic = () => {
     const [pinError, setPinError] = useState<string | null>(null);
 
     const handleLogout = () => {
-        Alert.alert("Вихід", "Ви впевнені, що хочете вийти з акаунту?", [
-            { text: "Скасувати", style: "cancel" },
-            {
-                text: "Вийти",
-                style: "destructive",
-                onPress: async () => {
-                    await logout();
-                    setCurrentTab('HOME');
+        // 🔥 Локалізований Alert
+        Alert.alert(
+            t('screens.app.logout_title'),
+            t('screens.app.logout_msg'),
+            [
+                { text: t('screens.app.btn_cancel'), style: "cancel" },
+                {
+                    text: t('screens.app.btn_logout'),
+                    style: "destructive",
+                    onPress: async () => {
+                        await logout();
+                        setCurrentTab('HOME');
+                    }
                 }
-            }
-        ]);
+            ]
+        );
     };
 
     const handleNavigate = (tab: AppTab, params?: any) => {
@@ -68,30 +77,30 @@ export const useAppLogic = () => {
     const handleSubmitPinChange = async () => {
         setPinError(null);
 
-        // 🔥 ПЕРЕВІРКА ІНТЕРНЕТУ (Зміна пароля не працює офлайн!)
+        // 🔥 ПЕРЕВІРКА ІНТЕРНЕТУ
         const state = await NetInfo.fetch();
         if (!state.isConnected) {
-            setPinError("Зміна PIN-коду потребує підключення до Інтернету");
+            setPinError(t('logs.errors.app.no_internet_pin') as string);
             return;
         }
 
         if (oldPin.length !== 4 || newPin.length !== 4 || confirmPin.length !== 4) {
-            setPinError("Всі поля мають містити 4 цифри");
+            setPinError(t('logs.errors.app.pin_length') as string);
             return;
         }
 
         if (profile?.pin_code && oldPin !== profile.pin_code) {
-            setPinError("Поточний PIN-код введено невірно");
+            setPinError(t('logs.errors.app.pin_incorrect') as string);
             return;
         }
 
         if (newPin !== confirmPin) {
-            setPinError("Нові PIN-коди не співпадають");
+            setPinError(t('logs.errors.app.pin_mismatch') as string);
             return;
         }
 
         if (oldPin === newPin) {
-            setPinError("Новий PIN має відрізнятися від старого");
+            setPinError(t('logs.errors.app.pin_same') as string);
             return;
         }
 
@@ -117,11 +126,25 @@ export const useAppLogic = () => {
 
             Keyboard.dismiss();
             setPinModalVisible(false);
-            Alert.alert("Успіх", "PIN-код успішно змінено!");
+
+            // 🔥 Локалізований Alert про успіх
+            Alert.alert(
+                t('screens.app.pin_success_title'),
+                t('screens.app.pin_success_msg')
+            );
 
         } catch (e: any) {
             console.error("❌ PIN Update Error:", e.message);
-            setPinError(e.message || "Не вдалося змінити PIN");
+
+            // 🔥 Перехоплюємо сирі помилки Supabase
+            let finalErrorMsg = t('logs.errors.app.pin_update_failed') as string;
+            if (e.message) {
+                const msg = e.message.toLowerCase();
+                if (msg.includes('fetch') || msg.includes('network')) {
+                    finalErrorMsg = t('logs.errors.auth.server_connection') as string; // Беремо з auth
+                }
+            }
+            setPinError(finalErrorMsg);
         } finally {
             setIsPinLoading(false);
         }

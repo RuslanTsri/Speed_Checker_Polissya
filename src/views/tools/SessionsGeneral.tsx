@@ -4,7 +4,6 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSessionsData } from '../../hooks/sessions/useSessionsData';
 
-// 🔥 Наші преміальні компоненти
 import { BestCard, WorstCard } from '../components/ui/stats';
 import { PlayerMod } from '../components/ui/mods';
 
@@ -59,7 +58,6 @@ const SessionItem = memo(({ item, t }: { item: any, t: any }) => {
                 optimizeForList={true}
                 subtitle={
                     <View className="mt-1">
-                        {/* 🔥 Виправлено: font-bold + font-evolventa -> font-evolventa-bold */}
                         <Text className="text-caption text-brand-orange uppercase mb-1 font-evolventa-bold">
                             {item.teamName}
                         </Text>
@@ -74,10 +72,8 @@ const SessionItem = memo(({ item, t }: { item: any, t: any }) => {
                 }
                 rightIcon={
                     <View className="items-end justify-center">
-                        {/* 🔥 Виправлено: font-black + font-unbounded -> font-unbounded-black */}
                         <Text className="text-h2 text-brand-orange font-unbounded-black leading-none">
                             {item.totalTime.toFixed(2)}
-                            {/* 🔥 Додав font-unbounded-bold для букви "s", щоб вона не випадала з дизайну */}
                             <Text className="text-small text-brand-orange/70 font-unbounded-bold">s</Text>
                         </Text>
 
@@ -139,7 +135,6 @@ export default function SessionsGeneral({ searchQuery }: Props) {
                         />
                     </View>
 
-                    {/* 🔥 Виправлено: font-bold + font-evolventa -> font-evolventa-bold */}
                     <Text className="px-2 uppercase text-caption tracking-widest text-text-sub font-evolventa-bold">
                         {t('tools.sessions.latest_runs') as string}
                     </Text>

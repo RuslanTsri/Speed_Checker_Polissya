@@ -65,7 +65,11 @@
     "click_to_view": "Click to view statistics",
     "no_tests_run": "No tests run yet",
     "players_count": "{{count}} Players",
-    "status_has_results": "Has results"
+    "status_has_results": "Has results",
+    "result_type": "Results Type",
+    "choose_distance": "Distance",
+    "all_distances": "All",
+    "attempt_number": "Round {{num}}"
   },
   "timer": {
     "title": "Stopwatch",
@@ -124,7 +128,7 @@
     "modal_summary": "Summary ({{count}})",
     "summary_desc": "Check the list before saving to database.",
     "btn_reset_all": "Reset all",
-    "btn_save_db": "Save to DB",
+    "btn_save_db": "Save",
     "select_team_title": "Select Team",
     "search_team": "Search team",
     "team_players_count": "Players: {{count}}",

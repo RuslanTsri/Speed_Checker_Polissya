@@ -10,10 +10,10 @@ let appIdentifier = "com.yourname.tempometrics";
 // Підставляємо потрібні імена та ідентифікатори залежно від версії
 if (variant === "development") {
   appName = "Tempo DEV";
-  appIdentifier = "com.yourname.tempometrics.dev";
+  appIdentifier = "com.scienceparkztu.tempometrics.dev";
 } else if (variant === "preview") {
   appName = "Tempo Metrics";
-  appIdentifier = "com.yourname.tempometrics.preview";
+  appIdentifier = "com.scienceparkztu.tempometrics";
 }
 
 const withAndroidResolutionStrategy = (config) => {
@@ -67,7 +67,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/tempometrics_white_nobackground.png",
+        foregroundImage: "./assets/adaptive_icon.svg",
         backgroundColor: "#0A0A0A",
         resizeMode: "contain"
       },

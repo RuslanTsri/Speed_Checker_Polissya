@@ -70,7 +70,11 @@
     "click_to_view": "Натисніть для перегляду статистики",
     "no_tests_run": "Тестування ще не проводились",
     "players_count": "{{count}} Гравців",
-    "status_has_results": "Є результати"
+    "status_has_results": "Є результати",
+    "result_type": "Тип результатів",
+    "choose_distance": "Вибір дистанції",
+    "all_distances": "Усі",
+    "attempt_number": "Спроба {{num}}"
   },
   "timer": {
     "title": "Секундомір",
@@ -130,7 +134,7 @@
     "modal_summary": "Підсумок ({{count}})",
     "summary_desc": "Перевірте список перед записом у базу даних.",
     "btn_reset_all": "Скинути все",
-    "btn_save_db": "В базу",
+    "btn_save_db": "Зберегти",
     "select_team_title": "Вибір команди",
     "search_team": "Пошук команди",
     "team_players_count": "Гравців: {{count}}",

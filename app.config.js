@@ -67,7 +67,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive_icon.svg",
+        foregroundImage: "./assets/adaptive_icon.png",
         backgroundColor: "#0A0A0A",
         resizeMode: "contain"
       },

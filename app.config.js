@@ -69,7 +69,7 @@ export default {
       adaptiveIcon: {
         foregroundImage: "./assets/tempometrics_white_nobackground.png",
         backgroundColor: "#0A0A0A",
-        resizeMode: "cover"
+        resizeMode: "contain"
       },
       package: appIdentifier,
       permissions: [

@@ -18,11 +18,11 @@ export const AppLoaderStart = ({ progress, statusText }: AppLoaderStartProps) =>
     const [widthAnim] = useState(new Animated.Value(0));
 
     useEffect(() => {
-        // Анімуємо зміну ширини прогрес-бару
+
         Animated.timing(widthAnim, {
             toValue: progress,
             duration: 300,
-            useNativeDriver: false, // Для ширини false
+            useNativeDriver: false,
         }).start();
     }, [progress]);
 
@@ -32,16 +32,20 @@ export const AppLoaderStart = ({ progress, statusText }: AppLoaderStartProps) =>
         <View className="flex-1 justify-center items-center bg-[#0A0A0A]">
             <StatusBar style="light" />
 
-            {/* 🔥 ВЕРХНІЙ БЛОК: Логотипи партнерів */}
-            <View className="absolute top-24 flex-row items-center justify-center w-full px-6">
-                <InHubLogo width={130} height={45} />
+            <View className="absolute top-24 w-full items-center justify-center">
 
-                {/* Хрестик "X" між логотипами */}
-                <Text className="text-white text-xl mx-5 font-evolventa">
-                    X
-                </Text>
+                <View className="flex-row items-center justify-center ml-4">
 
-                <PolissyaLogo width={50} height={50} />
+                    <InHubLogo width={130} height={45} />
+
+                    <Text className="text-white text-xl font-evolventa pl-10 px-4">
+                        X
+                    </Text>
+
+                    <PolissyaLogo width={90} height={90} />
+
+                </View>
+
             </View>
 
             {/* ЦЕНТРАЛЬНИЙ БЛОК: Основне лого */}

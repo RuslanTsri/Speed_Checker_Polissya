@@ -15,51 +15,70 @@ export default function SessionDetails({ session, onBack }: any) {
         filteredAttempts, sortedResults, sessionStats, handleExport
     } = useSessionDetails(session);
 
-    // 🔥 Локальний стейт для вибору дистанції у вкладці "Усі спроби"
     const [localAllDistance, setLocalAllDistance] = useState<number | 'ALL'>('ALL');
 
     const mainTabs = [
-        { id: 'BEST', label: t('tools.sessions.tab_summary', 'Рейтинг') },
+        { id: 'BEST', label: t('tools.sessions.tab_summary', 'Підсумок (Best)') },
         { id: 'ALL', label: t('tools.sessions.tab_all_attempts', 'Усі спроби') }
     ];
 
-    // Визначаємо, які дистанції показувати залежно від активного таба
     const activeDistances = subTab === 'BEST' ? predefinedDistances : ['ALL', ...predefinedDistances];
     const activeSelectedDistance = subTab === 'BEST' ? selectedDistance : localAllDistance;
 
-    // 🔥 БЕЗПЕЧНА ФУНКЦІЯ ДЛЯ TYPESCRIPT
-    // Перевіряє тип перед тим, як зберегти дистанцію, щоб додаток не впав
     const handleDistanceSelect = (dist: number | 'ALL') => {
         if (subTab === 'BEST') {
-            // У рейтингу дозволяємо лише цифри
             if (typeof dist === 'number') {
                 setSelectedDistance(dist);
             }
         } else {
-            // В усіх спробах дозволяємо і цифри, і 'ALL'
             setLocalAllDistance(dist);
         }
     };
 
-    // Розумний підрахунок та фільтрація спроб
+    // 🔥 Розумний підрахунок: тепер знаходимо номер НАЙКРАЩОЇ спроби
     const displayedAttempts = useMemo(() => {
-        if (subTab === 'BEST') return sortedResults;
-
+        // Спочатку рахуємо хронологічні номери для ВСІХ забігів гравців
         const counts: Record<string, number> = {};
-        const withNumbers = filteredAttempts.map(attempt => {
+        const allWithNumbers = filteredAttempts.map(attempt => {
             counts[attempt.playerName] = (counts[attempt.playerName] || 0) + 1;
             return { ...attempt, attemptNumber: counts[attempt.playerName] };
         });
 
-        if (localAllDistance === 'ALL') return withNumbers;
+        if (subTab === 'BEST') {
+            // Для вкладки BEST беремо відсортовані найкращі результати
+            return sortedResults.map(playerResult => {
+                // Шукаємо саме той забіг (за унікальним ID), який став найкращим
+                const bestRun = allWithNumbers.find(a => a.id === playerResult.id);
+                return {
+                    ...playerResult,
+                    // Додаємо точний номер цієї переможної спроби
+                    bestAttemptNumber: bestRun ? bestRun.attemptNumber : 1
+                };
+            });
+        }
 
-        // Фільтруємо по вибраній дистанції (припускаємо, що у attempt є поле distance)
-        return withNumbers.filter(a => a.distance === localAllDistance);
+        // Для вкладки ALL
+        if (localAllDistance === 'ALL') return allWithNumbers;
+        return allWithNumbers.filter(a => a.distance === localAllDistance);
     }, [subTab, sortedResults, filteredAttempts, localAllDistance]);
 
+    const renderEmptyState = () => (
+        <View className="items-center justify-center py-10 opacity-80 mt-10">
+            <View className="w-16 h-16 rounded-full bg-surface-card items-center justify-center border border-surface-border mb-4">
+                <Feather name="inbox" size={24} color="#A3A3A3" />
+            </View>
+            <Text className="text-body text-text-main font-evolventa-bold mb-1 text-center">
+                {activeSelectedDistance === 'ALL'
+                    ? t('tools.sessions.alert_no_data', 'Дані відсутні')
+                    : t('tools.sessions.no_results_distance', { dist: activeSelectedDistance, defaultValue: `Немає результатів на ${activeSelectedDistance}м` })
+                }
+            </Text>
+        </View>
+    );
+
     return (
-        <View className="flex-1 pt-4">
-            <View className="flex-row items-center justify-between px-4 mb-6">
+        <View className="flex-1 pt-2">
+            <View className="flex-row items-center justify-between px-4 mb-3">
                 <Pressable onPress={onBack} className="p-2 -ml-2">
                     {({ pressed }) => (
                         <View style={styles.rotateRight}>
@@ -70,7 +89,6 @@ export default function SessionDetails({ session, onBack }: any) {
 
                 <View className="items-center flex-1">
                     <Text className="text-h4 text-text-main font-unbounded-bold">{t('tools.sessions.results_title', 'Результати')}</Text>
-                    <Text className="text-caption text-text-sub font-evolventa">{session.teamName}</Text>
                 </View>
 
                 <Pressable onPress={handleExport} className="p-2 active:opacity-60">
@@ -78,18 +96,18 @@ export default function SessionDetails({ session, onBack }: any) {
                 </Pressable>
             </View>
 
-            <View className="px-4 mb-6">
+            <View className="px-4 mb-3">
                 <Mod title={session.teamName} subtitle={t('tools.sessions.team', 'Команда')}>
-                    <View className="flex-row justify-between items-end border-t border-surface-border pt-4 mt-1">
+                    <View className="flex-row justify-between items-end border-t border-surface-border pt-2 mt-0">
                         <View>
-                            <Text className="text-caption text-text-sub uppercase font-evolventa">{t('tools.sessions.best', 'Кращий час')}</Text>
-                            <Text className="text-h1 text-brand-yellow font-unbounded-black">
+                            <Text className="text-caption text-text-sub uppercase font-evolventa mb-0.5">{t('tools.sessions.best', 'Найкращий')}</Text>
+                            <Text className="text-h2 text-brand-yellow font-unbounded-black leading-tight">
                                 {sessionStats.best > 0 ? sessionStats.best.toFixed(2) : '--'}
                             </Text>
                         </View>
                         <View className="items-end">
-                            <Text className="text-caption text-text-sub uppercase font-evolventa">{t('tools.sessions.average', 'Середній час')}</Text>
-                            <Text className="text-h1 text-brand-orange font-unbounded-black">
+                            <Text className="text-caption text-text-sub uppercase font-evolventa mb-0.5">{t('tools.sessions.average', 'Середній')}</Text>
+                            <Text className="text-h2 text-brand-orange font-unbounded-black leading-tight">
                                 {sessionStats.avg > 0 ? sessionStats.avg.toFixed(2) : '--'}
                             </Text>
                         </View>
@@ -97,20 +115,17 @@ export default function SessionDetails({ session, onBack }: any) {
                 </Mod>
             </View>
 
-            {/* ПІДПИС І ТАБИ ТИПУ РЕЗУЛЬТАТІВ */}
-            <View className="px-4 mb-5">
-                <Text className="text-[10px] text-text-muted uppercase tracking-widest font-evolventa-bold mb-3 ml-1">
+            <View className="px-4 mb-3">
+                <Text className="text-[10px] text-text-muted uppercase tracking-widest font-evolventa-bold mb-1.5 ml-1">
                     {t('tools.sessions.result_type', 'Тип результатів')}
                 </Text>
                 <HeaderTabs tabs={mainTabs} activeTab={subTab} onTabChange={id => setSubTab(id as any)} />
             </View>
 
-            {/* ПІДПИС І ТАБИ ВИБОРУ ДИСТАНЦІЇ */}
-            <View className="px-4 mb-4">
-                <Text className="text-[10px] text-text-muted uppercase tracking-widest font-evolventa-bold mb-3 ml-1">
+            <View className="px-4 mb-2">
+                <Text className="text-[10px] text-text-muted uppercase tracking-widest font-evolventa-bold mb-1.5 ml-1">
                     {t('tools.sessions.choose_distance', 'Вибір дистанції')}
                 </Text>
-                {/* 🔥 Підключаємо наш новий безпечний хендлер */}
                 <SubTabs
                     distances={activeDistances as any}
                     selectedDistance={activeSelectedDistance as any}
@@ -121,27 +136,47 @@ export default function SessionDetails({ session, onBack }: any) {
             <FlatList
                 data={displayedAttempts}
                 keyExtractor={(item, index) => `${item.playerName}-${index}`}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, paddingTop: 4 }}
+                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, paddingTop: 4, flexGrow: 1 }}
+                ListEmptyComponent={renderEmptyState}
                 renderItem={({ item, index }) => (
                     subTab === 'BEST' ? (
-                        <RatingMod rank={index + 1} name={item.playerName} resultValue={item.bestTime.toFixed(2)} className="mb-3" />
+                        <RatingMod
+                            rank={index + 1}
+                            name={item.playerName}
+                            // 🔥 Тепер тут формат точно як в ALL: "Спроба X • YY м"
+                            subtitle={
+                                <Text className="text-[10px] text-text-sub font-evolventa mt-0.5">
+                                    {t('tools.sessions.attempt_number', { num: item.bestAttemptNumber, defaultValue: `Спроба ${item.bestAttemptNumber}` })}
+                                    {` • ${selectedDistance} м`}
+                                </Text>
+                            }
+                            resultValue={item.bestTime.toFixed(2)}
+                            secondaryValue={
+                                <Text className="text-[9px] text-text-muted font-unbounded-medium uppercase mt-0.5">
+                                    {t('tools.sessions.seconds_short', 'с')}
+                                </Text>
+                            }
+                            className="mb-2"
+                        />
                     ) : (
-                        <View className="flex-row items-center justify-between p-4 mb-3 bg-surface-card rounded-2xl border border-surface-border">
-                            <View className="flex-row items-center gap-4">
-                                <View className="w-10 h-10 rounded-full bg-surface-bg items-center justify-center border border-surface-border/50">
-                                    <Feather name="clock" size={16} color="#A3A3A3" />
+                        <View className="flex-row items-center justify-between p-3.5 mb-2 bg-surface-card rounded-2xl border border-surface-border">
+                            <View className="flex-row items-center gap-3">
+                                <View className="w-9 h-9 rounded-full bg-surface-bg items-center justify-center border border-surface-border/50">
+                                    <Feather name="clock" size={14} color="#A3A3A3" />
                                 </View>
                                 <View>
                                     <Text className="text-body text-text-main font-evolventa-bold">{item.playerName}</Text>
-                                    <Text className="text-[11px] text-text-sub font-evolventa mt-1">
+                                    <Text className="text-[10px] text-text-sub font-evolventa mt-0.5">
                                         {t('tools.sessions.attempt_number', { num: item.attemptNumber, defaultValue: `Спроба ${item.attemptNumber}` })}
                                         {item.distance ? ` • ${item.distance} м` : ''}
                                     </Text>
                                 </View>
                             </View>
                             <View className="items-end">
-                                <Text className="text-h3 text-text-main font-unbounded-bold">{item.time.toFixed(2)}</Text>
-                                <Text className="text-[10px] text-text-muted font-unbounded-medium uppercase">сек</Text>
+                                <Text className="text-h4 text-text-main font-unbounded-bold">{item.time.toFixed(2)}</Text>
+                                <Text className="text-[9px] text-text-muted font-unbounded-medium uppercase mt-0.5">
+                                    {t('tools.sessions.seconds_short', 'с')}
+                                </Text>
                             </View>
                         </View>
                     )

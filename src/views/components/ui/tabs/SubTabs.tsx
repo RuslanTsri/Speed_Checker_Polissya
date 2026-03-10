@@ -1,18 +1,20 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 
 interface SubTabsProps {
-    distances: (number | 'ALL')[]; // 🔥 Тепер приймає і 'ALL'
+    distances: (number | 'ALL')[];
     selectedDistance: number | 'ALL';
     onSelect: (distance: number | 'ALL') => void;
+    optimizeForList?: boolean;
+
 }
 
-export const SubTabs = ({ distances, selectedDistance, onSelect }: SubTabsProps) => {
-    const { t } = useTranslation();
+export const SubTabs = ({ distances, selectedDistance, onSelect, optimizeForList = false }: SubTabsProps) => {
+    const isAndroidTurbo = Platform.OS === 'android' && optimizeForList;
 
     return (
-        <View className="w-full">
+        <View className="w-full mb-4">
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -20,25 +22,29 @@ export const SubTabs = ({ distances, selectedDistance, onSelect }: SubTabsProps)
             >
                 {distances.map(dist => {
                     const isActive = selectedDistance === dist;
-                    // 🔥 Визначаємо, що писати на кнопці
-                    const label = dist === 'ALL' ? t('tools.sessions.all_distances', 'Усі') : `${dist} м`;
-
                     return (
                         <TouchableOpacity
                             key={dist}
                             onPress={() => onSelect(dist)}
                             activeOpacity={0.7}
-                            className={`rounded-2xl overflow-hidden px-5 py-2.5 border ${
-                                isActive
-                                    ? 'bg-brand-orange border-brand-orange shadow-sm shadow-brand-orange/30'
-                                    : 'bg-surface-card border-surface-border'
+                            className={`rounded-full overflow-hidden border ${
+                                isActive ? 'border-brand-orange/60' : 'border-surface-border'
                             }`}
                         >
-                            <Text className={`text-sm font-unbounded-bold ${
-                                isActive ? 'text-[#0A0A0A]' : 'text-text-sub'
-                            }`}>
-                                {label}
-                            </Text>
+                            {/* Android Turbo Оптимізація */}
+                            {isAndroidTurbo ? (
+                                <View style={StyleSheet.absoluteFill} className="bg-surface-card" />
+                            ) : (
+                                <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+                            )}
+
+                            <View className={`px-5 py-1.5 ${isActive ? 'bg-brand-orange/20' : 'bg-surface-card/20'}`}>
+                                <Text className={`text-small font-evolventa-bold ${
+                                    isActive ? 'text-brand-orange' : 'text-text-sub'
+                                }`}>
+                                    {dist} м
+                                </Text>
+                            </View>
                         </TouchableOpacity>
                     );
                 })}
@@ -49,9 +55,9 @@ export const SubTabs = ({ distances, selectedDistance, onSelect }: SubTabsProps)
 
 const styles = StyleSheet.create({
     scrollContent: {
-        gap: 10,
+        gap: 8,
         flexGrow: 1,
-        paddingHorizontal: 4,
-        paddingBottom: 4 // Для тіні
+        justifyContent: 'center',
+        paddingHorizontal: 4
     }
 });

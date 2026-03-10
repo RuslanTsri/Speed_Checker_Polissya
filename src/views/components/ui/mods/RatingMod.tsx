@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Pressable, View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -8,9 +8,9 @@ const GRAD_COLORS = ['rgba(0, 0, 0, 0.4)', 'rgba(64, 64, 64, 0.4)'] as const;
 interface RatingModProps {
     rank: number | string;
     name: string;
-    subtitle?: string;
+    subtitle?: string | ReactNode;
     resultValue: string;
-    secondaryValue?: string;
+    secondaryValue?: string | ReactNode;
     onPress?: () => void;
     className?: string;
     optimizeForList?: boolean;

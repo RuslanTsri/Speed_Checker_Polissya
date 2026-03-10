@@ -109,7 +109,7 @@
     "export_msg": "Формування PDF..."
   },
   "sessions": {
-    "title": "Звіти",
+    "title": "Результати",
     "tab_team": "Командні",
     "tab_general": "Загальні / Швидкі",
     "search_placeholder": "Пошук за командою або іменем гравця",

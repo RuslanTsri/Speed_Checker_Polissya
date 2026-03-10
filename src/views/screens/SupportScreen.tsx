@@ -130,7 +130,7 @@ export default function SupportScreen({ onBack }: { onBack: () => void }) {
                 <Mod title="">
                     <SettingsRow
                         title={t('screens.support.email_btn')}
-                        value="support@tempometrics.com"
+                        value="sciencepark@ztu.edu.ua"
                         icon={<Feather name="mail" size={22} color="#A3A3A3" />}
                         onPress={handleContactSupport}
                         isLast

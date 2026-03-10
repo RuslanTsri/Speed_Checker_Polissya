@@ -3,6 +3,10 @@ import { View, Image, Animated, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 
+
+import InHubLogo from '../../../../assets/InHub_logo_white.svg';
+import PolissyaLogo from '../../../../assets/Polissya_icon.svg';
+
 interface AppLoaderStartProps {
     progress: number; // від 0 до 100
     statusText?: string;
@@ -28,7 +32,19 @@ export const AppLoaderStart = ({ progress, statusText }: AppLoaderStartProps) =>
         <View className="flex-1 justify-center items-center bg-[#0A0A0A]">
             <StatusBar style="light" />
 
-            {/* Твоє лого */}
+            {/* 🔥 ВЕРХНІЙ БЛОК: Логотипи партнерів */}
+            <View className="absolute top-24 flex-row items-center justify-center w-full px-6">
+                <InHubLogo width={130} height={45} />
+
+                {/* Хрестик "X" між логотипами */}
+                <Text className="text-white text-xl mx-5 font-evolventa">
+                    X
+                </Text>
+
+                <PolissyaLogo width={50} height={50} />
+            </View>
+
+            {/* ЦЕНТРАЛЬНИЙ БЛОК: Основне лого */}
             <Image
                 source={require('../../../../assets/tempometrics_white_nobackground.png')}
                 style={{ width: 150, height: 150, resizeMode: 'contain' }}

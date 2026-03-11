@@ -1,5 +1,5 @@
 import "./global.css";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Platform } from 'react-native';
@@ -36,6 +36,8 @@ const AppContentWrapper = () => {
     const { isDark } = useTheme();
     const { isLangLoading } = useLanguage();
 
+    const [isMinimumTimeElapsed, setIsMinimumTimeElapsed] = useState(false);
+
     const [fontsLoaded] = useFonts({
         'Unbounded': require('./assets/fonts/Unbounded-Regular.ttf'),
         'Unbounded-Bold': require('./assets/fonts/Unbounded-Bold.ttf'),
@@ -51,23 +53,31 @@ const AppContentWrapper = () => {
         isPinModalVisible, setPinModalVisible,
         oldPin, setOldPin, newPin, setNewPin, confirmPin, setConfirmPin,
         isPinLoading, pinError,
-        handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange
+        handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange,
+        homeActiveTool, setHomeActiveTool,
+        sessionDetailsOpen, setSessionDetailsOpen // 🔥 Витягуємо стейти сесій
     } = useAppLogic();
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsMinimumTimeElapsed(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, []);
 
     let loadProgress = 0;
     let loadStatus = "Ініціалізація...";
 
-    if (fontsLoaded) {
-        loadProgress += 30;
-        loadStatus = "Шрифти завантажено...";
-    }
-    if (!isLangLoading) {
-        loadProgress += 30;
-        loadStatus = "Налаштування мови...";
-    }
-    if (!isUserLoading) {
-        loadProgress += 40;
+    if (fontsLoaded) loadProgress += 30;
+    if (!isLangLoading) loadProgress += 30;
+    if (!isUserLoading) loadProgress += 40;
+
+    if (fontsLoaded && !isLangLoading && !isUserLoading) {
+        loadStatus = "Готово до запуску...";
+    } else if (fontsLoaded && !isLangLoading) {
         loadStatus = "Перевірка сесії...";
+    } else if (fontsLoaded) {
+        loadStatus = "Налаштування мови...";
     }
 
     useEffect(() => {
@@ -79,12 +89,10 @@ const AppContentWrapper = () => {
     }, []);
 
     useEffect(() => {
-
         SplashScreen.hideAsync();
     }, []);
 
-
-    if (!fontsLoaded || isUserLoading || isLangLoading) {
+    if (!fontsLoaded || isUserLoading || isLangLoading || !isMinimumTimeElapsed) {
         return <AppLoaderStart progress={loadProgress} statusText={loadStatus} />;
     }
 
@@ -99,13 +107,21 @@ const AppContentWrapper = () => {
 
     const renderScreen = () => {
         switch (currentTab) {
-            case 'HOME': return <HomeScreen onNavigate={handleNavigate} />;
+            case 'HOME':
+                return <HomeScreen
+                    onNavigate={handleNavigate}
+                    externalTool={homeActiveTool}
+                    setExternalTool={setHomeActiveTool}
+                />;
             case 'PLAYERS': return <PlayersScreen />;
             case 'SESSIONS':
                 return <SessionsScreen
                     key={sessionsInitialTab}
                     initialTab={sessionsInitialTab}
                     openSession={navParams?.openSession}
+                    // 🔥 Передаємо пропси в екран сесій
+                    sessionDetailsOpen={sessionDetailsOpen}
+                    setSessionDetailsOpen={setSessionDetailsOpen}
                 />;
             case 'TOOLS': return <BluetoothTool onBack={() => handleNavigate('SETTINGS')} />;
             case 'SETTINGS':

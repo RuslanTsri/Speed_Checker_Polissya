@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -19,19 +19,32 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
         goToPlayers, goToSessions, openRecentActivity,
     } = useHomeScreen(onNavigate);
 
-    React.useEffect(() => {
-        if (externalTool && currentTool !== externalTool) {
+    // 1. Слухаємо команди зверху (з App.tsx / useAppLogic)
+    // Якщо externalTool змінився на null (наприклад, через кнопку Назад), закриваємо тул
+    useEffect(() => {
+        if (externalTool === null && currentTool !== 'MENU') {
+            closeTool();
+        } else if (externalTool && currentTool !== externalTool) {
             if (externalTool === 'SPEEDCHECK') openSpeedCheck();
             if (externalTool === 'BLUETOOTH') openBluetooth();
             if (externalTool === 'TIMER') openTimer();
-        } else if (externalTool === null && currentTool !== null) {
-            closeTool();
         }
     }, [externalTool]);
 
+    // 🔥 2. Кажемо наверх (в App.tsx / useAppLogic) про те, що тул відкрився тут, всередині
+    // Це потрібно, щоб BackHandler знав, що на екрані HOME є відкритий інструмент
+    useEffect(() => {
+        if (setExternalTool) {
+            if (currentTool === 'MENU') {
+                setExternalTool(null);
+            } else {
+                setExternalTool(currentTool);
+            }
+        }
+    }, [currentTool, setExternalTool]);
+
     const handleClose = () => {
         closeTool();
-        if (setExternalTool) setExternalTool(null);
     };
 
     const handleOpenSpeedCheck = () => {

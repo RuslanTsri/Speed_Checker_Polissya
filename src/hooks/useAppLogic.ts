@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Alert, Keyboard } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { Alert, Keyboard, BackHandler, ToastAndroid } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { useUser } from '../context/UserContext';
 import { authService } from '../services/authService';
@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 import { TabType } from '../views/layout/Footer';
 // @ts-ignore
 import { SessionTabType } from '../views/screens/SessionsScreen';
-import { useTranslation } from 'react-i18next'; // 🔥 Додали імпорт
+import { useTranslation } from 'react-i18next';
 
 export type AppTab = TabType | 'TOOLS' | 'SETTINGS';
 const PIN_SALT = "tempo_metrics_secure_v1";
@@ -27,6 +27,15 @@ export const useAppLogic = () => {
     const [isPinLoading, setIsPinLoading] = useState(false);
     const [navParams, setNavParams] = useState<any>(null);
     const [pinError, setPinError] = useState<string | null>(null);
+
+    // 🔥 Стейт для відстеження відкритого тулза на HomeScreen
+    const [homeActiveTool, setHomeActiveTool] = useState<string | null>(null);
+
+    // 🔥 Стейт для відстеження відкритих деталей сесії на SessionsScreen
+    const [sessionDetailsOpen, setSessionDetailsOpen] = useState(false);
+
+    // 🔥 Реф для відстеження "подвійного" натискання Назад
+    const exitAppPromptRef = useRef(false);
 
     const handleLogout = () => {
         Alert.alert(
@@ -69,10 +78,71 @@ export const useAppLogic = () => {
         if (pinError) setPinError(null);
     };
 
+    // 🔥 ГЛОБАЛЬНИЙ ОБРОБНИК КНОПКИ "НАЗАД" ДЛЯ ANDROID
+    useEffect(() => {
+        const handleBackPress = () => {
+            // 1. Якщо відкрита модалка PIN-коду
+            if (isPinModalVisible) {
+                setPinModalVisible(false);
+                return true;
+            }
+
+            // 2. ОНОВЛЕНА ЛОГІКА ДЛЯ ВКЛАДКИ SESSIONS
+            if (currentTab === 'SESSIONS') {
+                if (sessionDetailsOpen) {
+                    setSessionDetailsOpen(false); // Кажемо екрану SESSIONS закрити деталі
+                    return true;
+                } else {
+                    handleNavigate('HOME'); // Якщо деталей немає, повертаємось на головний
+                    return true;
+                }
+            }
+
+            // 3. Якщо ми в інструментах (вкладка TOOLS)
+            if (currentTab === 'TOOLS') {
+                handleNavigate('SETTINGS');
+                return true;
+            }
+
+            // 4. Якщо ми на вкладці HOME і там відкритий якийсь інструмент (Секундомір тощо)
+            if (currentTab === 'HOME' && homeActiveTool !== null) {
+                setHomeActiveTool(null);
+                return true;
+            }
+
+            // 5. Якщо ми на будь-якому іншому табі, окрім HOME
+            if (currentTab !== 'HOME') {
+                handleNavigate('HOME');
+                return true;
+            }
+
+            // 6. ЛОГІКА "НАТИСНІТЬ ЩЕ РАЗ ЩОБ ВИЙТИ" НА ЕКРАНІ 'HOME'
+            if (exitAppPromptRef.current) {
+                BackHandler.exitApp();
+                return false;
+            }
+
+            exitAppPromptRef.current = true;
+            ToastAndroid.show(
+                t('screens.app.press_back_again_to_exit', 'Натисніть ще раз, щоб вийти'),
+                ToastAndroid.SHORT
+            );
+
+            setTimeout(() => {
+                exitAppPromptRef.current = false;
+            }, 2000);
+
+            return true;
+        };
+
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+        return () => backHandler.remove();
+    }, [currentTab, navParams, isPinModalVisible, homeActiveTool, sessionDetailsOpen]);
+
     const handleSubmitPinChange = async () => {
         setPinError(null);
 
-        // 🔥 ПЕРЕВІРКА ІНТЕРНЕТУ
         const state = await NetInfo.fetch();
         if (!state.isConnected) {
             setPinError(t('logs.errors.app.no_internet_pin') as string);
@@ -132,7 +202,7 @@ export const useAppLogic = () => {
             if (e.message) {
                 const msg = e.message.toLowerCase();
                 if (msg.includes('fetch') || msg.includes('network')) {
-                    finalErrorMsg = t('logs.errors.auth.server_connection') as string; // Беремо з auth
+                    finalErrorMsg = t('logs.errors.auth.server_connection') as string;
                 }
             }
             setPinError(finalErrorMsg);
@@ -148,6 +218,8 @@ export const useAppLogic = () => {
         newPin, setNewPin: (text: string) => { setNewPin(text); clearPinError(); },
         confirmPin, setConfirmPin: (text: string) => { setConfirmPin(text); clearPinError(); },
         isPinLoading, pinError, navParams,
-        handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange
+        handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange,
+        homeActiveTool, setHomeActiveTool,
+        sessionDetailsOpen, setSessionDetailsOpen // 🔥 Додали нові стейти у повернення
     };
 };

@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Image, Animated, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
-
 
 import InHubLogo from '../../../../assets/InHub_logo_white.svg';
 import PolissyaLogo from '../../../../assets/Polissya_icon.svg';
@@ -17,8 +16,13 @@ export const AppLoaderStart = ({ progress, statusText }: AppLoaderStartProps) =>
 
     const [widthAnim] = useState(new Animated.Value(0));
 
-    useEffect(() => {
+    const mainLogoOpacity = useRef(new Animated.Value(0)).current;
+    const mainLogoScale = useRef(new Animated.Value(0.8)).current;
+    const partnersOpacity = useRef(new Animated.Value(0)).current;
+    const partnersTranslateY = useRef(new Animated.Value(20)).current; // Логотипи партнерів трохи підніматимуться
 
+    useEffect(() => {
+        // Анімація прогрес-бару
         Animated.timing(widthAnim, {
             toValue: progress,
             duration: 300,
@@ -26,32 +30,70 @@ export const AppLoaderStart = ({ progress, statusText }: AppLoaderStartProps) =>
         }).start();
     }, [progress]);
 
+    useEffect(() => {
+        Animated.sequence([
+            Animated.parallel([
+                Animated.timing(mainLogoOpacity, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(mainLogoScale, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                })
+            ]),
+            Animated.parallel([
+                Animated.timing(partnersOpacity, {
+                    toValue: 1,
+                    duration: 600,
+                    useNativeDriver: true,
+                    delay: 200
+                }),
+                Animated.timing(partnersTranslateY, {
+                    toValue: 0,
+                    duration: 600,
+                    useNativeDriver: true,
+                    delay: 200
+                })
+            ])
+        ]).start();
+    }, []);
+
     const displayText = statusText || t('screens.loader.default_status');
 
     return (
         <View className="flex-1 justify-center items-center bg-[#0A0A0A]">
             <StatusBar style="light" />
 
-            <View className="absolute top-24 w-full items-center justify-center">
-
+            <Animated.View
+                className="absolute top-24 w-full items-center justify-center"
+                style={{
+                    opacity: partnersOpacity,
+                    transform: [{ translateY: partnersTranslateY }]
+                }}
+            >
                 <View className="flex-row items-center justify-center ml-4">
-
                     <InHubLogo width={130} height={45} />
-
                     <Text className="text-white text-xl font-evolventa pl-10 px-4">
                         X
                     </Text>
-
                     <PolissyaLogo width={90} height={90} />
-
                 </View>
+            </Animated.View>
 
-            </View>
-
-            <Image
-                source={require('../../../../assets/tempometrics_white_nobackground.png')}
-                style={{ width: 150, height: 150, resizeMode: 'contain' }}
-            />
+            <Animated.View
+                style={{
+                    opacity: mainLogoOpacity,
+                    transform: [{ scale: mainLogoScale }]
+                }}
+            >
+                <Image
+                    source={require('../../../../assets/tempometrics_white_nobackground.png')}
+                    style={{ width: 150, height: 150, resizeMode: 'contain' }}
+                />
+            </Animated.View>
 
             <View className="w-2/3 h-2 bg-surface-card rounded-full mt-10 overflow-hidden">
                 <Animated.View

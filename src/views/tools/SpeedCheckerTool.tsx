@@ -1,5 +1,5 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useEffect } from 'react'; // 🔥 Додали useEffect
+import { View, BackHandler } from 'react-native'; // 🔥 Додали BackHandler
 import SpeedCheckerModeSelector from './TempoMetrics/SpeedCheckerModeSelector';
 import QuickTestConfig from './TempoMetrics/QuickTestConfig';
 import TeamSelector from './TempoMetrics/TeamSelector';
@@ -17,6 +17,36 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: 
         handlePlayersSelect, handleStartTest, handleBackFromConfig,
         handleBackFromPlayers, handleBackFromTeam, handleBackFromRun
     } = useSpeedCheckerRouter();
+
+    // 🔥 ЛОКАЛЬНИЙ ОБРОБНИК КНОПКИ "НАЗАД" ДЛЯ МІНІ-НАВІГАЦІЇ
+    useEffect(() => {
+        const handleHardwareBackPress = () => {
+            switch (currentScreen) {
+                case 'TEAM_SELECT':
+                    handleBackFromTeam();
+                    return true; // Зупиняємо подію, робимо крок назад всередині тулза
+                case 'PLAYER_SELECT':
+                    handleBackFromPlayers();
+                    return true;
+                case 'QUICK_CONFIG':
+                    handleBackFromConfig();
+                    return true;
+                case 'TEST_RUN':
+                    handleBackFromRun();
+                    return true;
+                case 'MODE_SELECT':
+                default:
+                    // 🔥 Ми на першому екрані тулза.
+                    // Повертаємо false, щоб подія полетіла в глобальний useAppLogic,
+                    // який зробить setHomeActiveTool(null) і закриє весь тулз!
+                    return false;
+            }
+        };
+
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', handleHardwareBackPress);
+
+        return () => backHandler.remove();
+    }, [currentScreen]); // 🔥 Обов'язково залежить від currentScreen
 
     switch (currentScreen) {
         case 'MODE_SELECT':

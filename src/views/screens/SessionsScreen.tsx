@@ -12,9 +12,12 @@ import { SearchInput } from '../components/ui/SearchInput';
 interface SessionsScreenProps {
     initialTab?: SessionTabType;
     openSession?: any;
+    // 🔥 Додані пропси
+    sessionDetailsOpen?: boolean;
+    setSessionDetailsOpen?: (val: boolean) => void;
 }
 
-export default function SessionsScreen({ initialTab, openSession }: SessionsScreenProps) {
+export default function SessionsScreen({ initialTab, openSession, sessionDetailsOpen, setSessionDetailsOpen }: SessionsScreenProps) {
     const { t } = useTranslation();
     const {
         activeTab, setActiveTab, searchQuery, setSearchQuery,
@@ -31,6 +34,20 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
             setActiveTab('TEAM');
         }
     }, [openSession]);
+
+    // 🔥 1. Кажемо глобальному AppLogic, чи відкриті зараз деталі сесії
+    useEffect(() => {
+        if (setSessionDetailsOpen) {
+            setSessionDetailsOpen(!!selectedTeamSession);
+        }
+    }, [selectedTeamSession]);
+
+    // 🔥 2. Слухаємо AppLogic: якщо він каже "закрити" (по кнопці Назад) — очищаємо сесію
+    useEffect(() => {
+        if (sessionDetailsOpen === false && selectedTeamSession) {
+            clearSelection();
+        }
+    }, [sessionDetailsOpen]);
 
     if (selectedTeamSession) {
         return <SessionDetails session={selectedTeamSession} onBack={clearSelection} />;

@@ -15,7 +15,7 @@ const ModeCard = ({ title, subtitle, Icon, ActiveIcon, onPress }: any) => (
     >
         {({ pressed }) => (
             <View className={`rounded-3xl border min-h-[80px] p-5 flex-row items-center justify-between transition-colors ${
-                pressed ? 'bg-surface-card border-brand-orange/30' : 'bg-surface-card/50 border-surface-border'
+                pressed ? 'bg-surface-card border-brand-ora,nge/30' : 'bg-surface-card/50 border-surface-border'
             }`}>
                 <View className="flex-row items-center gap-4 flex-1">
                     <View className="items-center justify-center">

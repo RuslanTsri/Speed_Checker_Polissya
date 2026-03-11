@@ -15,7 +15,7 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: 
     const {
         currentScreen, testConfig, handleModeSelect, handleTeamSelect,
         handlePlayersSelect, handleStartTest, handleBackFromConfig,
-        handleBackFromPlayers, handleBackFromTeam, handleBackFromRun
+        handleBackFromPlayers, handleBackFromTeam, handleBackFromRun, onNavigate
     } = useSpeedCheckerRouter();
 
     useEffect(() => {
@@ -63,7 +63,7 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: 
         case 'QUICK_CONFIG':
             return <ScreenContainer><QuickTestConfig onBack={handleBackFromConfig} onStart={handleStartTest} playerCount={testConfig.selectedPlayers.length} testType={testConfig.type} onOpenBluetooth={onOpenBluetooth} /></ScreenContainer>;
         case 'TEST_RUN':
-            return <ScreenContainer><SpeedTestRun config={testConfig} onBack={handleBackFromRun} onFinish={onBack} /></ScreenContainer>;
+            return <ScreenContainer><SpeedTestRun config={testConfig} onBack={handleBackFromRun} onFinish={onBack} onNavigate={onNavigate} /></ScreenContainer>;
         default:
             return null;
     }

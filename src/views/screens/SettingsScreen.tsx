@@ -115,12 +115,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 </Text>
                 <Mod title="" className="mb-8">
                     <SettingsRow
-                        title={t('screens.settings.item_notif')}
-                        icon={<NotificationsIcon width={22} height={22} />}
-                        rightElement={<Switch active={isNotifEnabled} onChange={toggleNotif} />}
-                    />
-
-                    <SettingsRow
                         title={t('screens.settings.item_lang')}
                         value={currentLang === 'uk' ? 'UA' : 'EN'}
                         icon={<Ionicons name="language" size={22} color="#A3A3A3" />}

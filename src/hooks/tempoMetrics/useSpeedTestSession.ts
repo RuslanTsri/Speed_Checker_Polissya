@@ -9,8 +9,6 @@ const TAG = '[SESSION-DEBUG] 🟠';
 
 export interface LocalResult { player: any; fullTime: number; gates: number[]; }
 
-// Master (ID=0) is always the START gate.
-// Slave with the highest ID is always the FINISH gate.
 const MASTER_SENSOR_ID = 0;
 
 export const useSpeedTestSession = (config: any, onFinish: () => void) => {
@@ -27,6 +25,9 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     const [isSaving, setIsSaving] = useState(false);
 
     const [frozenTime, setFrozenTime] = useState<number | null>(null);
+
+    const [isScreenInitialized, setIsScreenInitialized] = useState(false);
+
     const hasProcessedRun = useRef(false);
     const isRunning  = state === 'active';
     const isFinished = state === 'finished';
@@ -53,7 +54,12 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         };
         createSession();
 
+        const initTimer = setTimeout(() => {
+            setIsScreenInitialized(true);
+        }, 150);
+
         return () => {
+            clearTimeout(initTimer);
             resetSession();
         };
     }, []);
@@ -77,9 +83,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     }, [currentPlayerObj]);
 
     useEffect(() => {
-        if (isFinished) {
-            console.log(`${TAG} Ефект зловив isFinished=true. hasProcessedRun=${hasProcessedRun.current}`);
-        }
+        if (!isScreenInitialized) return;
 
         if (isFinished && !hasProcessedRun.current) {
             console.log(`${TAG} 🏁 ОБРОБКА ФІНІШУ (Заморожуємо час)`);
@@ -103,7 +107,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
             hasProcessedRun.current = false;
             setFrozenTime(null);
         }
-    }, [isFinished, isReady, isRunning, sensors, elapsedTime, handleRunFinish]);
+    }, [isFinished, isReady, isRunning, sensors, elapsedTime, handleRunFinish, isScreenInitialized]); // Додали isScreenInitialized у залежності
 
     const confirmIndividualRun = () => {
         console.log(`${TAG} Юзер натиснув 'Зарахувати'`);
@@ -152,7 +156,25 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
                     onPress: () => {
                         setLocalResults([]);
                         resetSession();
-                        onFinish();
+                        if (onNavigate) {
+                            // Формуємо об'єкт сесії, який очікує SessionsScreen
+                            const mockSession = {
+                                id: config.teamId || sessionId, // Якщо це вільне тренування без команди, юзаємо ID сесії
+                                teamName: config.teamName || (t('tools.speed_checker.free_training') as string),
+                                hasResults: true,
+                                playerCount: localResults.length,
+                                testType: config.testType || 'STATIC',
+                            };
+
+                            // Перекидаємо юзера на вкладку SESSIONS,
+                            // відразу відкриваючи деталі (через openSession)
+                            onNavigate('SESSIONS', {
+                                subTab: 'TEAM',
+                                openSession: mockSession
+                            });
+                        } else {
+                            onFinish(); // Фоллбек, якщо onNavigate не передано
+                        }
                     },
                 }]
             );
@@ -181,7 +203,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         }
     };
 
-    // --- РОЗРАХУНОК АКТИВНИХ ДАТЧИКІВ ДЛЯ ВІДОБРАЖЕННЯ ---
     let activeSensors = sensors
         .filter(s => s.status === 'active')
         .sort((a, b) => a.id - b.id);
@@ -208,9 +229,9 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     let progressPercent = 0;
 
     if (lastTriggeredIndex === 0) {
-        progressPercent = 0; // Тільки стартували
+        progressPercent = 0;
     } else if (lastTriggeredIndex === totalSensors - 1) {
-        progressPercent = 100; // Фінішували
+        progressPercent = 100;
     } else if (lastTriggeredIndex > 0) {
         const safeTotalDistance = Number(config.distance) || 0;
         const gatePosition = config.splitPositions?.[lastTriggeredIndex - 1];
@@ -265,8 +286,12 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     return {
         currentPlayerObj, currentPlayerIndex, totalPlayers: playersQueue.length,
         teamName: config.teamName || (t('tools.speed_checker.free_training') as string),
-        isRunning, isFinished, isReady, timeObj: formatTime(displayTime / 1000),
-        progressPercent, activeSensors, splitRows,
+        isRunning: isScreenInitialized ? isRunning : false,
+        isFinished: isScreenInitialized ? isFinished : false,
+        isReady: isScreenInitialized ? isReady : false,
+        timeObj: isScreenInitialized ? formatTime(displayTime / 1000) : { main: '00:00', decimal: '.00' },
+        progressPercent: isScreenInitialized ? progressPercent : 0,
+        activeSensors, splitRows,
         startTraining, stopTraining, resetSession, nextPlayer, formatTime,
         currentRunResult, localResults, showIndividualModal, confirmIndividualRun,
         retryIndividualRun, showSummaryModal, saveAllResults, restartWholeSession, isSaving,

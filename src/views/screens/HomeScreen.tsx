@@ -31,8 +31,7 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
         }
     }, [externalTool]);
 
-    // 🔥 2. Кажемо наверх (в App.tsx / useAppLogic) про те, що тул відкрився тут, всередині
-    // Це потрібно, щоб BackHandler знав, що на екрані HOME є відкритий інструмент
+
     useEffect(() => {
         if (setExternalTool) {
             if (currentTool === 'MENU') {
@@ -64,8 +63,7 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
 
     if (currentTool === 'TIMER') return <TimerTool onBack={handleClose} />;
 
-    if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} onOpenBluetooth={handleOpenBluetooth} />;
-
+    if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} onOpenBluetooth={handleOpenBluetooth} onNavigate={onNavigate} />;
     if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={handleClose} />;
 
     const gateSensors = sensors ? sensors.filter((s: any) => s.id !== 0) : [];

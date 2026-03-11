@@ -60,7 +60,7 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
         showSummaryModal, saveAllResults, isSaving,
         localResults, currentRunResult, formatTime,
         restartWholeSession
-    } = useSpeedTestSession(config, onFinish);
+    } = useSpeedTestSession(config, onFinish, onNavigate);
 
     const animatedProgress = useRef(new Animated.Value(0)).current;
 

@@ -55,7 +55,7 @@ const AppContentWrapper = () => {
         isPinLoading, pinError,
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange,
         homeActiveTool, setHomeActiveTool,
-        sessionDetailsOpen, setSessionDetailsOpen // 🔥 Витягуємо стейти сесій
+        sessionDetailsOpen, setSessionDetailsOpen
     } = useAppLogic();
 
     useEffect(() => {
@@ -119,7 +119,6 @@ const AppContentWrapper = () => {
                     key={sessionsInitialTab}
                     initialTab={sessionsInitialTab}
                     openSession={navParams?.openSession}
-                    // 🔥 Передаємо пропси в екран сесій
                     sessionDetailsOpen={sessionDetailsOpen}
                     setSessionDetailsOpen={setSessionDetailsOpen}
                 />;

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'; // 🔥 Додали useEffect
-import { View, BackHandler } from 'react-native'; // 🔥 Додали BackHandler
+import React, { useEffect } from 'react';
+import { View, BackHandler } from 'react-native';
 import SpeedCheckerModeSelector from './TempoMetrics/SpeedCheckerModeSelector';
 import QuickTestConfig from './TempoMetrics/QuickTestConfig';
 import TeamSelector from './TempoMetrics/TeamSelector';
@@ -18,13 +18,12 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: 
         handleBackFromPlayers, handleBackFromTeam, handleBackFromRun
     } = useSpeedCheckerRouter();
 
-    // 🔥 ЛОКАЛЬНИЙ ОБРОБНИК КНОПКИ "НАЗАД" ДЛЯ МІНІ-НАВІГАЦІЇ
     useEffect(() => {
         const handleHardwareBackPress = () => {
             switch (currentScreen) {
                 case 'TEAM_SELECT':
                     handleBackFromTeam();
-                    return true; // Зупиняємо подію, робимо крок назад всередині тулза
+                    return true;
                 case 'PLAYER_SELECT':
                     handleBackFromPlayers();
                     return true;
@@ -36,17 +35,15 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: 
                     return true;
                 case 'MODE_SELECT':
                 default:
-                    // 🔥 Ми на першому екрані тулза.
-                    // Повертаємо false, щоб подія полетіла в глобальний useAppLogic,
-                    // який зробить setHomeActiveTool(null) і закриє весь тулз!
-                    return false;
+                    onBack();
+                    return true;
             }
         };
 
         const backHandler = BackHandler.addEventListener('hardwareBackPress', handleHardwareBackPress);
 
         return () => backHandler.remove();
-    }, [currentScreen]); // 🔥 Обов'язково залежить від currentScreen
+    }, [currentScreen, onBack]);
 
     switch (currentScreen) {
         case 'MODE_SELECT':
@@ -60,29 +57,13 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: 
                 </ScreenContainer>
             );
         case 'TEAM_SELECT':
-            return (
-                <ScreenContainer>
-                    <TeamSelector onBack={handleBackFromTeam} onSelect={handleTeamSelect} />
-                </ScreenContainer>
-            );
+            return <ScreenContainer><TeamSelector onBack={handleBackFromTeam} onSelect={handleTeamSelect} /></ScreenContainer>;
         case 'PLAYER_SELECT':
-            return (
-                <ScreenContainer>
-                    <PlayerSelector teamId={testConfig.teamId || ''} onBack={handleBackFromPlayers} onSelect={handlePlayersSelect} />
-                </ScreenContainer>
-            );
+            return <ScreenContainer><PlayerSelector teamId={testConfig.teamId || ''} onBack={handleBackFromPlayers} onSelect={handlePlayersSelect} /></ScreenContainer>;
         case 'QUICK_CONFIG':
-            return (
-                <ScreenContainer>
-                    <QuickTestConfig onBack={handleBackFromConfig} onStart={handleStartTest} playerCount={testConfig.selectedPlayers.length} testType={testConfig.type} onOpenBluetooth={onOpenBluetooth} />
-                </ScreenContainer>
-            );
+            return <ScreenContainer><QuickTestConfig onBack={handleBackFromConfig} onStart={handleStartTest} playerCount={testConfig.selectedPlayers.length} testType={testConfig.type} onOpenBluetooth={onOpenBluetooth} /></ScreenContainer>;
         case 'TEST_RUN':
-            return (
-                <ScreenContainer>
-                    <SpeedTestRun config={testConfig} onBack={handleBackFromRun} onFinish={onBack} />
-                </ScreenContainer>
-            );
+            return <ScreenContainer><SpeedTestRun config={testConfig} onBack={handleBackFromRun} onFinish={onBack} /></ScreenContainer>;
         default:
             return null;
     }

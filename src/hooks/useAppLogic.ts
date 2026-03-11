@@ -28,13 +28,10 @@ export const useAppLogic = () => {
     const [navParams, setNavParams] = useState<any>(null);
     const [pinError, setPinError] = useState<string | null>(null);
 
-    // 🔥 Стейт для відстеження відкритого тулза на HomeScreen
     const [homeActiveTool, setHomeActiveTool] = useState<string | null>(null);
 
-    // 🔥 Стейт для відстеження відкритих деталей сесії на SessionsScreen
     const [sessionDetailsOpen, setSessionDetailsOpen] = useState(false);
 
-    // 🔥 Реф для відстеження "подвійного" натискання Назад
     const exitAppPromptRef = useRef(false);
 
     const handleLogout = () => {
@@ -78,45 +75,38 @@ export const useAppLogic = () => {
         if (pinError) setPinError(null);
     };
 
-    // 🔥 ГЛОБАЛЬНИЙ ОБРОБНИК КНОПКИ "НАЗАД" ДЛЯ ANDROID
     useEffect(() => {
         const handleBackPress = () => {
-            // 1. Якщо відкрита модалка PIN-коду
             if (isPinModalVisible) {
                 setPinModalVisible(false);
                 return true;
             }
 
-            // 2. ОНОВЛЕНА ЛОГІКА ДЛЯ ВКЛАДКИ SESSIONS
             if (currentTab === 'SESSIONS') {
                 if (sessionDetailsOpen) {
-                    setSessionDetailsOpen(false); // Кажемо екрану SESSIONS закрити деталі
+                    setSessionDetailsOpen(false);
                     return true;
                 } else {
-                    handleNavigate('HOME'); // Якщо деталей немає, повертаємось на головний
+                    handleNavigate('HOME');
                     return true;
                 }
             }
 
-            // 3. Якщо ми в інструментах (вкладка TOOLS)
             if (currentTab === 'TOOLS') {
                 handleNavigate('SETTINGS');
                 return true;
             }
 
-            // 4. Якщо ми на вкладці HOME і там відкритий якийсь інструмент (Секундомір тощо)
             if (currentTab === 'HOME' && homeActiveTool !== null) {
                 setHomeActiveTool(null);
                 return true;
             }
 
-            // 5. Якщо ми на будь-якому іншому табі, окрім HOME
             if (currentTab !== 'HOME') {
                 handleNavigate('HOME');
                 return true;
             }
 
-            // 6. ЛОГІКА "НАТИСНІТЬ ЩЕ РАЗ ЩОБ ВИЙТИ" НА ЕКРАНІ 'HOME'
             if (exitAppPromptRef.current) {
                 BackHandler.exitApp();
                 return false;

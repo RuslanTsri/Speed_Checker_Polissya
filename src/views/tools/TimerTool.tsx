@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet, BackHandler } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { BlurView } from 'expo-blur';
@@ -12,6 +12,15 @@ import { ArrowIcon, ReloadIcon } from '../../../assets/icons';
 export default function TimerTool({ onBack }: { onBack: () => void }) {
     const { t } = useTranslation();
     const { timeObj, isActive, toggle, reset } = useStopwatch();
+
+    useEffect(() => {
+        const backAction = () => {
+            onBack();
+            return true;
+        };
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+        return () => backHandler.remove();
+    }, [onBack]);
 
     return (
         <View className="flex-1 pt-4 ">

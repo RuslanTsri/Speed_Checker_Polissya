@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, ScrollView, BackHandler } from 'react-native'; // 🔥 Додали BackHandler
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useBle } from '../../context/BleContext';
@@ -39,6 +39,15 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
         }
         return () => clearInterval(interval);
     }, [state, configStep]);
+
+    useEffect(() => {
+        const backAction = () => {
+            onBack();
+            return true;
+        };
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+        return () => backHandler.remove();
+    }, [onBack]);
 
     const requiredTotalSensors = targetGates;
     const foundTotalSensors = sensors.length;

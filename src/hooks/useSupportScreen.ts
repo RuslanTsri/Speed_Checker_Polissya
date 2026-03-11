@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Linking, Alert, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-// Типізація для нашого об'єкта FAQ
 interface FAQItem {
     q: string;
     a: string;
@@ -13,9 +12,8 @@ export const useSupportScreen = () => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const appVersion = "v1.0.0";
-    const supportEmail = 'support@tempometrics.com'; // Заміни на реальну
+    const supportEmail = 'support@tempometrics.com';
 
-    // Витягуємо перекладений масив FAQ та додаємо до кожного id
     const rawFaqs = t('screens.support.faqs', { returnObjects: true }) as FAQItem[];
     const localizedFaqs = rawFaqs.map((item, index) => ({
         id: String(index + 1),

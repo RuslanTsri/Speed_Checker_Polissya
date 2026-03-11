@@ -15,10 +15,8 @@ export const useHomeScreen = (onNavigate: (tab: TabType, params?: any) => void) 
 
     const { connected, sensors } = useBle();
 
-    // Стан для останньої активності
     const [recentActivity, setRecentActivity] = useState<any>(null);
 
-    // --- ЗАВАНТАЖЕННЯ ОСТАННЬОЇ СЕСІЇ ---
     const loadRecentActivity = async () => {
         try {
             const state = await NetInfo.fetch();
@@ -81,7 +79,6 @@ export const useHomeScreen = (onNavigate: (tab: TabType, params?: any) => void) 
         return unsub;
     }, []);
 
-    // --- ЛОГІКА СТАТУСУ UI (Локалізована) ---
     let status = {
         title: t('screens.home.status_disconnected_title') as string,
         desc: t('screens.home.status_disconnected_desc') as string,
@@ -96,7 +93,6 @@ export const useHomeScreen = (onNavigate: (tab: TabType, params?: any) => void) 
 
     if (connected) {
         status.title = t('screens.home.status_online_title') as string;
-        // 🔥 ФІКС: Рахуємо сателіти без device.name
         const satellitesCount = sensors && sensors.length > 0 ? sensors.length - 1 : 0;
         status.desc = `STM32 Master • Gates: ${satellitesCount}`;
         status.iconColor = "#4ade80";
@@ -108,7 +104,6 @@ export const useHomeScreen = (onNavigate: (tab: TabType, params?: any) => void) 
         status.btnTextClass = "text-slate-400";
     }
 
-    // --- НАВІГАЦІЯ ---
     const openTimer = () => setCurrentTool('TIMER');
     const openBluetooth = () => setCurrentTool('BLUETOOTH');
     const openSpeedCheck = () => setCurrentTool('SPEEDCHECK');
@@ -134,7 +129,7 @@ export const useHomeScreen = (onNavigate: (tab: TabType, params?: any) => void) 
 
     return {
         currentTool, connected, status, recentActivity,
-        sensors, // Віддаємо сенсори для UI
+        sensors,
         openTimer, openBluetooth, openSpeedCheck, closeTool,
         goToPlayers, goToSessions, openRecentActivity
     };

@@ -31,7 +31,6 @@ export const SubTabs = ({ distances, selectedDistance, onSelect, optimizeForList
                                 isActive ? 'border-brand-orange/60' : 'border-surface-border'
                             }`}
                         >
-                            {/* Android Turbo Оптимізація */}
                             {isAndroidTurbo ? (
                                 <View style={StyleSheet.absoluteFill} className="bg-surface-card" />
                             ) : (

@@ -26,14 +26,8 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     const [showSummaryModal, setShowSummaryModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Зафіксований час фінішу — щоб уникнути оновлення таймера після фінішу
     const [frozenTime, setFrozenTime] = useState<number | null>(null);
     const hasProcessedRun = useRef(false);
-
-    // BLE state mapping:
-    // 'armed'    → isReady   — система озброєна, очікує перетину старту
-    // 'active'   → isRunning — атлет стартував, таймер іде
-    // 'finished' → isFinished — атлет фінішував
     const isRunning  = state === 'active';
     const isFinished = state === 'finished';
     const isReady    = state === 'armed';
@@ -45,9 +39,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     const currentPlayerObj = playersQueue[currentPlayerIndex];
     const isLastPlayer = currentPlayerIndex === playersQueue.length - 1;
 
-    // --- Створення сесії при маунті ---
     useEffect(() => {
-        // 🔥 1. Скидаємо блютуз при вході, щоб прибрати залишки старих забігів
         resetSession();
 
         const createSession = async () => {
@@ -61,7 +53,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         };
         createSession();
 
-        // 🔥 2. Скидаємо блютуз при виході зі сторінки (натискання "Назад")
         return () => {
             resetSession();
         };
@@ -85,7 +76,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         setShowIndividualModal(true);
     }, [currentPlayerObj]);
 
-    // --- ЕФЕКТ СТАНУ: відстежуємо перехід у 'finished' ---
     useEffect(() => {
         if (isFinished) {
             console.log(`${TAG} Ефект зловив isFinished=true. hasProcessedRun=${hasProcessedRun.current}`);
@@ -108,7 +98,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
             handleRunFinish(finalTime, sensorSnapshot);
         }
 
-        // Скидаємо прапор при поверненні в активний чи очікування
         if (isReady || isRunning) {
             if (hasProcessedRun.current) console.log(`${TAG} 🔄 Скидаємо запобіжник фінішу (Новий забіг)`);
             hasProcessedRun.current = false;
@@ -116,7 +105,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         }
     }, [isFinished, isReady, isRunning, sensors, elapsedTime, handleRunFinish]);
 
-    // --- ДІЇ ПІСЛЯ ФІНІШУ ---
     const confirmIndividualRun = () => {
         console.log(`${TAG} Юзер натиснув 'Зарахувати'`);
         if (currentRunResult) {
@@ -163,7 +151,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
                     text: t('tools.speed_checker.alert_ok') as string,
                     onPress: () => {
                         setLocalResults([]);
-                        resetSession(); // 🔥 3. Примусово скидаємо після збереження
+                        resetSession();
                         onFinish();
                     },
                 }]
@@ -217,7 +205,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         return lastIdx;
     }, -1);
 
-    // 🔥 НОВИЙ РОЗРАХУНОК ПРОГРЕСУ (В ЗАЛЕЖНОСТІ ВІД МЕТРАЖУ)
     let progressPercent = 0;
 
     if (lastTriggeredIndex === 0) {
@@ -225,23 +212,18 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     } else if (lastTriggeredIndex === totalSensors - 1) {
         progressPercent = 100; // Фінішували
     } else if (lastTriggeredIndex > 0) {
-        // Це проміжний гейт. Беремо його реальну дистанцію
         const safeTotalDistance = Number(config.distance) || 0;
-        // -1, бо в масиві сплітів немає Старту
         const gatePosition = config.splitPositions?.[lastTriggeredIndex - 1];
 
         if (safeTotalDistance > 0 && gatePosition !== undefined) {
             progressPercent = (Number(gatePosition) / safeTotalDistance) * 100;
         } else {
-            // Запасний варіант (фолбек), якщо щось піде не так з конфігом
             progressPercent = (lastTriggeredIndex / (totalSensors - 1)) * 100;
         }
     }
 
-    // Запобіжник, щоб лінія не вилетіла за межі
     progressPercent = Math.max(0, Math.min(100, progressPercent));
 
-    // --- СПЛІТОВІ РЯДКИ ---
     const splitRows = useMemo(() => {
         const rows: { label: string; time: number }[] = [];
         if (totalSensors > 1) {
@@ -267,7 +249,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         return rows;
     }, [activeSensors, isFinished]);
 
-    // --- ФОРМАТУВАННЯ ЧАСУ ---
     const formatTime = (totalSeconds: number) => {
         if (!totalSeconds && totalSeconds !== 0) return { main: '00:00', decimal: '.00' };
         const mins = Math.floor(totalSeconds / 60);

@@ -25,7 +25,6 @@ export const WorstCard = ({ title, time, playerName, teamName, optimizeForList =
                 <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} experimentalBlurMethod="dimezisBlurView" />
             )}
 
-            {/* ЧЕРВОНЕ ТОНУВАННЯ */}
             <View style={StyleSheet.absoluteFill} className="bg-status-error/5" />
 
             <View className="relative z-10">

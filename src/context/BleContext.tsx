@@ -18,7 +18,6 @@ export interface BleContextType {
     stopScanning: () => void;
     connectToDevice: (target: any) => Promise<void>;
     disconnect: () => Promise<void>;
-    // pingMaster прибрано, бо тепер працює автоматичний Watchdog!
     finishInitialization: () => void;
     startTraining: () => void;
     stopTraining: () => void;

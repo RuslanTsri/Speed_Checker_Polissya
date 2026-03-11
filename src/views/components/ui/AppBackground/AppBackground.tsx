@@ -13,14 +13,12 @@ interface AppBackgroundProps {
 export const AppBackground = ({ children, className = '' }: AppBackgroundProps) => {
     return (
         <View className={`flex-1 bg-black ${className}`}>
-            {/* Глибокий темний градієнт */}
             <LinearGradient
-                colors={['#000000', '#0A0A0A', '#1C1C1E']} // Перехід у твій surface-card
+                colors={['#000000', '#0A0A0A', '#1C1C1E']}
                 locations={[0, 0.6, 1]}
                 style={StyleSheet.absoluteFill}
             />
 
-            {/* Світлова пляма (Glow) */}
             <View style={styles.glowContainer}>
                 <Svg height="100%" width="100%">
                     <Defs>

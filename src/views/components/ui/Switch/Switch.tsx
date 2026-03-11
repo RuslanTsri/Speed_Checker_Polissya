@@ -30,7 +30,6 @@ export const Switch = ({ active, onChange }: SwitchProps) => {
                 <LinearGradient
                     colors={SWITCH_GRADIENT}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    // 🔥 Перенесли розміри в style
                     style={[styles.background, { width: '100%', height: '100%', justifyContent: 'center' }]}
                 >
                     <Animated.View

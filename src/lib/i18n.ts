@@ -1,12 +1,12 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import uk from '../locales/uk'; // Імпортуємо об'єкт з index.ts
+import uk from '../locales/uk';
 import en from '../locales/en';
 
 i18n.use(initReactI18next).init({
     resources: {
         uk: {
-            translation: uk // Переконайся, що переклади загорнуті саме в translation
+            translation: uk
         },
         en: {
             translation: en

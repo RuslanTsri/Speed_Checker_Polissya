@@ -29,7 +29,6 @@ export const TeamsMod = ({
     const isClickable = !!onPress;
     const isAndroidTurbo = Platform.OS === 'android' && optimizeForList;
 
-    // 🔥 Перевірка на одне слово для назви команди
     const isSingleWordTeam = teamName ? !teamName.trim().includes(' ') : false;
 
     return (

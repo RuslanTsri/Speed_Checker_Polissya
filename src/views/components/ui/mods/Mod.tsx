@@ -28,7 +28,6 @@ export const Mod = ({
     const hasHeader = title && title.length > 0;
     const isAndroid = Platform.OS === 'android' && optimizeForList;
 
-    // 🔥 Перевірка на одне слово для заголовка
     const isSingleWordTitle = title ? !title.trim().includes(' ') : false;
 
     return (

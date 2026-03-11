@@ -8,7 +8,7 @@ import InHubLogo from '../../../../assets/InHub_logo_white.svg';
 import PolissyaLogo from '../../../../assets/Polissya_icon.svg';
 
 interface AppLoaderStartProps {
-    progress: number; // від 0 до 100
+    progress: number;
     statusText?: string;
 }
 
@@ -48,13 +48,11 @@ export const AppLoaderStart = ({ progress, statusText }: AppLoaderStartProps) =>
 
             </View>
 
-            {/* ЦЕНТРАЛЬНИЙ БЛОК: Основне лого */}
             <Image
                 source={require('../../../../assets/tempometrics_white_nobackground.png')}
                 style={{ width: 150, height: 150, resizeMode: 'contain' }}
             />
 
-            {/* Контейнер для прогрес-бару */}
             <View className="w-2/3 h-2 bg-surface-card rounded-full mt-10 overflow-hidden">
                 <Animated.View
                     style={{

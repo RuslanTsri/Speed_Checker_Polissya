@@ -9,11 +9,9 @@ export interface LayoutMarkerProps {
 }
 
 export const LayoutMarker = ({ position, totalDistance, label, type }: LayoutMarkerProps) => {
-    // 1. Примусово перетворюємо в числа (якщо прийде брєд, буде 0)
     const safePos = parseFloat(position as string) || 0;
     const safeTotal = parseFloat(totalDistance as string) || 0;
 
-    // 2. Розрахунок відсотка (захист від ділення на 0)
     let percent = 0;
 
     if (type === 'start') {
@@ -21,18 +19,15 @@ export const LayoutMarker = ({ position, totalDistance, label, type }: LayoutMar
     } else if (type === 'finish') {
         percent = 100;
     } else {
-        // Для гейтів рахуємо реальний відсоток
         if (safeTotal > 0) {
             percent = (safePos / safeTotal) * 100;
         } else {
-            percent = 50; // Якщо дистанції нема, ставимо по центру
+            percent = 50;
         }
     }
 
-    // 3. Запобіжник: відсоток не може бути менше 0 або більше 100
     percent = Math.max(0, Math.min(100, percent));
 
-    // Відладка (можеш потім видалити)
     console.log(`[Marker] ${label}: pos=${safePos}, total=${safeTotal} -> left=${percent}%`);
 
     const isStart = type === 'start';

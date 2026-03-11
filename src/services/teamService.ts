@@ -7,7 +7,6 @@ import i18n from 'i18next'; // 🔥 Імпортуємо глобальний i1
 
 export const TeamSchema = z.object({
     id: z.string().optional(),
-    // 🔥 Локалізуємо повідомлення Zod-валідації
     name: z.string().min(1, { message: i18n.t('logs.errors.validation.team_name_required') }),
     coach_id: z.string().optional()
 });
@@ -83,7 +82,6 @@ class TeamService extends BaseService<Team> {
 
         const state = await NetInfo.fetch();
 
-        // Форматуємо чергу для UI
         const pendingTeams = syncManager.getPendingItems('teams')
             .filter((t: any) => t.coach_id === session.user.id)
             .map((t: any) => ({

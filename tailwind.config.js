@@ -8,7 +8,7 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
-      // 🎨 ПАЛІТРА КОЛЬОРІВ З ФІГМИ
+      //ПАЛІТРА КОЛЬОРІВ З ФІГМИ
       colors: {
         brand: {
           orange: '#FF6D00',      // Головний акцент
@@ -36,7 +36,7 @@ module.exports = {
         }
       },
 
-      // ✍️ СІМЕЙСТВА ШРИФТІВ
+      //СІМЕЙСТВА ШРИФТІВ
       fontFamily: {
         'unbounded': ['Unbounded', 'sans-serif'],
         'unbounded-bold': ['Unbounded-Bold', 'sans-serif'],
@@ -47,7 +47,7 @@ module.exports = {
         'evolventa-bold': ['Evolventa-Bold', 'sans-serif'],
       },
 
-      // 📏 ТИПОГРАФІЧНА ШКАЛА (Розмір + Міжрядковий інтервал)
+      //ТИПОГРАФІЧНА ШКАЛА (Розмір + Міжрядковий інтервал)
       fontSize: {
         'h1': ['32px', { lineHeight: '40px' }],
         'h2': ['24px', { lineHeight: '32px' }],

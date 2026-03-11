@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 const PIN_SALT = "tempo_metrics_secure_v1";
 
 export const useAuthScreen = (onLogin: () => void) => {
-    // Підключаємо обидва словники: основний і логи
     const { t } = useTranslation();
 
     const [isRegistering, setIsRegistering] = useState(false);
@@ -15,7 +14,6 @@ export const useAuthScreen = (onLogin: () => void) => {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [showVerifyModal, setShowVerifyModal] = useState(false);
 
-    // Дані форми
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [pin, setPin] = useState('');
@@ -40,7 +38,6 @@ export const useAuthScreen = (onLogin: () => void) => {
     const handleSubmit = async () => {
         setErrorMessage(null);
 
-        // ПЕРЕВІРКА ІНТЕРНЕТУ (твоя стара локалізація - не чіпаємо)
         const state = await NetInfo.fetch();
         if (!state.isConnected) {
             setErrorMessage(t('screens.auth.error_no_internet') as string);
@@ -97,19 +94,16 @@ export const useAuthScreen = (onLogin: () => void) => {
         } catch (e: any) {
             console.log("❌ Auth Error:", e.message);
 
-            // 🔥 ОСЬ ТУТ МАГІЯ ЛОКАЛІЗАЦІЇ СИРИХ ПОМИЛОК 🔥
             let finalErrorMsg = t('screens.auth.error_unknown') as string;
 
             if (e.message) {
                 const msg = e.message.toLowerCase();
 
-                // Наші кастомні помилки з try-блоку
                 if (msg === 'already_registered') {
                     finalErrorMsg = t('screens.auth.error_already_registered') as string;
                 } else if (msg === 'invalid_login') {
                     finalErrorMsg = t('screens.auth.error_invalid_login') as string;
                 }
-                // Сирі помилки Supabase, які раніше лякали юзера
                 else if (msg.includes('rate limit') || msg.includes('too many requests')) {
                     finalErrorMsg = t('logs.errors.auth.rate_limit') as string;
                 } else if (msg.includes('fetch') || msg.includes('network')) {
@@ -119,7 +113,6 @@ export const useAuthScreen = (onLogin: () => void) => {
                 }
             }
 
-            // Тепер юзер ніколи не побачить англійський текст
             setErrorMessage(finalErrorMsg);
 
         } finally {

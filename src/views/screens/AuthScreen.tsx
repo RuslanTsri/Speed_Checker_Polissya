@@ -4,7 +4,6 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 
-// 🔥 Наші компоненти
 import { AppModal } from '../components/AppModal';
 import { useAuthScreen } from '../../hooks/useAuthScreen';
 import { TextField } from '../components/ui/TextField';
@@ -35,7 +34,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     className="px-8"
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* 1. ЛОГОТИП ТА ЗАГОЛОВОК */}
                     <View className="items-center mb-10">
                         <View className="w-24 h-24 rounded-[32px] items-center justify-center mb-6 bg-surface-card border border-surface-border shadow-2xl">
                             <Ionicons name="flash" size={48} color="#FF6D00" />
@@ -49,7 +47,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                         </Text>
                     </View>
 
-                    {/* 2. ФОРМА ВВОДУ */}
                     <View className="w-full gap-y-4">
                         {isRegistering && (
                             <TextField
@@ -93,7 +90,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                         />
                     </View>
 
-                    {/* 3. ПЕРЕМИКАЧ РЕЖИМІВ */}
                     <View className="mt-10 items-center">
                         <Text className="text-text-muted text-small mb-2 font-evolventa">
                             {isRegistering ? t('screens.auth.switch_has_account') : t('screens.auth.switch_no_account')}
@@ -118,7 +114,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     </View>
                 </ScrollView>
 
-                {/* 4. МОДАЛКА ПІДТВЕРДЖЕННЯ (Поза ScrollView для коректного відображення) */}
                 <AppModal
                     visible={showVerifyModal}
                     onClose={handleVerifyConfirmed}

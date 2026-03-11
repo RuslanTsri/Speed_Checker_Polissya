@@ -4,7 +4,6 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useBle } from '../../context/BleContext';
 
-// Утиліти та Компоненти
 import { formatTime } from '../../utils/time';
 import { AppModal } from '../components/AppModal';
 import { Button } from '../components/ui/Button';
@@ -41,8 +40,8 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
         return () => clearInterval(interval);
     }, [state, configStep]);
 
-    const requiredTotalSensors = targetGates; // Якщо вибрали 2 ворота, значить чекаємо 2 датчики (Мастер + 1 Слейв)
-    const foundTotalSensors = sensors.length; // Починається з 0
+    const requiredTotalSensors = targetGates;
+    const foundTotalSensors = sensors.length;
     const progressPercent = Math.min((foundTotalSensors / requiredTotalSensors) * 100, 100);
 
     const handleCloseModal = () => {
@@ -53,7 +52,6 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
 
     return (
         <View className="flex-1 pt-4 relative">
-            {/* HEADER */}
             <View className="flex-row items-center justify-between px-4 mb-6 z-10">
                 <Pressable onPress={onBack} className="p-2 -ml-2 active:opacity-60">
                     {({ pressed }) => (
@@ -182,10 +180,16 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                                             <ConnectionIcon width={32} height={32} fill="#34d399" />
                                         )}
                                     </View>
-                                    <Text className="text-h3 text-text-main mb-2 text-center font-unbounded-bold">Система підключена</Text>
-                                    <Text className="text-text-sub mb-8 text-center font-evolventa">{t('tools.bluetooth.use_gates_configuration')}</Text>
+                                    <Text className="text-h3 text-text-main mb-2 text-center font-unbounded-bold">
+                                        {t('tools.bluetooth.master_connected')}
+                                    </Text>
+                                    <Text className="text-text-sub mb-8 text-center font-evolventa">
+                                        {t('tools.bluetooth.use_gates_configuration')}
+                                    </Text>
 
-                                    <Text className="text-text-sub text-caption uppercase font-bold tracking-widest self-start mb-3 ml-1 font-evolventa">{t('tools.bluetooth.gates_config')}</Text>
+                                    <Text className="text-text-sub text-caption uppercase font-bold tracking-widest self-start mb-3 ml-1 font-evolventa">
+                                        {t('tools.bluetooth.gates_config')}
+                                    </Text>
                                     <View className="flex-row gap-3 mb-8 w-full">
                                         <Button
                                             variant={targetGates === 2 ? 'light' : 'outline'}
@@ -207,16 +211,15 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                             ) : (
                                 <View>
                                     <Text className="text-h3 text-text-main mb-2 font-unbounded-bold">
-                                        Ініціалізація воріт
+                                        {t('tools.bluetooth.check_gates')}
                                     </Text>
 
-                                    {/* 🔥 ДИНАМІЧНА ПІДКАЗКА */}
                                     <Text className="text-text-sub mb-8 font-evolventa text-body">
                                         {foundTotalSensors === 0
-                                            ? "Проведіть рукою повз головний МАЙСТЕР-датчик (Старт)."
+                                            ? `${t('tools.bluetooth.task_gates')} (Master)`
                                             : foundTotalSensors < requiredTotalSensors
-                                                ? `Тепер проведіть рукою повз ДАТЧИК ${foundTotalSensors} (Ворота ${foundTotalSensors}).`
-                                                : "✅ Всі датчики успішно ініціалізовано!"
+                                                ? `${t('tools.bluetooth.task_gates')} (${t('tools.bluetooth.gate_id', { id: foundTotalSensors })})`
+                                                : `✅ ${t('tools.speed_checker.status_ready')}`
                                         }
                                     </Text>
 
@@ -236,12 +239,16 @@ export default function BluetoothTool({ onBack }: { onBack: () => void }) {
                                             {foundTotalSensors < requiredTotalSensors ? (
                                                 <>
                                                     <ActivityIndicator size="small" color="#A3A3A3" />
-                                                    <Text className="text-text-sub text-caption font-evolventa-bold">{t('tools.bluetooth.status_waiting')}</Text>
+                                                    <Text className="text-text-sub text-caption font-evolventa-bold">
+                                                        {t('tools.bluetooth.status_waiting')}
+                                                    </Text>
                                                 </>
                                             ) : (
                                                 <>
                                                     <Feather name="check-circle" size={18} color="#34d399" />
-                                                    <Text className="text-status-success text-body font-evolventa-bold">Готово до роботи</Text>
+                                                    <Text className="text-status-success text-body font-evolventa-bold">
+                                                        {t('tools.speed_checker.status_ready')}
+                                                    </Text>
                                                 </>
                                             )}
                                         </View>

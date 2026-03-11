@@ -30,7 +30,6 @@ export const RadioButton = ({ selected, onSelect }: RadioButtonProps) => {
                 <LinearGradient
                     colors={RADIO_GRADIENT}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    // 🔥 Перенесли розміри в style
                     style={[styles.radioCircle, { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }]}
                 >
                     <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: fadeAnim }] }}>

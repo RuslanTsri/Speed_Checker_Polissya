@@ -42,10 +42,6 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
 
     return (
         <View className="z-50 py-4 px-4 flex-row justify-between items-center bg-transparent w-full">
-
-            {/* ЛОГОТИП */}
-
-            {/* 🔥 Додали items-start, щоб і лого, і текст гарантовано рівнялися по лівому краю */}
             <TouchableOpacity onPress={onGoHome} activeOpacity={0.6} className="flex-1 mr-2 justify-center items-start">
 
                 <LogoSvg
@@ -60,10 +56,7 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
 
             </TouchableOpacity>
 
-            {/* ПРАВА ЧАСТИНА (Статус + Аватарка) */}
             <View className="flex-row items-center gap-2 shrink-0">
-
-                {/* СТАТУС ІНТЕРНЕТУ */}
                 <View className="items-end justify-center">
                     <View className="w-[100px] h-[32px] overflow-hidden rounded-xl">
                         <View style={{ width: 145, transform: [{ scale: 0.65 }], marginTop: -11, marginLeft: -15 }}>
@@ -80,8 +73,6 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
                         </Text>
                     )}
                 </View>
-
-                {/* АВАТАРКА / МЕНЮ */}
                 <View>
                     <TouchableOpacity
                         onPress={() => setIsMenuOpen(true)}
@@ -98,8 +89,6 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
                             </Text>
                         )}
                     </TouchableOpacity>
-
-                    {/* ВИПАДАЮЧЕ МЕНЮ */}
                     <Modal transparent visible={isMenuOpen} animationType="fade" onRequestClose={() => setIsMenuOpen(false)}>
                         <Pressable className="flex-1" onPress={() => setIsMenuOpen(false)}>
                             <Pressable

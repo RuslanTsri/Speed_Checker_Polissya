@@ -3,23 +3,19 @@ import React, { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Platform } from 'react-native';
-// 🔥 Використовуємо нативний StatusBar
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Feather } from "@expo/vector-icons";
 import * as NavigationBar from 'expo-navigation-bar';
 
-// Блокуємо авто-хованку заставки
 SplashScreen.preventAutoHideAsync();
 
-// Layouts & Components
 import { MainLayout } from './src/views/layout/MainLayout';
 import { TabType } from './src/views/layout/Footer';
 import { AppModal } from './src/views/components/AppModal';
-import { AppLoaderStart } from './src/views/components/ui/AppLoaderStart'; // <-- Додали імпорт лоадера
+import { AppLoaderStart } from './src/views/components/ui/AppLoaderStart';
 
-// Screens
 import AuthScreen from './src/views/screens/AuthScreen';
 import PlayersScreen from './src/views/screens/PlayersScreen';
 import SessionsScreen from './src/views/screens/SessionsScreen';
@@ -27,7 +23,6 @@ import SettingsScreen from './src/views/screens/SettingsScreen';
 import HomeScreen from './src/views/screens/HomeScreen';
 import BluetoothTool from './src/views/tools/BluetoothTool';
 
-// Context & Logic
 import { BleProvider } from './src/context/BleContext';
 import { UserProvider, useUser } from './src/context/UserContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
@@ -59,7 +54,6 @@ const AppContentWrapper = () => {
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange
     } = useAppLogic();
 
-    // 1. Рахуємо прогрес завантаження
     let loadProgress = 0;
     let loadStatus = "Ініціалізація...";
 
@@ -76,29 +70,24 @@ const AppContentWrapper = () => {
         loadStatus = "Перевірка сесії...";
     }
 
-    // 2. Хук для навігаційної панелі Android
     useEffect(() => {
         if (Platform.OS === 'android') {
-            NavigationBar.setPositionAsync('absolute'); // Панель починає "плавати" поверх контенту
-            NavigationBar.setBackgroundColorAsync('#ffffff00'); // Робимо її прозорою
-            NavigationBar.setButtonStyleAsync('light'); // Робимо іконки кнопок світлими, щоб їх було видно на темному футері
+            NavigationBar.setPositionAsync('absolute');
+            NavigationBar.setBackgroundColorAsync('#ffffff00');
+            NavigationBar.setButtonStyleAsync('light');
         }
     }, []);
 
-    // 3. Хук для ховання нативного сплеш-скріна
     useEffect(() => {
-        // Ховаємо нативний сплеш одразу, щоб передати естафету нашому кастомному лоадеру
+
         SplashScreen.hideAsync();
     }, []);
 
-    // --- ПЕРЕВІРКИ СТАНІВ ---
 
-    // Якщо хоч щось ще вантажиться — показуємо наш кастомний лоадер із прогрес-баром
     if (!fontsLoaded || isUserLoading || isLangLoading) {
         return <AppLoaderStart progress={loadProgress} statusText={loadStatus} />;
     }
 
-    // Якщо все завантажилось, але юзер не залогінений
     if (!user) {
         return (
             <>
@@ -131,7 +120,6 @@ const AppContentWrapper = () => {
 
     return (
         <BleProvider>
-            {/* 🔥 МАГІЯ ТУТ: Робимо панелі прозорими для Edge-to-Edge */}
             <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
 
             <MainLayout

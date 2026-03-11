@@ -93,7 +93,6 @@ class SessionsService extends BaseService<Session> {
         const combined = [...pendingSessions, ...serverFormatted];
         const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
 
-        // Сортуємо: нові зверху
         unique.sort((a, b) => new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime());
 
         return { data: unique, error: null };

@@ -30,11 +30,9 @@ export const Checkbox = ({ checked, onChange, disabled = false }: CheckboxProps)
                 <LinearGradient
                     colors={CHECKED_GRADIENT}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    // 🔥 Перенесли розміри та центрування в style
                     style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}
                 >
                     <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: fadeAnim }] }}>
-                        {/* Галочка */}
                         <View className="w-[10px] h-[5px] border-l-2 border-b-2 border-brand-light -rotate-45 -mt-0.5" />
                     </Animated.View>
                 </LinearGradient>

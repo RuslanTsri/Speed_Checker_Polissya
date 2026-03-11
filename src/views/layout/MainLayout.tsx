@@ -12,12 +12,10 @@ export const MainLayout = ({ children, currentTab, onSwitchTab, ...props }: any)
     const FOOTER_HEIGHT = 92 + insets.bottom;
 
     const handleSwitch = (tab: string) => {
-        // Якщо це один з інструментів, що відкриваються поверх Home
         if (['SPEEDCHECK', 'BLUETOOTH', 'TIMER'].includes(tab)) {
             setActiveTool(tab);
-            onSwitchTab('HOME'); // Футер підсвітить HOME (або центральну кнопку для SPEEDCHECK)
+            onSwitchTab('HOME');
         } else {
-            // Якщо це звичайний таб
             setActiveTool(null);
             onSwitchTab(tab);
         }
@@ -33,7 +31,6 @@ export const MainLayout = ({ children, currentTab, onSwitchTab, ...props }: any)
                 <View className="flex-1" style={{ paddingBottom: FOOTER_HEIGHT }}>
                     {React.Children.map(children, child =>
                         React.isValidElement(child)
-                            // 🔥 Передаємо handleSwitch вниз, щоб екрани могли ним керувати
                             ? React.cloneElement(child as any, {
                                 externalTool: activeTool,
                                 setExternalTool: setActiveTool,
@@ -42,8 +39,6 @@ export const MainLayout = ({ children, currentTab, onSwitchTab, ...props }: any)
                             : child
                     )}
                 </View>
-
-                {/* Якщо activeTool === 'SPEEDCHECK', підсвічуємо центральну кнопку */}
                 <Footer
                     activeTab={currentTab}
                     onSwitch={handleSwitch as any}

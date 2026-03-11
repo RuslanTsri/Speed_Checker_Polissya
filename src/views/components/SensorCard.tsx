@@ -6,7 +6,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { formatTime } from '../../utils/time';
 
-// Градієнти підтягуємо під твою палітру
 const GRAD_ACTIVE = ['rgba(52, 211, 153, 0.12)', 'rgba(52, 211, 153, 0.03)'] as const;
 const GRAD_INACTIVE = ['rgba(28, 28, 30, 0.6)', 'rgba(10, 10, 10, 0.8)'] as const;
 const GRAD_LOST = ['rgba(248, 113, 113, 0.15)', 'rgba(248, 113, 113, 0.05)'] as const;
@@ -17,7 +16,6 @@ export const SensorCard = memo(({ item, optimizeForList = false }: { item: any, 
     const isActive = item.status === 'active';
     const isLost = item.status === 'timeout';
 
-    // Визначаємо стилі на основі статусу
     const currentGradient = isActive ? GRAD_ACTIVE : (isLost ? GRAD_LOST : GRAD_INACTIVE);
     const currentBg = isActive ? 'bg-surface-card' : (isLost ? 'bg-status-error/10' : 'bg-surface-card/80');
     const currentBorder = isActive ? 'border-status-success/40 shadow-lg shadow-status-success/10' : (isLost ? 'border-status-error/40 shadow-lg shadow-status-error/10' : 'border-surface-border');
@@ -25,7 +23,6 @@ export const SensorCard = memo(({ item, optimizeForList = false }: { item: any, 
 
     return (
         <View className={`mb-3 rounded-3xl overflow-hidden border ${currentBorder} min-h-[85px]`}>
-            {/* ФОНОВІ ЕФЕКТИ */}
             {!isAndroid ? (
                 <>
                     <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
@@ -40,7 +37,6 @@ export const SensorCard = memo(({ item, optimizeForList = false }: { item: any, 
             )}
 
             <View className="p-4">
-                {/* ВЕРХНЯ ЧАСТИНА: ІКОНКА ТА НАЗВА */}
                 <View className="flex-row justify-between items-center mb-4">
                     <View className="flex-row items-center gap-3">
                         <View className={`w-9 h-9 rounded-2xl items-center justify-center border ${isActive ? 'bg-status-success/20 border-status-success/50' : (isLost ? 'bg-status-error/20 border-status-error/50' : 'bg-surface-bg border-surface-border')}`}>
@@ -55,11 +51,9 @@ export const SensorCard = memo(({ item, optimizeForList = false }: { item: any, 
                         </Text>
                     </View>
 
-                    {/* СТАТУСНИЙ ТОЧКОВИЙ ІНДИКАТОР */}
                     <View className={`w-2 h-2 rounded-full ${dotColor}`} />
                 </View>
 
-                {/* НИЖНЯ ЧАСТИНА: RSSI ТА ЧАС ТРИГЕРА */}
                 <View className="flex-row justify-between items-end">
                     <View className="flex-row items-center pb-1 gap-1.5">
                         <Feather name="wifi" size={14} color={isLost ? "#f87171" : "#717171"} />

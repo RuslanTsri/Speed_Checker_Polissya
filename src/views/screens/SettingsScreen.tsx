@@ -3,7 +3,6 @@ import { View, Text, ScrollView, Image, ActivityIndicator, TouchableOpacity, Pre
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
-// Компоненти
 import { AppModal } from '../components/AppModal';
 import { useSettingsScreen } from '../../hooks/useSettingsScreen';
 import { Switch } from '../components/ui/Switch';
@@ -11,10 +10,8 @@ import { Mod, SettingsRow } from "../components/ui/mods";
 import { Button } from '../components/ui/Button';
 import { TextField } from '../components/ui/TextField';
 
-// 🔥 Імпортуємо наш новий екран (перевір, щоб шлях співпадав з тим, де ти його створив)
 import SupportScreen from './SupportScreen';
 
-// Іконки
 import {
     NotificationsIcon, NotificationsIconActive,
     BleIcon, BleIconActive,
@@ -23,7 +20,6 @@ import {
     ArrowIcon, ArrowIconActive
 } from '../../../assets/icons';
 
-// 🎨 Пресети Аватарок
 const PRESET_AVATARS = [
     'https://img.icons8.com/color/480/wolf.png',
     'https://img.icons8.com/color/480/coach.png',
@@ -37,7 +33,6 @@ const PRESET_AVATARS = [
 export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBluetooth }: any) {
     const { t } = useTranslation();
 
-    // 🔥 1. Створюємо стейт, який знає, чи відкритий зараз екран підтримки
     const [isSupportVisible, setSupportVisible] = useState(false);
 
     const {
@@ -58,13 +53,10 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
         );
     }
 
-    // 🔥 3. Магія тут: якщо стейт true, ми ВЗАГАЛІ не рендеримо налаштування,
-    // а показуємо зверху екран підтримки. Коли там натиснуть "назад", стейт стане false.
     if (isSupportVisible) {
         return <SupportScreen onBack={() => setSupportVisible(false)} />;
     }
 
-    // Якщо isSupportVisible === false, показується звичайний екран налаштувань:
     return (
         <View className="flex-1 pt-4 relative">
             {/* Header */}
@@ -79,7 +71,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-                {/* 1. КАРТКА ПРОФІЛЮ */}
                 <Mod
                     title={userProfile.name}
                     subtitle={userProfile.role}
@@ -105,7 +96,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     className="mb-8"
                 />
 
-                {/* 2. ОБЛАДНАННЯ */}
                 <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
                     {t('screens.settings.section_equipment')}
                 </Text>
@@ -120,7 +110,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     />
                 </Mod>
 
-                {/* 3. СИСТЕМА */}
                 <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
                     {t('screens.settings.section_system')}
                 </Text>
@@ -145,7 +134,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     />
                 </Mod>
 
-                {/* 4. ІНШЕ */}
                 <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
                     {t('screens.settings.section_other')}
                 </Text>
@@ -159,8 +147,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     />
                 </Mod>
             </ScrollView>
-
-            {/* МОДАЛКА РЕДАГУВАННЯ */}
             <AppModal
                 type="bottom"
                 visible={isEditModalVisible}
@@ -169,8 +155,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
             >
                 <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
                     <View className="items-center mb-6 mt-2">
-
-                        {/* Аватар */}
                         <View className="w-24 h-24 rounded-3xl border-2 border-brand-orange items-center justify-center overflow-hidden mb-6 shadow-xl bg-surface-card">
                             <Image source={{ uri: tempAvatar || userProfile.avatar }} className="w-full h-full" />
                         </View>
@@ -179,7 +163,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                             {t('screens.settings.edit_avatar') || "ОБРАТИ АВАТАР"}
                         </Text>
 
-                        {/* Вибір аватарів */}
                         <View className="flex-row flex-wrap justify-center mb-8">
                             {PRESET_AVATARS.map((avatarUrl, index) => (
                                 <TouchableOpacity
@@ -195,7 +178,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                             ))}
                         </View>
 
-                        {/* Поля вводу та кнопка */}
                         <View className="w-full gap-y-4">
                             <TextField
                                 label={t('screens.settings.edit_name_label')}

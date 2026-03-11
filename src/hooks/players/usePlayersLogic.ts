@@ -14,37 +14,30 @@ export interface UITeam extends Team {
 
 export const usePlayersLogic = () => {
     const { t } = useTranslation();
-    // --- ДАНІ ---
     const [teams, setTeams] = useState<UITeam[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const { downloadPlayersTemplate, pickAndParseCSV } = useCSV();
 
-    // --- НАВІГАЦІЯ ---
     const [selectedTeam, setSelectedTeam] = useState<UITeam | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
-    // --- СТАНИ ДЛЯ КОМАНД ---
     const [isAddTeamModalVisible, setAddTeamModalVisible] = useState(false);
     const [newTeamName, setNewTeamName] = useState('');
     const [isEditTeamModalVisible, setEditTeamModalVisible] = useState(false);
     const [editingTeamName, setEditingTeamName] = useState('');
     const [isDeleteTeamModalVisible, setDeleteTeamModalVisible] = useState(false);
 
-    // --- СТАНИ ДЛЯ ГРАВЦІВ (СТВОРЕННЯ) ---
     const [isAddPlayerOptionsVisible, setAddPlayerOptionsVisible] = useState(false);
     const [isAddManualVisible, setAddManualVisible] = useState(false);
     const [newPlayerName, setNewPlayerName] = useState('');
 
-    // --- СТАНИ ДЛЯ ГРАВЦІВ (РЕДАГУВАННЯ/ВИДАЛЕННЯ) ---
     const [isEditPlayerModalVisible, setEditPlayerModalVisible] = useState(false);
     const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
     const [editingPlayerName, setEditingPlayerName] = useState('');
     const [isDeletePlayerModalVisible, setDeletePlayerModalVisible] = useState(false);
     const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
-
-    // --- ІМПОРТ ---
     const [isImportVisibleState, setImportVisibleState] = useState(false);
     const [isDropdownVisible, setDropdownVisible] = useState(false);
     const [importedPlayers, setImportedPlayers] = useState<CSVPlayer[]>([]);

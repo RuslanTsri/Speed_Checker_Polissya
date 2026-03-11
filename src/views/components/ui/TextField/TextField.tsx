@@ -24,7 +24,6 @@ export const TextField = ({
     else if (isFocused) state = 'focused';
     else if (isTyped) state = 'typed';
 
-    // Мапінг стилів на токени
     const containerBase = "flex-row items-center px-4 h-[56px] rounded-2xl border transition-all";
     const containerStyles = {
         focused: `${containerBase} border-brand-orange bg-surface-card`,

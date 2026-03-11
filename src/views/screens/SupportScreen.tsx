@@ -1,21 +1,20 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, TouchableOpacity, Animated, LayoutAnimation, UIManager, Platform, Linking } from 'react-native';
+import { View, Text, ScrollView, Pressable, TouchableOpacity, Animated, LayoutAnimation, UIManager, Platform, Linking, Image } from 'react-native'; // 🔥 Додали Image
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
-// Твої UI компоненти
 import { Mod, SettingsRow } from '../components/ui/mods';
 import { ArrowIcon, ArrowIconActive } from '../../../assets/icons';
 
-// 🔥 Наш хук
+import InHubLogo from '../../../assets/InHub_logo_white.svg';
+import PolissyaLogo from '../../../assets/Polissya_icon.svg';
+
 import { useSupportScreen } from '../../hooks/useSupportScreen';
 
-// Обов'язкове налаштування для Android, щоб працювала плавна зміна висоти
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// 🔥 Компонент одного питання з ідеальною анімацією
 const FaqItem = ({ faq, isExpanded, onPress, isLast }: any) => {
     const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
 
@@ -84,7 +83,6 @@ export default function SupportScreen({ onBack }: { onBack: () => void }) {
     return (
         <View className="flex-1 pt-4 relative">
 
-            {/* Header */}
             <View className="px-4 mb-6 flex-row items-center">
                 <Pressable
                     onPress={onBack}
@@ -105,7 +103,6 @@ export default function SupportScreen({ onBack }: { onBack: () => void }) {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-                {/* БЛОК FAQ */}
                 <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
                     {t('screens.support.faq_section')}
                 </Text>
@@ -122,7 +119,6 @@ export default function SupportScreen({ onBack }: { onBack: () => void }) {
                     ))}
                 </Mod>
 
-                {/* БЛОК КОНТАКТІВ */}
                 <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
                     {t('screens.support.contact_section')}
                 </Text>
@@ -136,17 +132,33 @@ export default function SupportScreen({ onBack }: { onBack: () => void }) {
                         isLast
                     />
                 </Mod>
-                <SettingsRow
-                    title={t('screens.support.privacy_policy')}
-                    icon={<Feather name="shield" size={22} color="#A3A3A3" />}
-                    onPress={() => Linking.openURL('https://bejewelled-sorbet-f2399d.netlify.app')}
-                    isLast // Тепер він останній, щоб не було зайвої лінії знизу
-                />
-                {/* Підвал з версією */}
-                <View className="items-center mt-8 opacity-50">
-                    <Text className="text-text-sub font-unbounded text-xs">Tempo Metrics {appVersion}</Text>
-                    <Text className="text-surface-border font-evolventa text-xs mt-1">Made in ZHTU</Text>
+
+                <View className="mt-4 bg-surface-card rounded-3xl border border-surface-border overflow-hidden">
+                    <SettingsRow
+                        title={t('screens.support.privacy_policy')}
+                        icon={<Feather name="shield" size={22} color="#A3A3A3" />}
+                        onPress={() => Linking.openURL('https://bejewelled-sorbet-f2399d.netlify.app')}
+                        isLast
+                    />
                 </View>
+
+                <View className="items-center mt-12 mb-6 opacity-40">
+
+                    <Text className="text-text-sub font-unbounded text-[10px] tracking-wider">
+                        TEMPO METRICS {appVersion}
+                    </Text>
+                    <View className="flex-row items-center justify-center gap-6 mb-5">
+                        <InHubLogo width={70} height={24} />
+
+                        <Image
+                            source={require('../../../assets/tempometrics_white_nobackground.png')}
+                            style={{ width: 45, height: 45, resizeMode: 'contain' }}
+                        />
+
+                        <PolissyaLogo width={40} height={40} />
+                    </View>
+                </View>
+
             </ScrollView>
         </View>
     );

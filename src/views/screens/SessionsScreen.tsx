@@ -6,13 +6,12 @@ import SessionsTeam from '../tools/SessionsTeam';
 import SessionDetails from '../tools/SessionDetails';
 import { useSessionsManager, SessionTabType } from '../../hooks/sessions/useSessionsManager';
 
-// 🔥 Наші UI Компоненти
 import { HeaderTabs } from '../components/ui/tabs';
 import { SearchInput } from '../components/ui/SearchInput';
 
 interface SessionsScreenProps {
     initialTab?: SessionTabType;
-    openSession?: any; // Типізуй згідно зі своєю моделлю даних
+    openSession?: any;
 }
 
 export default function SessionsScreen({ initialTab, openSession }: SessionsScreenProps) {
@@ -22,7 +21,6 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
         selectedTeamSession, setSelectedTeamSession, clearSelection
     } = useSessionsManager(initialTab);
 
-    // Синхронізація табів при зміні пропсів
     useEffect(() => {
         if (initialTab) setActiveTab(initialTab);
     }, [initialTab]);
@@ -38,7 +36,6 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
         return <SessionDetails session={selectedTeamSession} onBack={clearSelection} />;
     }
 
-    // Конфіг для табів (використовуємо твої переклади)
     const tabs = [
         { id: 'TEAM', label: t('screens.sessions.tab_team') as string },
         { id: 'GENERAL', label: t('screens.sessions.tab_general') as string }
@@ -46,14 +43,12 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
 
     return (
         <View className="flex-1 pt-4">
-            {/* Заголовок: h3 + font-unbounded */}
             <View className="items-center px-4 mb-4">
                 <Text className="text-h3 font-bold text-text-main font-unbounded">
                     {t('screens.sessions.title') as string}
                 </Text>
             </View>
 
-            {/* Таби: виправляємо помилку TS2322 за допомогою приведення типу */}
             <View className="px-4 mb-5">
                 <HeaderTabs
                     tabs={tabs}
@@ -62,7 +57,6 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
                 />
             </View>
 
-            {/* Пошук: наш преміальний SearchInput */}
             <View className="px-4 mb-6">
                 <SearchInput
                     value={searchQuery}
@@ -71,7 +65,6 @@ export default function SessionsScreen({ initialTab, openSession }: SessionsScre
                 />
             </View>
 
-            {/* Контентна частина: відображаємо потрібний тул */}
             {activeTab === 'TEAM' ? (
                 <SessionsTeam
                     searchQuery={searchQuery}

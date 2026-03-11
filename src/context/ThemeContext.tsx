@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { storage } from '../lib/storage'; // твій сторедж
+import { storage } from '../lib/storage';
 
 interface ThemeContextType {
     isDark: boolean;
@@ -8,15 +8,13 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-    isDark: true, // За замовчуванням темна, бо це спорт-додаток
+    isDark: true,
     toggleTheme: () => {},
 });
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-    // Тримаємо стейт теми тут
     const [isDark, setIsDark] = useState(true);
 
-    // При першому запуску дістаємо збережену тему з пам'яті
     useEffect(() => {
         const loadTheme = async () => {
             const savedTheme = await storage.getItem('app_theme');
@@ -27,7 +25,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         loadTheme();
     }, []);
 
-    // Функція для зміни теми і збереження
     const toggleTheme = async (value: boolean) => {
         setIsDark(value);
         await storage.setItem('app_theme', value ? 'dark' : 'light');
@@ -40,5 +37,4 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-// Зручний хук для використання на будь-якому екрані
 export const useTheme = () => useContext(ThemeContext);

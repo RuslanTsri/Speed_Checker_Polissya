@@ -9,7 +9,6 @@ const TAG = '[BLE-DEBUG] 🔵';
 let globalBleManager: any = null;
 
 export const useTrainingBle = () => {
-    // 🔥 Підключаємо обидва словники
     const { t } = useTranslation();
 
     // --- СТАН (STATE) ---
@@ -31,20 +30,17 @@ export const useTrainingBle = () => {
     const lastPingedSensorId = useRef<number>(0);
     const rxBuffer = useRef<string>('');
     const isIntentionalDisconnect = useRef<boolean>(false);
-    // МИТТЄВА ПАМ'ЯТЬ ДЛЯ ЗАХИСТУ ВІД ЗАТРИМОК REACT
     const stateRef = useRef<TrainingState>('idle');
     const sensorsRef = useRef<SensorInfo[]>([]);
     const sessionRef = useRef<TrainingSession | null>(null);
     const deviceRef = useRef<any>(null);
     const lastSeenRef = useRef<Record<number, number>>({});
 
-    // --- СИНХРОНІЗАЦІЯ ---
     useEffect(() => {
         if (stateRef.current !== state) console.log(`${TAG} UI Стейт змінився: ${stateRef.current} -> ${state}`);
     }, [state]);
     useEffect(() => { deviceRef.current = device; }, [device]);
 
-    // --- ІНІЦІАЛІЗАЦІЯ BLE ---
     useEffect(() => {
         if (Platform.OS !== 'web') {
             const BLE = require('@sfourdrinier/react-native-ble-plx');
@@ -59,7 +55,6 @@ export const useTrainingBle = () => {
         };
     }, []);
 
-    // 🔥 ЗАПИТ ДОЗВОЛІВ (PERMISSIONS)
     const requestPermissions = async (): Promise<boolean> => {
         if (Platform.OS === 'android') {
             const apiLevel = parseInt(Platform.Version.toString(), 10);
@@ -159,7 +154,7 @@ export const useTrainingBle = () => {
         }
     };
 
-    // 🔥 WATCHDOG
+    //WATCHDOG
     useEffect(() => {
         if (!connected) return;
 
@@ -276,7 +271,6 @@ export const useTrainingBle = () => {
                         sensorsRef.current = newSensors;
                         setSensors(newSensors);
                     }
-                    // 🔥 Локалізація з параметрами
                     setPingProgress(data.assigned_id === 0
                         ? t('screens.ble.status_master_init')
                         : t('screens.ble.status_sensor_found', { id: data.assigned_id }));
@@ -291,7 +285,6 @@ export const useTrainingBle = () => {
                     sensorsRef.current = newSensors;
                     setSensors([...newSensors]);
 
-                    // 🔥 Локалізація з параметрами
                     setPingProgress(data.sensor === 0
                         ? t('screens.ble.status_master_ok')
                         : t('screens.ble.status_sensor_ok', { id: data.sensor }));
@@ -440,7 +433,7 @@ export const useTrainingBle = () => {
 
                 stateRef.current = 'discovering';
                 setState('discovering');
-                setPingProgress(t('screens.ble.status_checking')); // 🔥 Локалізація
+                setPingProgress(t('screens.ble.status_checking'));
                 sendCommand({ type: 22 });
                 if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
                 pingTimeoutRef.current = setTimeout(() => {
@@ -482,7 +475,7 @@ export const useTrainingBle = () => {
 
         finishInitialization: () => {
             if (sensorsRef.current.length < 2) {
-                Alert.alert(t('screens.common.error'), t('logs.errors.ble.min_sensors')); // 🔥 Локалізація
+                Alert.alert(t('screens.common.error'), t('logs.errors.ble.min_sensors'));
                 return;
             }
             sendCommand({ type: 23, sensors: sensorsRef.current.length - 1 });
@@ -501,7 +494,7 @@ export const useTrainingBle = () => {
             sendCommand({ type: 21 });
             stateRef.current = 'finished';
             setState('finished');
-            setPingProgress(t('screens.ble.status_stopped')); // 🔥 Локалізація
+            setPingProgress(t('screens.ble.status_stopped'));
         },
 
         resetSession: () => {

@@ -13,16 +13,13 @@ export type AppTab = TabType | 'TOOLS' | 'SETTINGS';
 const PIN_SALT = "tempo_metrics_secure_v1";
 
 export const useAppLogic = () => {
-    // 🔥 Підключаємо обидва словники
     const { t } = useTranslation();
 
     const { profile, refreshProfile, logout } = useUser();
 
-    // --- NAV STATE ---
     const [currentTab, setCurrentTab] = useState<AppTab>('HOME');
     const [sessionsInitialTab, setSessionsInitialTab] = useState<SessionTabType | undefined>(undefined);
 
-    // --- PIN STATE ---
     const [isPinModalVisible, setPinModalVisible] = useState(false);
     const [oldPin, setOldPin] = useState('');
     const [newPin, setNewPin] = useState('');
@@ -32,7 +29,6 @@ export const useAppLogic = () => {
     const [pinError, setPinError] = useState<string | null>(null);
 
     const handleLogout = () => {
-        // 🔥 Локалізований Alert
         Alert.alert(
             t('screens.app.logout_title'),
             t('screens.app.logout_msg'),
@@ -61,7 +57,6 @@ export const useAppLogic = () => {
         setCurrentTab(tab);
     };
 
-    // --- PIN ACTIONS ---
     const handleOpenPinModal = () => {
         setOldPin('');
         setNewPin('');
@@ -107,14 +102,12 @@ export const useAppLogic = () => {
         setIsPinLoading(true);
 
         try {
-            // 1. Оновлюємо ПАРОЛЬ в системі аутентифікації Supabase
             const { error: authError } = await supabase.auth.updateUser({
                 password: `${newPin}${PIN_SALT}`
             });
 
             if (authError) throw authError;
 
-            // 2. Оновлюємо ПІН у таблиці профілів
             const { error: profileError } = await authService.updateCurrentProfile({
                 pin_code: newPin
             });
@@ -127,7 +120,6 @@ export const useAppLogic = () => {
             Keyboard.dismiss();
             setPinModalVisible(false);
 
-            // 🔥 Локалізований Alert про успіх
             Alert.alert(
                 t('screens.app.pin_success_title'),
                 t('screens.app.pin_success_msg')
@@ -136,7 +128,6 @@ export const useAppLogic = () => {
         } catch (e: any) {
             console.error("❌ PIN Update Error:", e.message);
 
-            // 🔥 Перехоплюємо сирі помилки Supabase
             let finalErrorMsg = t('logs.errors.app.pin_update_failed') as string;
             if (e.message) {
                 const msg = e.message.toLowerCase();

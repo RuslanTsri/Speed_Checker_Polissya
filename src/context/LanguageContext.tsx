@@ -26,7 +26,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
                 const savedLang = await storage.getItem(LANG_KEY);
                 if (savedLang) {
                     setLanguage(savedLang);
-                    await i18n.changeLanguage(savedLang); // Встановлюємо мову в i18next
+                    await i18n.changeLanguage(savedLang);
                 } else {
                     setLanguage(i18n.language || 'uk');
                 }
@@ -42,8 +42,8 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
 
     const changeLanguage = async (newLang: string) => {
         setLanguage(newLang);
-        await i18n.changeLanguage(newLang); // Змінюємо мову локалізації
-        await storage.setItem(LANG_KEY, newLang); // Зберігаємо в пам'ять
+        await i18n.changeLanguage(newLang);
+        await storage.setItem(LANG_KEY, newLang);
     };
 
     return (

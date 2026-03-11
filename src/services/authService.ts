@@ -60,7 +60,6 @@ class AuthService extends BaseService<Profile> {
 
     async getCurrentProfile(): Promise<ServiceResponse<Profile>> {
         console.log("🔍 [AuthService] Запит профілю...");
-        // 🔥 ВИПРАВЛЕНО: Використовуємо getSession замість getUser
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session?.user) {

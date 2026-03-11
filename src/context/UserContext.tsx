@@ -21,7 +21,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchProfile = async (userId: string) => {
-        // Захист від undefined
         if (!userId) return;
 
         console.log("👤 [UserContext] Завантажуємо профіль...");
@@ -43,12 +42,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("🚀 [UserContext] Початок процесу виходу...");
         setIsLoading(true);
         try {
-            // Спробуємо вийти через Supabase
             const { error } = await authService.signOut();
             if (error) throw error;
         } catch (error: any) {
-            // Навіть якщо Supabase видасть помилку (наприклад, токен вже невалідний),
-            // ми все одно маємо очистити локальний стейт!
             console.warn("⚠️ [UserContext] Помилка при signOut (це нормально, якщо токен протух):", error.message);
         } finally {
             setUser(null);
@@ -108,7 +104,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log(`📣 [Auth Event]: ${event}`);
 
-            // 1. Якщо токен оновився — просто логуємо
             if (event === 'TOKEN_REFRESHED') {
                 console.log('🔄 Токен оновлено');
             }

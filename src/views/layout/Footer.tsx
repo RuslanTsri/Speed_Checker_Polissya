@@ -62,7 +62,6 @@ export const Footer = ({ activeTab, onSwitch, isToolActive = false }: FooterProp
 
     return (
         <View className="absolute bottom-0 left-0 right-0 w-full">
-            {/* --- ШАР ФОНУ (SVG + FILLER) --- */}
             <View style={StyleSheet.absoluteFill}>
                 <Svg width={SCREEN_WIDTH} height={92} viewBox="0 0 375 92" fill="none" preserveAspectRatio="none">
                     <Path
@@ -77,25 +76,21 @@ export const Footer = ({ activeTab, onSwitch, isToolActive = false }: FooterProp
                     </Defs>
                 </Svg>
 
-                {/* 🔥 ФІЛЛЕР: заповнює залишок простору ПІД 92px кольором кінця градієнта */}
                 <View
                     style={{
-                        flex: 1, // Дозволяє розтягнутися до самого низу
+                        flex: 1,
                         backgroundColor: '#1C1C1E',
-                        marginTop: -1 // Прибирає мікро-щілину між SVG та філлером
+                        marginTop: -1
                     }}
                 />
             </View>
 
-            {/* --- ШАР КОНТЕНТУ (ІКОНКИ) --- */}
-            {/* Тут фіксована висота, іконки не розтягуються, а залишаються на місці */}
             <View className="flex-row justify-between items-start h-[92px] px-4">
                 <View className="flex-row">
                     {renderTab(tabs[0])}
                     {renderTab(tabs[1])}
                 </View>
 
-                {/* Центральна кнопка */}
                 <View className="items-center" style={{ marginTop: -25 }}>
                     <Primary
                         variant="gradient"
@@ -110,8 +105,6 @@ export const Footer = ({ activeTab, onSwitch, isToolActive = false }: FooterProp
                 </View>
             </View>
 
-            {/* --- ВІДСТУП ДЛЯ SAFE AREA (Навігаційна панель) --- */}
-            {/* Саме цей невидимий блок "роздуває" весь футер на висоту системних кнопок Android та iOS */}
             <View style={{ height: insets.bottom }} />
 
         </View>

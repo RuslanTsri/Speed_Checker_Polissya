@@ -3,7 +3,6 @@ import { Pressable, View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StartIcon, StartIconActive } from '../../../../../assets/icons/';
 
-// 🔥 Константи градієнта з твого конфігу
 const START_GRADIENT = ['#CA4402', '#FF6D00', '#FFF958'] as const;
 
 interface PrimaryProps {
@@ -35,7 +34,6 @@ export const Primary = ({ onPress, variant = 'gradient', isActive = false, class
                             style={StyleSheet.absoluteFill}
                         />
                     ) : (
-                        // Використовуємо твій surface-card для темного варіанту
                         <View
                             style={StyleSheet.absoluteFill}
                             className="bg-white/5 border border-white/10"

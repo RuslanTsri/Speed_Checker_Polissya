@@ -39,7 +39,6 @@ export class BaseService<T extends { id?: string }> {
     async create(item: Partial<T>): Promise<ServiceResponse<T>> {
         let validData = item;
 
-        // 🔥 ВАЖЛИВО: Беремо очищені дані result.data (зайве сміття відрізано)
         if (this.schema) {
             const result = this.schema.safeParse(item);
             if (!result.success) return { data: null, error: new Error(result.error.issues[0].message) };

@@ -27,8 +27,6 @@ export const RatingMod = ({
                               optimizeForList = false
                           }: RatingModProps) => {
     const isAndroid = Platform.OS === 'android' && optimizeForList;
-
-    // 🔥 Перевірка на одне слово для імені в рейтингу
     const isSingleWordName = name ? !name.trim().includes(' ') : false;
 
     return (

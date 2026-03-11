@@ -24,7 +24,6 @@ export const useTeamsList = (searchQuery: string) => {
         loadTeams();
     }, []);
 
-    // 🔥 АВТО-ОНОВЛЕННЯ ПІСЛЯ СИНХРОНІЗАЦІЇ
     useEffect(() => {
         const unsubscribe = syncManager.subscribe(() => {
             if (!syncManager.getIsSyncing()) {

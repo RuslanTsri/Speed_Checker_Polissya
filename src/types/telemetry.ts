@@ -15,8 +15,8 @@ export interface TrainingSession {
     startTime: number;
     triggers: {
         sensorId: number;
-        time: number;  // Час у мілісекундах від старту
-        split: number; // Час від попереднього датчика
+        time: number;
+        split: number;
     }[];
     totalTime?: number;
 }

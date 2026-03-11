@@ -141,7 +141,6 @@ class ResultsService extends BaseService<Result> {
 
         if (state.isConnected) {
             try {
-                // JOIN: Тягнемо результати + імена гравців + дистанцію з сесії
                 const { data, error } = await supabase
                     .from(this.tableName)
                     .select(`
@@ -162,7 +161,7 @@ class ResultsService extends BaseService<Result> {
                         time: Number(item.full_time),
                         splits: item.gates,
                         testType: item.sessions?.test_type || 'STATIC',
-                        distance: item.sessions?.total_distance || 30, // 🔥 ДОДАЛИ ДИСТАНЦІЮ
+                        distance: item.sessions?.total_distance || 30,
                         date: new Date(item.created_at).toLocaleDateString(),
                         round: 0
                     }));
@@ -181,7 +180,6 @@ class ResultsService extends BaseService<Result> {
             }
         }
 
-        // Беремо результати з черги SyncManager (офлайн)
         const pendingSessions = syncManager.getPendingItems('sessions').filter((s: any) => s.team_id === teamId);
         const pendingSessionIds = pendingSessions.map((s: any) => s.id);
         const pendingResults = syncManager.getPendingItems('results')

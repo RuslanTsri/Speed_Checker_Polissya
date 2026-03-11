@@ -10,7 +10,6 @@ export const useTeamManager = () => {
     const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
     const [isAddModalVisible, setAddModalVisible] = useState(false);
 
-    // Тут в майбутньому буде запит до API або Redux
     const players = DUMMY_PLAYERS_DATA;
 
     const togglePlayerSelection = (id: string) => {

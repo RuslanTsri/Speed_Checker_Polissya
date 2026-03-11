@@ -5,7 +5,7 @@ declare module 'i18next' {
     interface CustomTypeOptions {
         defaultNS: 'translation';
         resources: {
-            translation: typeof uk; // TS вирахує структуру з об'єкта в index.ts
+            translation: typeof uk;
         };
     }
 }

@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 import NetInfo from '@react-native-community/netinfo';
 import { syncManager } from './SyncManager';
 
-// Замінили .uuid() на .string(), щоб уникнути Zod-помилок, хоча наша ліба і так генерує UUID
 export const PlayerSchema = z.object({
     id: z.string().optional(),
     name: z.string().min(1, "Ім'я гравця обов'язкове"),
@@ -40,7 +39,6 @@ class PlayerService extends BaseService<Player> {
 
         let serverPlayers: any[] = [];
 
-        // 2. Онлайн запит
         if (state.isConnected) {
             try {
                 console.log("🌐 [PlayerService] Онлайн, тягнемо з бази...");
@@ -60,14 +58,12 @@ class PlayerService extends BaseService<Player> {
             }
         }
 
-        // 3. Офлайн запит з кешу
         if (!state.isConnected || serverPlayers.length === 0) {
             console.log("📴 [PlayerService] Офлайн, читаємо з кешу");
             // @ts-ignore
             serverPlayers = await this.getFromCache(cacheKey) || [];
         }
 
-        // 4. Злиття без дублікатів
          const deletedIds = syncManager.getDeletedIds('players');
 
         const combined = [...pendingPlayers, ...serverPlayers];

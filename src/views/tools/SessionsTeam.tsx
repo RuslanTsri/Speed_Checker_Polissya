@@ -45,7 +45,6 @@ export default function SessionsTeam({ searchQuery, onSelectSession }: Props) {
                     teamName={item.teamName}
                     tags={
                         <View className="flex-row items-center gap-2 mt-1">
-                            {/* Бейдж: Кількість гравців */}
                             <View className="flex-row items-center px-2 py-1 rounded-md border border-surface-border bg-surface-card">
                                 <Feather name="users" size={10} color="#A3A3A3" style={{ marginRight: 6 }} />
                                 <Text className="text-[10px] text-text-sub font-evolventa-bold">
@@ -53,7 +52,6 @@ export default function SessionsTeam({ searchQuery, onSelectSession }: Props) {
                                 </Text>
                             </View>
 
-                            {/* Бейдж: Статус даних (Є дані / Немає даних) */}
                             {item.hasResults ? (
                                 <View className="flex-row items-center px-2 py-1 rounded-md border border-status-success/20 bg-status-success/10">
                                     <Feather name="bar-chart-2" size={10} color="#34d399" style={{ marginRight: 4 }} />

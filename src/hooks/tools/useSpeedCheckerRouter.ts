@@ -31,12 +31,10 @@ export const useSpeedCheckerRouter = () => {
     const goToModeSelect = () => setCurrentScreen('MODE_SELECT');
 
     const handleModeSelect = (mode: 'DEVICE' | 'MANUAL', type: 'QUICK' | 'TEAM') => {
-        // 🔥 ПРИМУСОВЕ СКИДАННЯ КОНФІГУРАЦІЇ ПРИ ЗМІНІ РЕЖИМУ
         setTestConfig(prev => ({
             ...prev,
             mode,
             type,
-            // Скидаємо все, що стосується конкретного забігу
             distance: 30,
             splitPositions: [],
             selectedPlayers: [],
@@ -57,11 +55,10 @@ export const useSpeedCheckerRouter = () => {
     };
 
     const handleStartTest = ({ distance, splitPositions }: { distance: number, splitPositions?: number[] }) => {
-        // Завжди оновлюємо і distance, і splitPositions, незалежно від типу тесту
         setTestConfig(prev => ({
             ...prev,
             distance,
-            splitPositions: splitPositions || [] // гарантуємо, що масив завжди є
+            splitPositions: splitPositions || []
         }));
         setCurrentScreen('TEST_RUN');
     };

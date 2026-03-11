@@ -52,7 +52,6 @@ class SyncManager {
         await this.persistQueue();
         console.log(`📥 [SyncManager] Queued ${type} for ${tableName} (ID: ${payload.id})`);
 
-        // Викликаємо без await, щоб не блокувати UI
         this.processQueue();
         return job;
     }
@@ -68,11 +67,10 @@ class SyncManager {
     async processQueue() {
         if (this.isSyncing || this.queue.length === 0) return;
 
-        this.isSyncing = true; // Закриваємо замок відразу
+        this.isSyncing = true;
         this.notifyListeners();
 
         try {
-            // Перевіряємо інтернет
             const state = await NetInfo.fetch();
             if (!state.isConnected) {
                 this.isSyncing = false;
@@ -82,7 +80,6 @@ class SyncManager {
 
             console.log(`🔄 [SyncManager] Syncing started... (${this.queue.length} jobs)`);
 
-            // Це набагато надійніше за копіювання масиву
             while (this.queue.length > 0) {
                 // Беремо найперше завдання (FIFO)
                 const job = this.queue[0];
@@ -104,25 +101,22 @@ class SyncManager {
 
                     if (res?.error) {
                         const code = res.error.code;
-                        // 23505 - Duplicate key (вже є в базі)
                         if (code === '23505' || code === '42501' || code === '23503' || code === 'PGRST204') {
                             console.log(`⚠️ [SyncManager] Job ${job.id} skipped due to error code: ${code}`);
                             this.queue.shift(); // Видаляємо з черги як "оброблене"
                         } else {
-                            // Серйозна помилка (мережева) - зупиняємо цикл, спробуємо пізніше
                             console.log(`❌ [SyncManager] Network/Server error, stopping. Code: ${code}`);
                             break;
                         }
                     } else {
                         console.log(`✅ [SyncManager] Success: ${job.type} -> ${job.tableName}`);
-                        this.queue.shift(); // Успішно відправлено - видаляємо
+                        this.queue.shift();
                     }
                 } catch (err) {
                     console.error(`❌ [SyncManager] Fatal job error:`, err);
-                    break; // Перериваємо цикл при невідомій помилці
+                    break;
                 }
 
-                // Зберігаємо стан черги після кожного успішного кроку
                 await this.persistQueue();
             }
 

@@ -1,13 +1,10 @@
 const { withProjectBuildGradle } = require('@expo/config-plugins');
 
-// Зчитуємо змінну, яку передають наші скрипти з package.json
 const variant = process.env.APP_VARIANT;
 
-// Дефолтні значення
 let appName = "Tempo Metrics";
 let appIdentifier = "com.yourname.tempometrics";
 
-// Підставляємо потрібні імена та ідентифікатори залежно від версії
 if (variant === "development") {
   appName = "Tempo DEV";
   appIdentifier = "com.citye.scienceparkztu.tempometrics.dev";
@@ -81,7 +78,7 @@ export default {
       ]
     },
     plugins: [
-      withAndroidResolutionStrategy, // Підключаємо наш плагін
+      withAndroidResolutionStrategy,
       [
         "expo-build-properties",
         {
@@ -90,7 +87,7 @@ export default {
             targetSdkVersion: 35,
             buildToolsVersion: "35.0.0",
             kotlinVersion: "2.1.20"
-            // Блок configurations звідси прибрали, бо тепер за нього відповідає наш плагін вище
+
           }
         }
       ],

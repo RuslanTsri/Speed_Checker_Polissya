@@ -11,7 +11,6 @@ import { Mod } from '../components/ui/mods';
 import { Button } from '../components/ui/Button';
 import { StartIcon, StartIconActive, TeamsIcon, TeamsIconActive } from '../../../assets/icons';
 
-// 🔥 Додано onNavigateLayout
 export default function HomeScreen({ onNavigate, externalTool, setExternalTool, onNavigateLayout }: any) {
     const { t } = useTranslation();
     const {
@@ -20,26 +19,21 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
         goToPlayers, goToSessions, openRecentActivity,
     } = useHomeScreen(onNavigate);
 
-    // Синхронізація футера та внутрішнього стану HomeScreen
     React.useEffect(() => {
         if (externalTool && currentTool !== externalTool) {
-            // Якщо футер сказав відкрити тул - відкриваємо
             if (externalTool === 'SPEEDCHECK') openSpeedCheck();
             if (externalTool === 'BLUETOOTH') openBluetooth();
             if (externalTool === 'TIMER') openTimer();
         } else if (externalTool === null && currentTool !== null) {
-            // Якщо футер скинув тул (натиснули на звичайний таб) - закриваємо
             closeTool();
         }
     }, [externalTool]);
 
-    // Коли ми закриваємо тул зсередини екрана (кнопка Назад)
     const handleClose = () => {
         closeTool();
         if (setExternalTool) setExternalTool(null);
     };
 
-    // 🔥 Коли ми відкриваємо інструменти КНОПКАМИ НА ЕКРАНІ
     const handleOpenSpeedCheck = () => {
         if (onNavigateLayout) onNavigateLayout('SPEEDCHECK');
         else openSpeedCheck();
@@ -57,7 +51,6 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
 
     if (currentTool === 'TIMER') return <TimerTool onBack={handleClose} />;
 
-    // 🔥 Прокидаємо handleOpenBluetooth у SpeedCheckerTool (щоб він міг відкрити блютуз)
     if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} onOpenBluetooth={handleOpenBluetooth} />;
 
     if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={handleClose} />;
@@ -67,13 +60,11 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
 
     return (
         <ScrollView className="flex-1" contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-            {/* БЛОК СТАТУСУ */}
             <View className="mx-4 mt-2">
                 <Mod title={status.title} subtitle={status.desc}>
                     <View className="mt-2">
                         {connected ? (
                             <View className="gap-3">
-                                {/* ІНДИКАТОРИ ЛАЗЕРІВ (Без змін) */}
                                 <View className="flex-row items-center justify-center gap-3 mb-3">
                                     {Array.from({ length: displaySlotsCount }).map((_, idx) => {
                                         const gate = gateSensors[idx];
@@ -96,13 +87,11 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
                                         );
                                     })}
                                 </View>
-                                {/* 🔥 Використовуємо нові хендлери */}
                                 <Button variant="light" title={status.btnText} onPress={handleOpenBluetooth} className="w-full py-2.5" />
                                 <Button variant="outline" title={t('screens.home.stopwatch')} onPress={handleOpenTimer} icon={<Feather name="clock" size={14} color="#F5F5F5" />} className="w-full py-2.5" />
                             </View>
                         ) : (
                             <View className="flex-row gap-1.5">
-                                {/* 🔥 Використовуємо нові хендлери */}
                                 <Button variant="light" title={t('screens.home.status_btn_connect')} onPress={handleOpenBluetooth} icon={<Feather name="bluetooth" size={14} color="#0A0A0A" />} className="flex-1 py-2.5 px-0" style={{ fontSize: 10, letterSpacing: -0.5 }} />
                                 <Button variant="outline" title={t('screens.home.stopwatch')} onPress={handleOpenTimer} icon={<Feather name="clock" size={14} color="#F5F5F5" />} className="flex-1 py-2.5 px-0" style={{ fontSize: 10, letterSpacing: -0.5 }} />
                             </View>
@@ -111,12 +100,10 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
                 </Mod>
             </View>
 
-            {/* ШВИДКІ ДІЇ */}
             <View className="mx-4 mt-8 mb-2">
                 <Text className="text-text-sub text-caption tracking-widest uppercase mb-4 ml-2 font-evolventa-bold">
                     {t('screens.home.quick_actions')}
                 </Text>
-                {/* 🔥 Використовуємо новий хендлер */}
                 <Mod
                     title={t('screens.home.start_test')}
                     subtitle={t('screens.home.start_test_desc')}
@@ -131,7 +118,6 @@ export default function HomeScreen({ onNavigate, externalTool, setExternalTool, 
                 </View>
             </View>
 
-            {/* ОСТАННЯ АКТИВНІСТЬ (Без змін) */}
             <View className="mx-4 mt-6 mb-10">
                 <Text className="text-text-sub text-caption tracking-widest uppercase mb-4 ml-2 font-evolventa-bold">
                     {t('screens.home.recent_activity')}

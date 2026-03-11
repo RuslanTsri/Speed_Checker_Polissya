@@ -35,9 +35,7 @@ export default function SessionDetails({ session, onBack }: any) {
         }
     };
 
-    // 🔥 Розумний підрахунок: тепер знаходимо номер НАЙКРАЩОЇ спроби
     const displayedAttempts = useMemo(() => {
-        // Спочатку рахуємо хронологічні номери для ВСІХ забігів гравців
         const counts: Record<string, number> = {};
         const allWithNumbers = filteredAttempts.map(attempt => {
             counts[attempt.playerName] = (counts[attempt.playerName] || 0) + 1;
@@ -45,19 +43,15 @@ export default function SessionDetails({ session, onBack }: any) {
         });
 
         if (subTab === 'BEST') {
-            // Для вкладки BEST беремо відсортовані найкращі результати
             return sortedResults.map(playerResult => {
-                // Шукаємо саме той забіг (за унікальним ID), який став найкращим
                 const bestRun = allWithNumbers.find(a => a.id === playerResult.id);
                 return {
                     ...playerResult,
-                    // Додаємо точний номер цієї переможної спроби
                     bestAttemptNumber: bestRun ? bestRun.attemptNumber : 1
                 };
             });
         }
 
-        // Для вкладки ALL
         if (localAllDistance === 'ALL') return allWithNumbers;
         return allWithNumbers.filter(a => a.distance === localAllDistance);
     }, [subTab, sortedResults, filteredAttempts, localAllDistance]);
@@ -143,7 +137,6 @@ export default function SessionDetails({ session, onBack }: any) {
                         <RatingMod
                             rank={index + 1}
                             name={item.playerName}
-                            // 🔥 Тепер тут формат точно як в ALL: "Спроба X • YY м"
                             subtitle={
                                 <Text className="text-[10px] text-text-sub font-evolventa mt-0.5">
                                     {t('tools.sessions.attempt_number', { num: item.bestAttemptNumber, defaultValue: `Спроба ${item.bestAttemptNumber}` })}

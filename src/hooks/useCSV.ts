@@ -2,9 +2,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Alert, Platform } from 'react-native';
-import { useTranslation } from 'react-i18next'; // 🔥 Імпортуємо хук
+import { useTranslation } from 'react-i18next';
 
-// Хак для TypeScript, щоб не сварився на legacy
 const fs = FileSystem as any;
 const baseDir = fs.documentDirectory || fs.cacheDirectory;
 
@@ -13,10 +12,8 @@ export interface CSVPlayer {
 }
 
 export const useCSV = () => {
-    // Підключаємо два словники
     const { t } = useTranslation();
 
-    // === ДОПОМІЖНА ФУНКЦІЯ ДЛЯ WEB ===
     const saveFileOnWeb = (content: string, fileName: string) => {
         const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -31,7 +28,6 @@ export const useCSV = () => {
         URL.revokeObjectURL(url);
     };
 
-    // --- 1. ЕКСПОРТ СЕСІЇ ---
     const exportResultsToCSV = async (results: any[], teamName: string) => {
         try {
             if (!results || results.length === 0) {
@@ -42,19 +38,16 @@ export const useCSV = () => {
                 return;
             }
 
-            // 🔥 Локалізуємо заголовки стовпців CSV
             let csvContent = `${t('screens.csv.export_headers')}\n`;
 
             results.forEach((res) => {
-                const timeStr = res.time.toFixed(2);
-                const splitsStr = res.splits && res.splits.length > 0 ? `"${res.splits.join(',')}"` : '""';
-                const dateStr = res.date || '-';
-                const typeStr = res.testType || 'Sprint';
+                const timeStr = `="${res.time.toFixed(2)}"`;
+                const distanceStr = res.distance ? `="${res.distance.toString()}"` : '"-"';
+                const splitsStr = res.splits && res.splits.length > 0 ? `="${res.splits.join(', ')}"` : '""';
+                const dateStr = `"${res.date || '-'}"`;
+                const typeStr = `"${res.testType || 'Sprint'}"`;
 
-                // Витягуємо дистанцію
-                const distanceStr = res.distance ? res.distance.toString() : '-';
-
-                csvContent += `${teamName},${res.playerName},${dateStr},${typeStr},${distanceStr},${timeStr},${splitsStr}\n`;
+                csvContent += `"${teamName}","${res.playerName}",${dateStr},${typeStr},${distanceStr},${timeStr},${splitsStr}\n`;
             });
 
             const fileName = `Results_${teamName.replace(/\s+/g, '_')}_${Date.now()}.csv`;
@@ -71,24 +64,25 @@ export const useCSV = () => {
             });
 
             if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(fileUri, {
-                    mimeType: 'text/csv',
-                    dialogTitle: `${t('screens.csv.export_dialog')}: ${teamName}`,
-                    UTI: 'public.comma-separated-values-text'
-                });
+                try {
+                    await Sharing.shareAsync(fileUri, {
+                        mimeType: 'text/csv',
+                        dialogTitle: `${t('screens.csv.export_dialog')}: ${teamName}`,
+                        UTI: 'public.comma-separated-values-text'
+                    });
+                } catch (shareError) {
+                    console.log("Share dismissed by user:", shareError);
+                }
             } else {
                 Alert.alert(t('screens.common.error'), t('logs.errors.csv.sharing_unavailable'));
             }
         } catch (error) {
             console.error("Export Error:", error);
-            Alert.alert(t('screens.common.error'), t('logs.errors.csv.generate_failed'));
+            Alert.alert(t('screens.common.error'), "Не вдалося згенерувати файл");
         }
     };
-
-    // --- 2. ЗАВАНТАЖЕННЯ ШАБЛОНУ ---
     const downloadPlayersTemplate = async () => {
         try {
-            // 🔥 Локалізований шаблон гравців
             const header = t('screens.csv.template_header');
             const example1 = t('screens.csv.template_ex1');
             const example2 = t('screens.csv.template_ex2');
@@ -122,7 +116,6 @@ export const useCSV = () => {
         }
     };
 
-    // --- 3. ПАРСИНГ ФАЙЛУ ---
     const pickAndParseCSV = async (): Promise<CSVPlayer[] | null> => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
@@ -167,7 +160,6 @@ export const useCSV = () => {
 
         } catch (e: any) {
             console.error("CSV Parse Error:", e);
-            // Перехоплюємо нашу власну помилку про порожній файл, або віддаємо загальну
             if (e.message === t('logs.errors.csv.file_empty')) {
                 throw e;
             }

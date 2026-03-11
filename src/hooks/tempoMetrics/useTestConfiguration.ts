@@ -7,12 +7,10 @@ export const useTestConfiguration = () => {
 
     const { sensors = [] } = useBle();
 
-    // 1. Рахуємо активні сенсори
     const activeSensors = sensors.filter(s => s.status === 'active');
     const sensorsCount = Math.max(2, activeSensors.length);
     const intermediateCount = sensorsCount - 2;
 
-    // 2. Скидання сплітів при зміні дистанції або сенсорів
     useEffect(() => {
         if (intermediateCount > 0) {
             const step = distance / (intermediateCount + 1);
@@ -23,7 +21,6 @@ export const useTestConfiguration = () => {
         }
     }, [distance, sensorsCount]);
 
-    // 3. Логіка зміни дистанції спліта
     const adjustSplit = (index: number, change: number) => {
         setSplitPositions(prev => {
             const newSplits = [...prev];

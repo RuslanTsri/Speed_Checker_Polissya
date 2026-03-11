@@ -20,7 +20,6 @@ interface PlayerModProps {
 export const PlayerMod = ({ name, subtitle, rightIcon, onPress, onEditPress, onDeletePress, className = '', optimizeForList = false }: PlayerModProps) => {
     const isAndroid = Platform.OS === 'android' && optimizeForList;
 
-    // 🔥 Перевірка на одне слово для імені
     const isSingleWordName = name ? !name.trim().includes(' ') : false;
 
     return (

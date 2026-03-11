@@ -17,7 +17,6 @@ export interface Player {
 export const usePlayerInfo = (player: Player, onBack: () => void, onDelete: (id: string) => void) => {
     const { t } = useTranslation();
 
-    // Логіка підтвердження видалення
     const handleDeletePress = () => {
         Alert.alert(
             t('screens.player_info.delete_title') as string,
@@ -33,7 +32,6 @@ export const usePlayerInfo = (player: Player, onBack: () => void, onDelete: (id:
         );
     };
 
-    // Форматування позиції для UI
     const positionLabel = {
         'GK': t('screens.player_info.pos_gk') as string,
         'DEF': t('screens.player_info.pos_def') as string,

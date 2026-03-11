@@ -35,7 +35,6 @@ export const LayoutContainer = ({ children, title, subtitle }: LayoutContainerPr
                     {subtitle}
                 </Text>
 
-                {/* Трек для маркерів */}
                 <View className="h-20 justify-center relative mx-4">
                     {children}
                 </View>

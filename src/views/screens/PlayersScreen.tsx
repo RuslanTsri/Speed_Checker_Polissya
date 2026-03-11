@@ -3,17 +3,14 @@ import { View, Text, FlatList, TouchableOpacity, Modal, Pressable, StyleSheet, S
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
-// 🔥 Наші преміальні компоненти
 import { AppModal } from '../components/AppModal';
 import { usePlayersLogic } from '../../hooks/players/usePlayersLogic';
 
-// 🔥 UI Компоненти
 import { Mod, TeamsMod, PlayerMod } from '../components/ui/mods';
 import { SearchInput } from "../components/ui/SearchInput";
 import { IconButton, Button } from "../components/ui/Button";
 import { TextField } from '../components/ui/TextField';
 
-// Іконки
 import {
     TeamsIcon, TeamsIconActive,
     ArrowIcon, ArrowIconActive,
@@ -40,13 +37,10 @@ export default function PlayersScreen() {
         downloadTemplate, importedPlayers, handleSelectFile, handleConfirmImport
     } = usePlayersLogic();
 
-    // --- 1. РЕЖИМ ПЕРЕГЛЯДУ ГРАВЦІВ У КОМАНДІ ---
     if (selectedTeam) {
         return (
             <View className="flex-1 pt-4 relative">
-                {/* Header */}
                 <View className="flex-row items-center justify-between px-4 mb-6 relative z-10">
-                    {/* 🔥 КНОПКА НАЗАД */}
                     <Pressable onPress={() => setSelectedTeam(null)} className="p-2 -ml-2 active:opacity-60">
                         {({ pressed }) => (
                             <View style={styles.rotateLeft}>
@@ -71,12 +65,10 @@ export default function PlayersScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Dropdown Menu Команди */}
                 <Modal visible={isDropdownVisible} transparent animationType="fade">
                     <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setDropdownVisible(false)}>
                         <View className="absolute top-16 right-4 rounded-2xl border border-white/10 shadow-2xl overflow-hidden min-w-[180px] bg-[#0A0A0A]/95">
 
-                            {/* Редагувати команду */}
                             <Pressable
                                 onPress={() => { setDropdownVisible(false); handleEditTeam(); }}
                                 className="flex-row items-center px-4 py-4 border-b border-white/5"
@@ -98,7 +90,6 @@ export default function PlayersScreen() {
                                 )}
                             </Pressable>
 
-                            {/* Видалити команду */}
                             <TouchableOpacity onPress={() => { setDropdownVisible(false); handleDeleteTeam(); }} className="flex-row items-center px-4 py-4 active:bg-red-500/10">
                                 <Feather name="trash-2" size={18} color="#ef4444" style={{ marginRight: 12 }} />
                                 <Text className="text-red-500 font-medium text-sm font-evolventa">
@@ -109,14 +100,12 @@ export default function PlayersScreen() {
                     </TouchableOpacity>
                 </Modal>
 
-                {/* Статистика команди */}
                 <View className="flex-row justify-between px-6 pb-4 border-b border-white/5 mb-4">
                     <Text className="text-[10px] font-bold tracking-widest uppercase text-[#A3A3A3] font-evolventa-bold">
                         {t('screens.players.label_players_count', { count: players.length })}
                     </Text>
                 </View>
 
-                {/* Швидка дія: Додати гравця */}
                 <View className="px-4 mb-6 mt-2">
                     <Mod
                         title={t('screens.players.btn_add_players')}
@@ -126,7 +115,6 @@ export default function PlayersScreen() {
                     />
                 </View>
 
-                {/* СПИСОК ГРАВЦІВ */}
                 <FlatList
                     data={players}
                     keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
@@ -192,7 +180,6 @@ export default function PlayersScreen() {
                 {/* МОДАЛКИ ДЛЯ ГРАВЦІВ */}
                 {/* ==================================================== */}
 
-                {/* Вибір додавання гравця */}
                 <AppModal type="bottom" visible={isAddPlayerOptionsVisible} onClose={() => setAddPlayerOptionsVisible(false)} title={t('screens.players.modal_players_title')}>
                     <View className="flex-row gap-3 mb-2 mt-4">
                         <Pressable
@@ -239,7 +226,6 @@ export default function PlayersScreen() {
                     </View>
                 </AppModal>
 
-                {/* Ручне додавання гравця */}
                 <AppModal type="center" visible={isAddManualVisible} onClose={() => setAddManualVisible(false)} title={t('screens.players.modal_new_player')}>
                     <TextField
                         value={newPlayerName}
@@ -253,7 +239,6 @@ export default function PlayersScreen() {
                     </View>
                 </AppModal>
 
-                {/* Редагування гравця */}
                 <AppModal type="center" visible={isEditPlayerModalVisible} onClose={() => setEditPlayerModalVisible(false)} title={t('screens.players.modal_edit_player')}>
                     <TextField
                         value={editingPlayerName}
@@ -267,7 +252,6 @@ export default function PlayersScreen() {
                     </View>
                 </AppModal>
 
-                {/* Видалення гравця */}
                 <AppModal type="center" visible={isDeletePlayerModalVisible} onClose={() => setDeletePlayerModalVisible(false)} title={t('screens.players.modal_delete_title')}>
                     <View className="items-center mb-6 mt-2">
                         <View className="w-16 h-16 bg-red-500/10 rounded-full items-center justify-center mb-4 border border-red-500/20">
@@ -284,11 +268,9 @@ export default function PlayersScreen() {
                     </View>
                 </AppModal>
 
-                {/* Імпорт з файлу (CSV) */}
                 <AppModal type="bottom" visible={isImportVisible} onClose={() => setImportVisible(false)} title={importedPlayers.length > 0 ? "Перевірка файлу" : t('screens.players.import_title')}>
                     {importedPlayers.length === 0 ? (
                         <>
-                            {/* Завантаження Шаблону */}
                             <Pressable
                                 onPress={() => downloadTemplate()}
                                 className="flex-row items-center border border-white/10 p-4 rounded-2xl mb-6 bg-white/5"
@@ -308,7 +290,6 @@ export default function PlayersScreen() {
                                 )}
                             </Pressable>
 
-                            {/* Вибір файлу */}
                             <Pressable
                                 onPress={() => handleSelectFile()}
                                 className="border-2 border-dashed border-white/10 rounded-3xl py-10 items-center justify-center mb-4 bg-white/5"
@@ -328,7 +309,6 @@ export default function PlayersScreen() {
                         </>
                     ) : (
                         <View className="w-full">
-                            {/* Зелений бейдж успіху */}
                             <View className="flex-row items-center border border-emerald-500/30 bg-[#0A0A0A]/50 p-4 rounded-2xl mb-6 shadow-sm">
                                 <View className="mr-4">
                                     <DocIconActive width={28} height={28} />
@@ -343,7 +323,6 @@ export default function PlayersScreen() {
                                 </View>
                             </View>
 
-                            {/* Заголовок списку */}
                             <Text className="text-[11px] text-[#F5F5F5] mb-3 font-evolventa-bold">
                                 Список гравців
                             </Text>
@@ -360,7 +339,6 @@ export default function PlayersScreen() {
                                 ))}
                             </ScrollView>
 
-                            {/* Кнопка імпорту */}
                             <Button
                                 variant="primary"
                                 title={t('screens.players.import_confirm') || 'Імпортувати'}
@@ -373,7 +351,6 @@ export default function PlayersScreen() {
         );
     }
 
-    // --- 2. ГОЛОВНИЙ СПИСОК КОМАНД ---
     return (
         <View className="flex-1 pt-4 relative">
             <View className="flex-row items-center justify-between px-4 mb-6 relative z-10">
@@ -429,7 +406,6 @@ export default function PlayersScreen() {
                 )}
             />
 
-            {/* Модалка створення команди */}
             <AppModal type="fullscreen" visible={isAddTeamModalVisible} onClose={() => setAddTeamModalVisible(false)} title={t('screens.players.modal_new_team')}>
                 <View className="mt-8 px-2">
                     <TextField

@@ -60,8 +60,6 @@ export const Button = ({
         return base;
     };
 
-    // 🔥 КЛЮЧОВА ЛОГІКА АДАПТИВНОСТІ:
-    // Перевіряємо, чи складається title з одного слова (чи немає всередині пробілів)
     const isSingleWord = !title.trim().includes(' ');
 
     return (
@@ -81,10 +79,9 @@ export const Button = ({
                 <View className="flex-row items-center justify-center flex-1">
                     {icon && <View className="mr-3">{icon}</View>}
 
-                    {/* 🔥 ДОДАЛИ ПРОПСИ ДЛЯ ТЕКСТУ */}
                     <Text
                         className={getTextClasses()}
-                        style={[style, { textAlign: 'center' }]} // Центруємо текст, якщо він розіб'ється на 2 рядки
+                        style={[style, { textAlign: 'center' }]}
                         numberOfLines={isSingleWord ? 1 : 2}
                         adjustsFontSizeToFit={true}
                         minimumFontScale={isSingleWord ? 0.4 : 0.8}

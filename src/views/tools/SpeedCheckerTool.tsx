@@ -11,11 +11,11 @@ const ScreenContainer = ({ children }: { children: React.ReactNode }) => (
     <View className="flex-1">{children}</View>
 );
 
-export default function SpeedCheckerTool({ onBack, onOpenBluetooth }: { onBack: () => void, onOpenBluetooth: () => void }) {
+export default function SpeedCheckerTool({ onBack, onOpenBluetooth, onNavigate }: { onBack: () => void, onOpenBluetooth: () => void, onNavigate?: any }) {
     const {
         currentScreen, testConfig, handleModeSelect, handleTeamSelect,
         handlePlayersSelect, handleStartTest, handleBackFromConfig,
-        handleBackFromPlayers, handleBackFromTeam, handleBackFromRun, onNavigate
+        handleBackFromPlayers, handleBackFromTeam, handleBackFromRun
     } = useSpeedCheckerRouter();
 
     useEffect(() => {

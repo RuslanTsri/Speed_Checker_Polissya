@@ -52,7 +52,19 @@ export const useAppLogic = () => {
         );
     };
 
-    const handleNavigate = (tab: AppTab, params?: any) => {
+    const handleNavigate = (tab: AppTab | 'SPEEDCHECK', params?: any) => {
+        if (tab === 'SPEEDCHECK') {
+            setSessionsInitialTab(undefined);
+            setNavParams(null);
+            setCurrentTab('HOME');
+            setHomeActiveTool('SPEEDCHECK');
+            return;
+        }
+
+        if (tab === 'HOME') {
+            setHomeActiveTool(null);
+        }
+
         if (tab === 'SESSIONS') {
             setSessionsInitialTab(params?.subTab);
             setNavParams(params);
@@ -60,9 +72,8 @@ export const useAppLogic = () => {
             setSessionsInitialTab(undefined);
             setNavParams(null);
         }
-        setCurrentTab(tab);
+        setCurrentTab(tab as AppTab);
     };
-
     const handleOpenPinModal = () => {
         setOldPin('');
         setNewPin('');
@@ -210,6 +221,6 @@ export const useAppLogic = () => {
         isPinLoading, pinError, navParams,
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange,
         homeActiveTool, setHomeActiveTool,
-        sessionDetailsOpen, setSessionDetailsOpen // 🔥 Додали нові стейти у повернення
+        sessionDetailsOpen, setSessionDetailsOpen
     };
 };

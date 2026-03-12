@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -11,60 +11,22 @@ import { Mod } from '../components/ui/mods';
 import { Button } from '../components/ui/Button';
 import { StartIcon, StartIconActive, TeamsIcon, TeamsIconActive } from '../../../assets/icons';
 
-export default function HomeScreen({ onNavigate, externalTool, setExternalTool, onNavigateLayout }: any) {
+export default function HomeScreen({ onNavigate, externalTool, setExternalTool }: any) {
     const { t } = useTranslation();
+
     const {
-        currentTool, connected, status, recentActivity, sensors,
-        openTimer, openBluetooth, openSpeedCheck, closeTool,
+        connected, status, recentActivity, sensors,
         goToPlayers, goToSessions, openRecentActivity,
     } = useHomeScreen(onNavigate);
 
-    // 1. Слухаємо команди зверху (з App.tsx / useAppLogic)
-    // Якщо externalTool змінився на null (наприклад, через кнопку Назад), закриваємо тул
-    useEffect(() => {
-        if (externalTool === null && currentTool !== 'MENU') {
-            closeTool();
-        } else if (externalTool && currentTool !== externalTool) {
-            if (externalTool === 'SPEEDCHECK') openSpeedCheck();
-            if (externalTool === 'BLUETOOTH') openBluetooth();
-            if (externalTool === 'TIMER') openTimer();
-        }
-    }, [externalTool]);
+    const handleClose = () => setExternalTool?.(null);
+    const handleOpenSpeedCheck = () => setExternalTool?.('SPEEDCHECK');
+    const handleOpenBluetooth = () => setExternalTool?.('BLUETOOTH');
+    const handleOpenTimer = () => setExternalTool?.('TIMER');
 
-
-    useEffect(() => {
-        if (setExternalTool) {
-            if (currentTool === 'MENU') {
-                setExternalTool(null);
-            } else {
-                setExternalTool(currentTool);
-            }
-        }
-    }, [currentTool, setExternalTool]);
-
-    const handleClose = () => {
-        closeTool();
-    };
-
-    const handleOpenSpeedCheck = () => {
-        if (onNavigateLayout) onNavigateLayout('SPEEDCHECK');
-        else openSpeedCheck();
-    };
-
-    const handleOpenBluetooth = () => {
-        if (onNavigateLayout) onNavigateLayout('BLUETOOTH');
-        else openBluetooth();
-    };
-
-    const handleOpenTimer = () => {
-        if (onNavigateLayout) onNavigateLayout('TIMER');
-        else openTimer();
-    };
-
-    if (currentTool === 'TIMER') return <TimerTool onBack={handleClose} />;
-
-    if (currentTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} onOpenBluetooth={handleOpenBluetooth} onNavigate={onNavigate} />;
-    if (currentTool === 'BLUETOOTH') return <BluetoothTool onBack={handleClose} />;
+    if (externalTool === 'TIMER') return <TimerTool onBack={handleClose} />;
+    if (externalTool === 'SPEEDCHECK') return <SpeedCheckerTool onBack={handleClose} onOpenBluetooth={handleOpenBluetooth} onNavigate={onNavigate} />;
+    if (externalTool === 'BLUETOOTH') return <BluetoothTool onBack={handleClose} />;
 
     const gateSensors = sensors ? sensors.filter((s: any) => s.id !== 0) : [];
     const displaySlotsCount = Math.max(2, gateSensors.length);

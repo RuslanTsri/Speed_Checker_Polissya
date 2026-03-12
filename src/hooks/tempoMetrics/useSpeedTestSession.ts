@@ -11,7 +11,7 @@ export interface LocalResult { player: any; fullTime: number; gates: number[]; }
 
 const MASTER_SENSOR_ID = 0;
 
-export const useSpeedTestSession = (config: any, onFinish: () => void) => {
+export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigate?: any) => {
     const { t } = useTranslation();
     const { state, elapsedTime, sensors, startTraining, stopTraining, resetSession } = useBle();
 
@@ -25,7 +25,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
     const [isSaving, setIsSaving] = useState(false);
 
     const [frozenTime, setFrozenTime] = useState<number | null>(null);
-
     const [isScreenInitialized, setIsScreenInitialized] = useState(false);
 
     const hasProcessedRun = useRef(false);
@@ -64,7 +63,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
         };
     }, []);
 
-    // --- ОБРОБКА ФІНІШУ ---
     const handleRunFinish = useCallback((finalTime: number, sensorSnapshot: typeof sensors) => {
         hasProcessedRun.current = true;
 
@@ -107,7 +105,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
             hasProcessedRun.current = false;
             setFrozenTime(null);
         }
-    }, [isFinished, isReady, isRunning, sensors, elapsedTime, handleRunFinish, isScreenInitialized]); // Додали isScreenInitialized у залежності
+    }, [isFinished, isReady, isRunning, sensors, elapsedTime, handleRunFinish, isScreenInitialized]);
 
     const confirmIndividualRun = () => {
         console.log(`${TAG} Юзер натиснув 'Зарахувати'`);
@@ -156,24 +154,27 @@ export const useSpeedTestSession = (config: any, onFinish: () => void) => {
                     onPress: () => {
                         setLocalResults([]);
                         resetSession();
-                        if (onNavigate) {
-                            // Формуємо об'єкт сесії, який очікує SessionsScreen
-                            const mockSession = {
-                                id: config.teamId || sessionId, // Якщо це вільне тренування без команди, юзаємо ID сесії
-                                teamName: config.teamName || (t('tools.speed_checker.free_training') as string),
-                                hasResults: true,
-                                playerCount: localResults.length,
-                                testType: config.testType || 'STATIC',
-                            };
 
-                            // Перекидаємо юзера на вкладку SESSIONS,
-                            // відразу відкриваючи деталі (через openSession)
-                            onNavigate('SESSIONS', {
-                                subTab: 'TEAM',
-                                openSession: mockSession
-                            });
+                        if (onNavigate) {
+                            if (config.teamId) {
+                                const mockSession = {
+                                    id: config.teamId,
+                                    teamName: config.teamName,
+                                    hasResults: true,
+                                    playerCount: localResults.length,
+                                    testType: config.testType || 'STATIC',
+                                };
+                                onNavigate('SESSIONS', {
+                                    subTab: 'TEAM',
+                                    openSession: mockSession
+                                });
+                            } else {
+                                onNavigate('SESSIONS', {
+                                    subTab: 'GENERAL'
+                                });
+                            }
                         } else {
-                            onFinish(); // Фоллбек, якщо onNavigate не передано
+                            onFinish();
                         }
                     },
                 }]

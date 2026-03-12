@@ -24,7 +24,7 @@ const RunMarker = ({ position, totalDistance, label, type, triggered, timeDispla
         if (safeTotal > 0) {
             percent = (safePos / safeTotal) * 100;
         } else {
-            percent = 50; // Якщо totalDistance = 0, ставить по центру
+            percent = 50;
         }
     }
     percent = Math.max(0, Math.min(100, percent));
@@ -50,7 +50,7 @@ const RunMarker = ({ position, totalDistance, label, type, triggered, timeDispla
     );
 };
 
-export default function SpeedTestRun({ config, onBack, onFinish }: any) {
+export default function SpeedTestRun({ config, onBack, onFinish, onNavigate }: any) {
     const { t } = useTranslation();
 
     const {
@@ -60,7 +60,7 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
         showSummaryModal, saveAllResults, isSaving,
         localResults, currentRunResult, formatTime,
         restartWholeSession
-    } = useSpeedTestSession(config, onFinish, onNavigate);
+    } = useSpeedTestSession(config, onFinish, onNavigate); // 🔥 ПЕРЕДАЄМО onNavigate СЮДИ
 
     const animatedProgress = useRef(new Animated.Value(0)).current;
 
@@ -123,15 +123,34 @@ export default function SpeedTestRun({ config, onBack, onFinish }: any) {
                                 timeDisplay = `${tf.main}${tf.decimal}`;
                             }
 
+                            const isStart = index === 0;
+                            const isFinish = index === activeSensors.length - 1;
+
+                            let markerPosition = 0;
+                            if (isStart) {
+                                markerPosition = 0;
+                            } else if (isFinish) {
+                                markerPosition = config.distance;
+                            } else {
+                                markerPosition = config.splitPositions?.[index - 1] || 0;
+                            }
+
+                            const markerType = isStart ? 'start' : isFinish ? 'finish' : 'gate';
+                            const markerLabel = isStart
+                                ? t('tools.speed_checker.start_label')
+                                : isFinish
+                                    ? t('tools.speed_checker.finish_label')
+                                    : t('tools.speed_checker.gate_label', { number: index });
+
                             return (
                                 <RunMarker
                                     key={sensor.id}
-                                    position={index === 0 ? 0 : index === activeSensors.length - 1 ? config.distance : config.splitPositions?.[index-1]}
+                                    position={markerPosition}
                                     totalDistance={config.distance}
                                     triggered={isTriggered}
                                     timeDisplay={timeDisplay}
-                                    type={index === 0 ? 'start' : index === activeSensors.length - 1 ? 'finish' : 'gate'}
-                                    label={index === 0 ? t('tools.speed_checker.start_label') : index === activeSensors.length - 1 ? t('tools.speed_checker.finish_label') : t('tools.speed_checker.gate_label', { number: index })}
+                                    type={markerType}
+                                    label={markerLabel}
                                 />
                             );
                         })}

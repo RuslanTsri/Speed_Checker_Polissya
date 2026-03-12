@@ -42,7 +42,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
     } = useSettingsScreen({
         onOpenPinChange,
         onOpenBluetooth,
-        onOpenSupport: () => setSupportVisible(true) // 🔥 2. Кажемо хуку відкривати стейт
+        onOpenSupport: () => setSupportVisible(true)
     });
 
     if (isLoading) {

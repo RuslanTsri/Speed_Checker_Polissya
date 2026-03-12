@@ -5,6 +5,7 @@ import { useUser } from '../context/UserContext';
 import { authService } from '../services/authService';
 import { supabase } from '../lib/supabase';
 import { TabType } from '../views/layout/Footer';
+import { useKeepAwake } from 'expo-keep-awake';
 // @ts-ignore
 import { SessionTabType } from '../views/screens/SessionsScreen';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,7 @@ export type AppTab = TabType | 'TOOLS' | 'SETTINGS';
 const PIN_SALT = "tempo_metrics_secure_v1";
 
 export const useAppLogic = () => {
+    useKeepAwake();
     const { t } = useTranslation();
 
     const { profile, refreshProfile, logout } = useUser();

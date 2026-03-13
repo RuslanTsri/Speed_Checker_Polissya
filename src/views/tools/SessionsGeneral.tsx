@@ -74,14 +74,19 @@ const SessionItem = memo(({ item, t }: { item: any, t: any }) => {
                     <View className="items-end justify-center">
                         <Text className="text-h2 text-brand-orange font-unbounded-black leading-none">
                             {item.totalTime.toFixed(2)}
-                            <Text className="text-small text-brand-orange/70 font-unbounded-bold">s</Text>
+                            <Text className="text-small text-brand-orange/70 font-unbounded-bold">
+                                {t('tools.sessions.seconds_short')}
+                            </Text>
                         </Text>
 
                         <View className="flex-row items-center mt-1">
                             <MaterialCommunityIcons name="timer-sand" size={10} color="#A3A3A3" />
                             <Text className="text-caption ml-0.5 text-text-sub font-evolventa">
-                                {/* 🔥 Показуємо середній спліт та кількість гейтів */}
-                                {item.avgSplit.toFixed(2)}s <Text className="text-[9px] text-text-muted">({item.gatesCount} гейти)</Text>
+                                {/* 🔥 Використовуємо t() для секунд та кількості гейтів */}
+                                {item.avgSplit.toFixed(2)}{t('tools.sessions.seconds_short')}{' '}
+                                <Text className="text-[9px] text-text-muted">
+                                    ({t('tools.speed_checker.gates_count', { count: item.gatesCount || 0 })})
+                                </Text>
                             </Text>
                         </View>
                     </View>
@@ -121,7 +126,7 @@ export default function SessionsGeneral({ searchQuery }: Props) {
                     <View className="flex-row justify-between mb-6">
                         <BestCard
                             title={t('tools.sessions.best') as string}
-                            time={`${best?.totalTime.toFixed(2) || '--'}s`}
+                            time={`${best?.totalTime.toFixed(2) || '--'}${t('tools.sessions.seconds_short')}`}
                             playerName={best?.playerName || (t('tools.sessions.not_available') as string)}
                             teamName={best?.teamName}
                             optimizeForList={true}
@@ -129,7 +134,7 @@ export default function SessionsGeneral({ searchQuery }: Props) {
 
                         <WorstCard
                             title={t('tools.sessions.worst') as string}
-                            time={`${worst?.totalTime.toFixed(2) || '--'}s`}
+                            time={`${worst?.totalTime.toFixed(2) || '--'}${t('tools.sessions.seconds_short')}`}
                             playerName={worst?.playerName || (t('tools.sessions.not_available') as string)}
                             teamName={worst?.teamName}
                             optimizeForList={true}

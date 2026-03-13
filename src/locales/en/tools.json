@@ -69,7 +69,14 @@
     "result_type": "Results Type",
     "choose_distance": "Distance",
     "all_distances": "All",
-    "attempt_number": "Round {{num}}"
+    "attempt_number": "Round {{num}}",
+    "best_attempt_metrics": "Best attempt metrics",
+    "gate_metrics": "Gate metrics",
+    "start_0m": "Start (0m)",
+    "gate_n": "Gate {{number}}",
+    "finish": "Finish",
+    "avg_split_time": "Average split time:",
+    "total_time": "Total time"
   },
   "timer": {
     "title": "Stopwatch",
@@ -155,6 +162,12 @@
     "status_ready_to_measure": "Ready to measure",
     "status_result_obtained": "Result obtained",
     "status_running": "Measuring...",
-    "btn_waiting_start": "WAITING FOR START..."
+    "btn_waiting_start": "WAITING FOR START...",
+    "team_empty_no_teams_desc": "You don't have any teams created yet. Create a team to start testing.",
+    "btn_create_team": "Create team",
+    "btn_add_players": "Add player",
+    "import_confirm": "Import",
+    "import_file_verified": "File verified",
+    "import_found_players": "Found {{count}} players"
   }
 }

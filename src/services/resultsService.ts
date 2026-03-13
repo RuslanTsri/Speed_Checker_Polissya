@@ -186,15 +186,21 @@ class ResultsService extends BaseService<Result> {
             .filter((r: any) => pendingSessionIds.includes(r.session_id))
             .map((item: any) => {
                 const session = pendingSessions.find((s: any) => s.id === item.session_id);
+                // Захист від ділення на нуль або помилок, якщо gates ще немає
+                const gatesCount = item.gates ? item.gates.length : 0;
+
                 return {
                     id: item.id,
                     playerId: item.player_id || 'guest',
                     playerName: 'Синхронізація...',
                     playerNumber: '-',
                     time: Number(item.full_time),
-                    splits: item.gates,
+                    splits: item.gates || [],
                     testType: session?.test_type || 'STATIC',
-                    distance: session?.total_distance || 30, // 🔥 З черги теж беремо дистанцію
+                    distance: session?.total_distance || 30,
+                    // 🔥 ДОДАНО ПОЛЯ:
+                    gateDistances: session?.splits_config || [],
+                    avgSplit: gatesCount > 0 ? Number(item.full_time) / (gatesCount + 1) : Number(item.full_time),
                     date: new Date(item.created_at || Date.now()).toLocaleDateString(),
                     round: 0
                 };

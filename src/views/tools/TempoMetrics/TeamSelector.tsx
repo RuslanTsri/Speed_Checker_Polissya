@@ -66,7 +66,7 @@ export default function TeamSelector({ onBack, onSelect }: any) {
                 <View className="mt-8">
                     <Button
                         variant="primary"
-                        title={t('screens.players.btn_create_team')}
+                        title={t('tools.speed_checker.btn_create_team')}
                         onPress={onTeamCreate}
                         disabled={!newTeamName?.trim() || isLogicLoading}
                         isLoading={isLogicLoading}
@@ -76,11 +76,8 @@ export default function TeamSelector({ onBack, onSelect }: any) {
         </AppModal>
     );
 
-    // 🔥 ЄДИНИЙ КОРІНЬ
     return (
         <View className="flex-1 pt-4 relative">
-
-            {/* 1. СТАН ЗАВАНТАЖЕННЯ */}
             {isInitialLoading && (
                 <>
                     <View className="flex-row items-center justify-between px-4 mb-6 z-10">
@@ -102,7 +99,6 @@ export default function TeamSelector({ onBack, onSelect }: any) {
                 </>
             )}
 
-            {/* 2. СТАН ПОРОЖНЬОГО СПИСКУ */}
             {isEmpty && !isInitialLoading && (
                 <>
                     <View className="flex-row items-center justify-between px-4 mb-6 z-10">
@@ -124,11 +120,11 @@ export default function TeamSelector({ onBack, onSelect }: any) {
                             <Feather name="shield" size={32} color="#717171" />
                         </View>
                         <Text className="text-text-sub text-center mb-8 font-evolventa text-body leading-5">
-                            У вас ще немає створених команд. Створіть команду, щоб почати тестування.
+                            {t('tools.speed_checker.team_empty_no_teams_desc')}
                         </Text>
                         <Button
                             variant="primary"
-                            title={t('screens.players.btn_create_team') || "Створити команду"}
+                            title={t('tools.speed_checker.btn_create_team')}
                             onPress={() => setAddTeamModalVisible(true)}
                             className="w-full mb-3"
                         />
@@ -137,7 +133,6 @@ export default function TeamSelector({ onBack, onSelect }: any) {
                 </>
             )}
 
-            {/* 3. ОСНОВНИЙ ЕКРАН (ЗІ СПИСКОМ) */}
             {!isEmpty && !isInitialLoading && (
                 <>
                     <View className="flex-row items-center justify-between px-4 mb-6 z-10">
@@ -202,7 +197,6 @@ export default function TeamSelector({ onBack, onSelect }: any) {
                 </>
             )}
 
-            {/* 🔥 МОДАЛКИ */}
             {modalsJSX}
         </View>
     );

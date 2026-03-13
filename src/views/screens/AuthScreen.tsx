@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Linking, Image } from 'react-native'; // 🔥 Додали Image
-import { Feather } from '@expo/vector-icons'; // 🔥 Прибрали Ionicons (бо блискавка більше не потрібна)
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Linking } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppModal } from '../components/AppModal';
 import { useAuthScreen } from '../../hooks/useAuthScreen';
@@ -10,8 +11,8 @@ import { TextField } from '../components/ui/TextField';
 import { AppBackground } from '../components/ui/AppBackground';
 import { Button } from '../components/ui/Button';
 
-
 import TempoMetricWhiteNoBackground from '../../../assets/tempometrics_white_nobackground.svg';
+
 interface AuthScreenProps {
     onLogin: () => void;
 }
@@ -23,6 +24,8 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
         name, setName, email, setEmail, pin, setPin, handleSubmit, toggleMode
     } = useAuthScreen(onLogin);
 
+    const insets = useSafeAreaInsets();
+
     return (
         <AppBackground>
             <KeyboardAvoidingView
@@ -32,87 +35,104 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                 <StatusBar style="light" />
 
                 <ScrollView
+                    // 🔥 Повертаємо центрування, тепер весь контент буде єдиним блоком по центру
                     contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
-                    className="px-8"
                     showsVerticalScrollIndicator={false}
                 >
-                    <View className="items-center mb-10">
-                        <View className="w-24 h-24 rounded-[32px] items-center justify-center mb-6 bg-surface-card border border-surface-border shadow-2xl overflow-hidden">
-                          <TempoMetricWhiteNoBackground width={64} height={64} fill="#FF6D00" />
+                    {/* 🔥 Єдиний контейнер для всього (прибрали flex-1, який розривав екран) */}
+                    <View
+                        className="px-8 w-full"
+                        style={{
+                            paddingTop: Math.max(insets.top, 20),
+                            paddingBottom: Math.max(insets.bottom, 20)
+                        }}
+                    >
+
+                        {/* Логотип */}
+                        <View className="items-center mb-6">
+                            <View className="w-24 h-24 rounded-[32px] items-center justify-center mb-4 bg-surface-card border border-surface-border shadow-2xl overflow-hidden">
+                                <TempoMetricWhiteNoBackground width={64} height={64} fill="#FF6D00" />
+                            </View>
+
+                            <Text className="text-h1 font-black tracking-tight text-center mb-1 text-text-main font-unbounded">
+                                TEMPO METRICS
+                            </Text>
+                            <Text className="text-body text-center text-text-sub px-4 font-evolventa">
+                                {isRegistering ? t('screens.auth.register_subtitle') : t('screens.auth.login_subtitle')}
+                            </Text>
                         </View>
 
-                        <Text className="text-h1 font-black tracking-tight text-center mb-2 text-text-main font-unbounded">
-                            TEMPO METRICS
-                        </Text>
-                        <Text className="text-body text-center text-text-sub px-4 font-evolventa">
-                            {isRegistering ? t('screens.auth.register_subtitle') : t('screens.auth.login_subtitle')}
-                        </Text>
-                    </View>
+                        {/* Форма: Звузили gap-y-4 до gap-y-3 */}
+                        <View className="w-full gap-y-3">
+                            {isRegistering && (
+                                <TextField
+                                    label={t('screens.auth.label_name')}
+                                    value={name}
+                                    onChangeText={setName}
+                                    placeholder={t('screens.auth.placeholder_name')}
+                                    icon={<Feather name="user" size={18} color="#717171" />}
+                                    autoCapitalize="words"
+                                />
+                            )}
 
-                    <View className="w-full gap-y-4">
-                        {isRegistering && (
                             <TextField
-                                label={t('screens.auth.label_name')}
-                                value={name}
-                                onChangeText={setName}
-                                placeholder={t('screens.auth.placeholder_name')}
-                                icon={<Feather name="user" size={18} color="#717171" />}
-                                autoCapitalize="words"
+                                label={t('screens.auth.label_email')}
+                                value={email}
+                                onChangeText={setEmail}
+                                placeholder="coach@example.com"
+                                icon={<Feather name="mail" size={18} color="#717171" />}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
                             />
-                        )}
 
-                        <TextField
-                            label={t('screens.auth.label_email')}
-                            value={email}
-                            onChangeText={setEmail}
-                            placeholder="coach@example.com"
-                            icon={<Feather name="mail" size={18} color="#717171" />}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                        />
+                            <TextField
+                                label={isRegistering ? t('screens.auth.label_pin_reg') : t('screens.auth.label_pin_login')}
+                                value={pin}
+                                onChangeText={setPin}
+                                placeholder="• • • •"
+                                icon={<Feather name="lock" size={18} color="#717171" />}
+                                keyboardType="numeric"
+                                secureTextEntry
+                                maxLength={4}
+                                error={errorMessage || undefined}
+                            />
 
-                        <TextField
-                            label={isRegistering ? t('screens.auth.label_pin_reg') : t('screens.auth.label_pin_login')}
-                            value={pin}
-                            onChangeText={setPin}
-                            placeholder="• • • •"
-                            icon={<Feather name="lock" size={18} color="#717171" />}
-                            keyboardType="numeric"
-                            secureTextEntry
-                            maxLength={4}
-                            error={errorMessage || undefined}
-                        />
+                            {/* Відступ перед головною кнопкою зменшили (mt-3 замість mt-6) */}
+                            <Button
+                                title={isRegistering ? t('screens.auth.btn_register') : t('screens.auth.btn_login')}
+                                variant="primary"
+                                isLoading={isLoading}
+                                onPress={handleSubmit}
+                                className="mt-3"
+                            />
+                        </View>
 
-                        <Button
-                            title={isRegistering ? t('screens.auth.btn_register') : t('screens.auth.btn_login')}
-                            variant="primary"
-                            isLoading={isLoading}
-                            onPress={handleSubmit}
-                            className="mt-6"
-                        />
-                    </View>
-
-                    <View className="mt-10 items-center">
-                        <Text className="text-text-muted text-small mb-2 font-evolventa">
-                            {isRegistering ? t('screens.auth.switch_has_account') : t('screens.auth.switch_no_account')}
-                        </Text>
-                        <Button
-                            title={isRegistering ? t('screens.auth.btn_login') : t('screens.auth.btn_register_short')}
-                            variant="outline"
-                            onPress={toggleMode}
-                            className="w-full"
-                        />
-                    </View>
-                    <View className="mt-8 mb-4 items-center px-4">
-                        <Text className="text-text-muted text-xs text-center font-evolventa leading-5">
-                            {t('screens.auth.if_you_continued_privacy_policy')}{' '}
-                            <Text
-                                className="text-brand-orange underline font-evolventa-bold"
-                                onPress={() => Linking.openURL('https://bejewelled-sorbet-f2399d.netlify.app')}
-                            >
-                                {t('screens.auth.privacy_policyes')}
+                        {/* Блок реєстрації прям під головною кнопкою */}
+                        <View className="mt-6 items-center w-full">
+                            <Text className="text-text-muted text-small mb-2 font-evolventa">
+                                {isRegistering ? t('screens.auth.switch_has_account') : t('screens.auth.switch_no_account')}
                             </Text>
-                        </Text>
+                            <Button
+                                title={isRegistering ? t('screens.auth.btn_login') : t('screens.auth.btn_register_short')}
+                                variant="outline"
+                                onPress={toggleMode}
+                                className="w-full"
+                            />
+                        </View>
+
+                        {/* Політика конфіденційності */}
+                        <View className="mt-6 items-center px-4">
+                            <Text className="text-text-muted text-xs text-center font-evolventa leading-5">
+                                {t('screens.auth.if_you_continued_privacy_policy')}{' '}
+                                <Text
+                                    className="text-brand-orange underline font-evolventa-bold"
+                                    onPress={() => Linking.openURL('https://bejewelled-sorbet-f2399d.netlify.app')}
+                                >
+                                    {t('screens.auth.privacy_policyes')}
+                                </Text>
+                            </Text>
+                        </View>
+
                     </View>
                 </ScrollView>
 

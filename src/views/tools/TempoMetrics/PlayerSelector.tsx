@@ -104,7 +104,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                 </View>
             </AppModal>
 
-            <AppModal type="bottom" visible={isImportVisible} onClose={() => setImportVisible(false)} title={importedPlayers.length > 0 ? "Перевірка файлу" : t('screens.players.import_title')}>
+            <AppModal type="bottom" visible={isImportVisible} onClose={() => setImportVisible(false)} title={importedPlayers.length > 0 ? t('tools.speed_checker.import_file_verified') : t('screens.players.import_title')}>
                 {importedPlayers.length === 0 ? (
                     <>
                         <Pressable
@@ -151,16 +151,16 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                             </View>
                             <View className="flex-1">
                                 <Text className="text-base text-[#F5F5F5] mb-0.5 font-unbounded-bold">
-                                    Файл перевірений
+                                    {t('tools.speed_checker.import_file_verified')}
                                 </Text>
                                 <Text className="text-xs text-emerald-500 font-evolventa-bold">
-                                    Знайдено {importedPlayers.length} гравців
+                                    {t('tools.speed_checker.import_found_players', { count: importedPlayers.length })}
                                 </Text>
                             </View>
                         </View>
 
                         <Text className="text-[11px] text-[#F5F5F5] mb-3 font-evolventa-bold">
-                            Список гравців
+                            {t('tools.speed_checker.player_list')}
                         </Text>
 
                         <ScrollView
@@ -177,7 +177,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
 
                         <Button
                             variant="primary"
-                            title={t('screens.players.import_confirm') || 'Імпортувати'}
+                            title={t('tools.speed_checker.import_confirm')}
                             onPress={() => handleConfirmImport()}
                             isLoading={isLogicLoading}
                         />
@@ -187,11 +187,8 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
         </>
     );
 
-    // 🔥 ЄДИНИЙ КОРІНЬ ДЛЯ ВСЬОГО ЕКРАНУ
     return (
         <View className="flex-1 pt-4 relative">
-
-            {/* 1. СТАН ЗАВАНТАЖЕННЯ */}
             {isInitialLoading && (
                 <>
                     <View className="flex-row items-center justify-between px-4 mb-6 z-10">
@@ -213,7 +210,6 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                 </>
             )}
 
-            {/* 2. СТАН ПОРОЖНЬОГО СПИСКУ */}
             {isEmpty && !isInitialLoading && (
                 <>
                     <View className="flex-row items-center justify-between px-4 mb-6 z-10">
@@ -239,7 +235,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                         </Text>
                         <Button
                             variant="primary"
-                            title={t('screens.players.btn_add_players') || "Додати гравця"}
+                            title={t('tools.speed_checker.btn_add_players')}
                             onPress={() => setAddPlayerOptionsVisible(true)}
                             className="w-full mb-3"
                         />
@@ -248,7 +244,6 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                 </>
             )}
 
-            {/* 3. СТАН З ДАНИМИ (СПИСОК) */}
             {!isEmpty && !isInitialLoading && (
                 <>
                     <View className="flex-row items-center justify-between px-4 mb-6 z-10">
@@ -322,7 +317,6 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                 </>
             )}
 
-            {/* 🔥 МОДАЛКИ ЗАВЖДИ В САМОМУ НИЗУ І НЕ ВИДАЛЯЮТЬСЯ */}
             {modalsJSX}
         </View>
     );

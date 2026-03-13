@@ -6,8 +6,16 @@ import { useTranslation } from 'react-i18next';
 import { resultsService } from '../../services/resultsService';
 import { syncManager } from '../../services/SyncManager';
 
+// 🔥 1. Додаємо splits та avgSplit до інтерфейсу
 interface PlayerStats {
-    id: string; playerName: string; number: string; bestTime: number; maxSpeed: number; attemptsCount: number;
+    id: string;
+    playerName: string;
+    number: string;
+    bestTime: number;
+    maxSpeed: number;
+    attemptsCount: number;
+    splits: number[]; // Додано
+    avgSplit: number; // Додано
 }
 
 export const useSessionDetails = (session: TeamSession) => {
@@ -53,16 +61,35 @@ export const useSessionDetails = (session: TeamSession) => {
         return rawResults.filter(r => r.distance === selectedDistance);
     }, [rawResults, selectedDistance]);
 
+    // 🔥 2. Оновлюємо логіку збереження найкращої спроби
     const groupedPlayers = useMemo(() => {
         const playersMap = new Map<string, PlayerStats>();
         resultsFilteredByDistance.forEach((res) => {
             const key = res.playerId || res.playerName;
+
             if (!playersMap.has(key)) {
-                playersMap.set(key, { id: res.id, playerName: res.playerName, number: res.playerNumber || '-', bestTime: res.time, maxSpeed: 0, attemptsCount: 1 });
+                // Якщо це перша знайдена спроба гравця - записуємо її разом зі сплітами
+                playersMap.set(key, {
+                    id: res.id,
+                    playerName: res.playerName,
+                    number: res.playerNumber || '-',
+                    bestTime: res.time,
+                    maxSpeed: 0,
+                    attemptsCount: 1,
+                    splits: res.splits || [],    // Зберігаємо спліти
+                    avgSplit: res.avgSplit || 0  // Зберігаємо середній спліт
+                });
             } else {
                 const player = playersMap.get(key)!;
                 player.attemptsCount += 1;
-                if (res.time < player.bestTime) { player.bestTime = res.time; player.id = res.id; }
+
+                // Якщо знайдена спроба КРАЩА за збережену раніше - оновлюємо час І спліти
+                if (res.time < player.bestTime) {
+                    player.bestTime = res.time;
+                    player.id = res.id;
+                    player.splits = res.splits || [];   // Перезаписуємо спліти на кращі
+                    player.avgSplit = res.avgSplit || 0; // Перезаписуємо середній спліт
+                }
             }
         });
         return Array.from(playersMap.values()).sort((a, b) => a.bestTime - b.bestTime);
@@ -83,13 +110,14 @@ export const useSessionDetails = (session: TeamSession) => {
         }
         try { await exportResultsToCSV(rawResults, session.teamName); } catch (err) { console.error("Export handler error:", err); }
     };
+
     const gateDistances = useMemo(() => {
         if (rawResults.length > 0 && rawResults[0].splits_config) {
             return rawResults[0].splits_config;
         }
-        // Якщо немає конфігу, повертаємо порожній масив або логіку за замовчуванням
         return [];
     }, [rawResults]);
+
     return {
         subTab, setSubTab, roundFilter, setRoundFilter, selectedDistance, setSelectedDistance, predefinedDistances, rounds: [],
         filteredAttempts: rawResults, sortedResults: groupedPlayers, handleExport, sessionStats, isLoading, gateDistances

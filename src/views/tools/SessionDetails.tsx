@@ -1,18 +1,100 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {Feather, MaterialCommunityIcons} from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSessionDetails } from '../../hooks/sessions/useSessionDetails';
 
 import { Mod, RatingMod } from '../components/ui/mods';
 import { HeaderTabs, SubTabs } from '../components/ui/tabs/';
 import { ExportIcon, ArrowIcon, ArrowIconActive } from '../../../assets/icons';
 
+// Дозволяємо LayoutAnimation на Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// 🔥 Оновлений інтерактивний компонент з локалізацією
+const SplitsBlock = ({ splits, totalTime, avgSplit, title }: any) => {
+    const { t } = useTranslation();
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const toggleExpand = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setIsExpanded(!isExpanded);
+    };
+
+    return (
+        <View className="bg-surface-bg/60 rounded-2xl border border-surface-border/50 overflow-hidden">
+            <Pressable
+                onPress={toggleExpand}
+                className="flex-row items-center justify-between p-3 active:bg-surface-card/50"
+            >
+                <View className="flex-row items-center">
+                    <MaterialCommunityIcons name="gesture-double-tap" size={14} color="#A3A3A3" />
+                    <Text className="text-[10px] text-text-sub font-evolventa-bold ml-1.5 uppercase">
+                        {title}
+                    </Text>
+                </View>
+                <View style={{ transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }}>
+                    <Feather name="chevron-down" size={16} color="#A3A3A3" />
+                </View>
+            </Pressable>
+
+            {isExpanded && (
+                <View className="px-3 pb-3">
+                    <View className="flex-row flex-wrap gap-2 mt-1">
+                        {/* 1. ЗАВЖДИ СТАРТ */}
+                        <View className="bg-surface-card px-3 py-1.5 rounded-xl border border-surface-border flex-1 min-w-[80px]">
+                            <Text className="text-[8px] text-text-muted font-evolventa uppercase mb-0.5">
+                                {t('tools.sessions.start_0m')}
+                            </Text>
+                            <Text className="text-caption text-text-main font-unbounded-bold">0.00s</Text>
+                        </View>
+
+                        {/* 2. ПРОМІЖНІ ГЕЙТИ */}
+                        {splits && splits.slice(0, -1).map((splitTime: number, idx: number) => (
+                            <View key={idx} className="bg-surface-card px-3 py-1.5 rounded-xl border border-surface-border flex-1 min-w-[80px]">
+                                <Text className="text-[8px] text-text-muted font-evolventa uppercase mb-0.5">
+                                    {t('tools.sessions.gate_n', { number: idx + 1 })}
+                                </Text>
+                                <Text className="text-caption text-text-main font-unbounded-bold">
+                                    {splitTime.toFixed(2)}s
+                                </Text>
+                            </View>
+                        ))}
+
+                        {/* 3. ЗАВЖДИ ФІНІШ */}
+                        <View className="bg-brand-orange/10 px-3 py-1.5 rounded-xl border border-brand-orange/30 flex-1 min-w-[80px]">
+                            <Text className="text-[8px] text-brand-orange font-evolventa uppercase mb-0.5">
+                                {t('tools.sessions.finish')}
+                            </Text>
+                            <Text className="text-caption text-brand-orange font-unbounded-bold">{totalTime.toFixed(2)}s</Text>
+                        </View>
+                    </View>
+
+                    {/* СЕРЕДНІЙ СПЛІТ */}
+                    <View className="mt-3 pt-2.5 border-t border-surface-border/30 flex-row justify-between items-center">
+                        <View className="flex-row items-center">
+                            <MaterialCommunityIcons name="timer-sand" size={12} color="#717171" />
+                            <Text className="text-[10px] text-text-muted font-evolventa ml-1">
+                                {t('tools.sessions.avg_split_time')}
+                            </Text>
+                        </View>
+                        <Text className="text-caption text-text-main font-unbounded-medium">
+                            {avgSplit ? avgSplit.toFixed(2) : '--'} s
+                        </Text>
+                    </View>
+                </View>
+            )}
+        </View>
+    );
+};
+
 export default function SessionDetails({ session, onBack }: any) {
     const { t } = useTranslation();
     const {
         subTab, setSubTab, selectedDistance, setSelectedDistance, predefinedDistances,
-        filteredAttempts, sortedResults, sessionStats, handleExport, gateDistances
+        filteredAttempts, sortedResults, sessionStats, handleExport
     } = useSessionDetails(session);
 
     const [localAllDistance, setLocalAllDistance] = useState<number | 'ALL'>('ALL');
@@ -69,7 +151,6 @@ export default function SessionDetails({ session, onBack }: any) {
             </Text>
         </View>
     );
-
 
     return (
         <View className="flex-1 pt-2">
@@ -132,20 +213,33 @@ export default function SessionDetails({ session, onBack }: any) {
                 data={displayedAttempts}
                 keyExtractor={(item, index) => `${item.playerName}-${index}`}
                 contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, paddingTop: 4, flexGrow: 1 }}
+                ListEmptyComponent={renderEmptyState}
                 renderItem={({ item, index }) => (
                     subTab === 'BEST' ? (
-                        <RatingMod
-                            rank={index + 1}
-                            name={item.playerName}
-                            subtitle={
-                                <Text className="text-[10px] text-text-sub font-evolventa mt-0.5">
-                                    {t('tools.sessions.attempt_number', { num: item.bestAttemptNumber })} • {selectedDistance} м
-                                </Text>
-                            }
-                            resultValue={item.bestTime.toFixed(2)}
-                            secondaryValue={<Text className="text-[9px] text-text-muted mt-0.5">с</Text>}
-                            className="mb-2"
-                        />
+                        <View className="mb-4 bg-surface-card rounded-3xl border border-surface-border p-1">
+                            {/* Рейтинг найкращої спроби */}
+                            <RatingMod
+                                rank={index + 1}
+                                name={item.playerName}
+                                subtitle={
+                                    <Text className="text-[10px] text-text-sub font-evolventa mt-0.5">
+                                        {t('tools.sessions.attempt_number', { num: item.bestAttemptNumber })} • {selectedDistance} {t('tools.speed_checker.meters_short', 'м')}
+                                    </Text>
+                                }
+                                resultValue={item.bestTime.toFixed(2)}
+                                secondaryValue={<Text className="text-[9px] text-text-muted mt-0.5">{t('tools.sessions.seconds_short')}</Text>}
+                                className="border-0 bg-transparent mb-1"
+                            />
+
+                            <View className="px-2 pb-2">
+                                <SplitsBlock
+                                    splits={item.splits}
+                                    totalTime={item.bestTime}
+                                    avgSplit={item.avgSplit}
+                                    title={t('tools.sessions.best_attempt_metrics')}
+                                />
+                            </View>
+                        </View>
                     ) : (
                         <View className="p-4 mb-3 bg-surface-card rounded-3xl border border-surface-border">
                             {/* ВЕРХНЯ ЧАСТИНА КАРТКИ */}
@@ -157,53 +251,24 @@ export default function SessionDetails({ session, onBack }: any) {
                                     <View>
                                         <Text className="text-body text-text-main font-unbounded-bold">{item.playerName}</Text>
                                         <Text className="text-[10px] text-text-sub font-evolventa">
-                                            Спроба {item.round || index + 1} • {item.distance}м
+                                            {t('tools.sessions.attempt_number', { num: item.round || index + 1 })} • {item.distance}{t('tools.speed_checker.meters_short', 'м')}
                                         </Text>
                                     </View>
                                 </View>
                                 <View className="items-end">
                                     <Text className="text-h3 text-brand-orange font-unbounded-black leading-none">{item.time.toFixed(2)}s</Text>
-                                    <Text className="text-[9px] text-text-muted font-evolventa uppercase tracking-tighter">Загальний час</Text>
-                                </View>
-                            </View>
-
-                            {/* 🔥 БЛОК СПЛІТІВ (НОВИЙ) */}
-                            <View className="bg-surface-bg/60 rounded-2xl p-3 border border-surface-border/50">
-                                <View className="flex-row items-center mb-3">
-                                    <MaterialCommunityIcons name="gesture-double-tap" size={14} color="#A3A3A3" />
-                                    <Text className="text-[10px] text-text-sub font-evolventa-bold ml-1.5 uppercase">
-                                        Показники по гейтах
-                                    </Text>
-                                </View>
-
-                                <View className="flex-row flex-wrap gap-2">
-                                    {item.splits && item.splits.map((splitTime: number, idx: number) => (
-                                        <View key={idx} className="bg-surface-card px-3 py-1.5 rounded-xl border border-surface-border flex-1 min-w-[80px]">
-                                            <Text className="text-[8px] text-text-muted font-evolventa uppercase mb-0.5">
-                                                Гейт {idx + 1} ({item.gateDistances[idx] || '?'}м)
-                                            </Text>
-                                            <Text className="text-caption text-text-main font-unbounded-bold">
-                                                {splitTime.toFixed(2)}s
-                                            </Text>
-                                        </View>
-                                    ))}
-                                    <View className="bg-brand-orange/10 px-3 py-1.5 rounded-xl border border-brand-orange/30 flex-1 min-w-[80px]">
-                                        <Text className="text-[8px] text-brand-orange font-evolventa uppercase mb-0.5">Фініш ({item.distance}м)</Text>
-                                        <Text className="text-caption text-brand-orange font-unbounded-bold">{item.time.toFixed(2)}s</Text>
-                                    </View>
-                                </View>
-
-                                {/* СЕРЕДНІЙ СПЛІТ */}
-                                <View className="mt-3 pt-2.5 border-t border-surface-border/30 flex-row justify-between items-center">
-                                    <View className="flex-row items-center">
-                                        <MaterialCommunityIcons name="timer-sand" size={12} color="#717171" />
-                                        <Text className="text-[10px] text-text-muted font-evolventa ml-1">Середній час відрізка:</Text>
-                                    </View>
-                                    <Text className="text-caption text-text-main font-unbounded-medium">
-                                        {item.avgSplit ? item.avgSplit.toFixed(2) : '--'} s
+                                    <Text className="text-[9px] text-text-muted font-evolventa uppercase tracking-tighter">
+                                        {t('tools.sessions.total_time')}
                                     </Text>
                                 </View>
                             </View>
+
+                            <SplitsBlock
+                                splits={item.splits}
+                                totalTime={item.time}
+                                avgSplit={item.avgSplit}
+                                title={t('tools.sessions.gate_metrics')}
+                            />
                         </View>
                     )
                 )}

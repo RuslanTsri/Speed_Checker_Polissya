@@ -74,7 +74,14 @@
     "result_type": "Тип результатів",
     "choose_distance": "Вибір дистанції",
     "all_distances": "Усі",
-    "attempt_number": "Спроба {{num}}"
+    "attempt_number": "Спроба {{num}}",
+    "best_attempt_metrics": "Показники найкращої спроби",
+    "gate_metrics": "Показники по гейтах",
+    "start_0m": "Старт (0м)",
+    "gate_n": "Гейт {{number}}",
+    "finish": "Фініш",
+    "avg_split_time": "Середній час відрізка:",
+    "total_time": "Загальний час"
   },
   "timer": {
     "title": "Секундомір",
@@ -161,6 +168,12 @@
     "status_ready_to_measure": "Ready to measure",
     "status_result_obtained": "Результат отримано",
     "status_running": "Вимірювання...",
-    "btn_waiting_start": "ОЧІКУВАННЯ СТАРТУ..."
+    "btn_waiting_start": "ОЧІКУВАННЯ СТАРТУ...",
+    "team_empty_no_teams_desc": "У вас ще немає створених команд. Створіть команду, щоб почати тестування.",
+    "btn_create_team": "Створити команду",
+    "btn_add_players": "Додати гравця",
+    "import_confirm": "Імпортувати",
+    "import_file_verified": "Файл перевірений",
+    "import_found_players": "Знайдено {{count}} гравців"
   }
 }

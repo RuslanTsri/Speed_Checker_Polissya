@@ -80,7 +80,8 @@ const SessionItem = memo(({ item, t }: { item: any, t: any }) => {
                         <View className="flex-row items-center mt-1">
                             <MaterialCommunityIcons name="timer-sand" size={10} color="#A3A3A3" />
                             <Text className="text-caption ml-0.5 text-text-sub font-evolventa">
-                                {t('tools.sessions.split', { time: item.avgSplit.toFixed(2) }) as string}
+                                {/* 🔥 Показуємо середній спліт та кількість гейтів */}
+                                {item.avgSplit.toFixed(2)}s <Text className="text-[9px] text-text-muted">({item.gatesCount} гейти)</Text>
                             </Text>
                         </View>
                     </View>

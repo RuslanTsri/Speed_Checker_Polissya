@@ -112,7 +112,7 @@ class ResultsService extends BaseService<Result> {
                         playerName: item.players?.name || 'Гість',
                         teamName: item.sessions?.teams?.name || 'Вільне тренування',
                         totalTime: Number(item.full_time),
-                        avgSplit: item.gates.length > 0 ? (Number(item.full_time) / item.gates.length) : 0,
+                        avgSplit: Number(item.full_time) / (item.gates.length + 1),
                         date: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
                     }));
                     // @ts-ignore

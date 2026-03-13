@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Feather } from '@expo/vector-icons';
+import {Feather, MaterialCommunityIcons} from '@expo/vector-icons';
 import { useSessionDetails } from '../../hooks/sessions/useSessionDetails';
 
 import { Mod, RatingMod } from '../components/ui/mods';
@@ -12,7 +12,7 @@ export default function SessionDetails({ session, onBack }: any) {
     const { t } = useTranslation();
     const {
         subTab, setSubTab, selectedDistance, setSelectedDistance, predefinedDistances,
-        filteredAttempts, sortedResults, sessionStats, handleExport
+        filteredAttempts, sortedResults, sessionStats, handleExport, gateDistances
     } = useSessionDetails(session);
 
     const [localAllDistance, setLocalAllDistance] = useState<number | 'ALL'>('ALL');
@@ -69,6 +69,7 @@ export default function SessionDetails({ session, onBack }: any) {
             </Text>
         </View>
     );
+
 
     return (
         <View className="flex-1 pt-2">
@@ -131,7 +132,6 @@ export default function SessionDetails({ session, onBack }: any) {
                 data={displayedAttempts}
                 keyExtractor={(item, index) => `${item.playerName}-${index}`}
                 contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, paddingTop: 4, flexGrow: 1 }}
-                ListEmptyComponent={renderEmptyState}
                 renderItem={({ item, index }) => (
                     subTab === 'BEST' ? (
                         <RatingMod
@@ -139,37 +139,70 @@ export default function SessionDetails({ session, onBack }: any) {
                             name={item.playerName}
                             subtitle={
                                 <Text className="text-[10px] text-text-sub font-evolventa mt-0.5">
-                                    {t('tools.sessions.attempt_number', { num: item.bestAttemptNumber, defaultValue: `Спроба ${item.bestAttemptNumber}` })}
-                                    {` • ${selectedDistance} м`}
+                                    {t('tools.sessions.attempt_number', { num: item.bestAttemptNumber })} • {selectedDistance} м
                                 </Text>
                             }
                             resultValue={item.bestTime.toFixed(2)}
-                            secondaryValue={
-                                <Text className="text-[9px] text-text-muted font-unbounded-medium uppercase mt-0.5">
-                                    {t('tools.sessions.seconds_short', 'с')}
-                                </Text>
-                            }
+                            secondaryValue={<Text className="text-[9px] text-text-muted mt-0.5">с</Text>}
                             className="mb-2"
                         />
                     ) : (
-                        <View className="flex-row items-center justify-between p-3.5 mb-2 bg-surface-card rounded-2xl border border-surface-border">
-                            <View className="flex-row items-center gap-3">
-                                <View className="w-9 h-9 rounded-full bg-surface-bg items-center justify-center border border-surface-border/50">
-                                    <Feather name="clock" size={14} color="#A3A3A3" />
+                        <View className="p-4 mb-3 bg-surface-card rounded-3xl border border-surface-border">
+                            {/* ВЕРХНЯ ЧАСТИНА КАРТКИ */}
+                            <View className="flex-row items-center justify-between mb-4">
+                                <View className="flex-row items-center gap-3">
+                                    <View className="w-10 h-10 rounded-full bg-brand-orange/10 items-center justify-center border border-brand-orange/20">
+                                        <Feather name="user" size={18} color="#FF6D00" />
+                                    </View>
+                                    <View>
+                                        <Text className="text-body text-text-main font-unbounded-bold">{item.playerName}</Text>
+                                        <Text className="text-[10px] text-text-sub font-evolventa">
+                                            Спроба {item.round || index + 1} • {item.distance}м
+                                        </Text>
+                                    </View>
                                 </View>
-                                <View>
-                                    <Text className="text-body text-text-main font-evolventa-bold">{item.playerName}</Text>
-                                    <Text className="text-[10px] text-text-sub font-evolventa mt-0.5">
-                                        {t('tools.sessions.attempt_number', { num: item.attemptNumber, defaultValue: `Спроба ${item.attemptNumber}` })}
-                                        {item.distance ? ` • ${item.distance} м` : ''}
-                                    </Text>
+                                <View className="items-end">
+                                    <Text className="text-h3 text-brand-orange font-unbounded-black leading-none">{item.time.toFixed(2)}s</Text>
+                                    <Text className="text-[9px] text-text-muted font-evolventa uppercase tracking-tighter">Загальний час</Text>
                                 </View>
                             </View>
-                            <View className="items-end">
-                                <Text className="text-h4 text-text-main font-unbounded-bold">{item.time.toFixed(2)}</Text>
-                                <Text className="text-[9px] text-text-muted font-unbounded-medium uppercase mt-0.5">
-                                    {t('tools.sessions.seconds_short', 'с')}
-                                </Text>
+
+                            {/* 🔥 БЛОК СПЛІТІВ (НОВИЙ) */}
+                            <View className="bg-surface-bg/60 rounded-2xl p-3 border border-surface-border/50">
+                                <View className="flex-row items-center mb-3">
+                                    <MaterialCommunityIcons name="gesture-double-tap" size={14} color="#A3A3A3" />
+                                    <Text className="text-[10px] text-text-sub font-evolventa-bold ml-1.5 uppercase">
+                                        Показники по гейтах
+                                    </Text>
+                                </View>
+
+                                <View className="flex-row flex-wrap gap-2">
+                                    {item.splits && item.splits.map((splitTime: number, idx: number) => (
+                                        <View key={idx} className="bg-surface-card px-3 py-1.5 rounded-xl border border-surface-border flex-1 min-w-[80px]">
+                                            <Text className="text-[8px] text-text-muted font-evolventa uppercase mb-0.5">
+                                                Гейт {idx + 1} ({item.gateDistances[idx] || '?'}м)
+                                            </Text>
+                                            <Text className="text-caption text-text-main font-unbounded-bold">
+                                                {splitTime.toFixed(2)}s
+                                            </Text>
+                                        </View>
+                                    ))}
+                                    <View className="bg-brand-orange/10 px-3 py-1.5 rounded-xl border border-brand-orange/30 flex-1 min-w-[80px]">
+                                        <Text className="text-[8px] text-brand-orange font-evolventa uppercase mb-0.5">Фініш ({item.distance}м)</Text>
+                                        <Text className="text-caption text-brand-orange font-unbounded-bold">{item.time.toFixed(2)}s</Text>
+                                    </View>
+                                </View>
+
+                                {/* СЕРЕДНІЙ СПЛІТ */}
+                                <View className="mt-3 pt-2.5 border-t border-surface-border/30 flex-row justify-between items-center">
+                                    <View className="flex-row items-center">
+                                        <MaterialCommunityIcons name="timer-sand" size={12} color="#717171" />
+                                        <Text className="text-[10px] text-text-muted font-evolventa ml-1">Середній час відрізка:</Text>
+                                    </View>
+                                    <Text className="text-caption text-text-main font-unbounded-medium">
+                                        {item.avgSplit ? item.avgSplit.toFixed(2) : '--'} s
+                                    </Text>
+                                </View>
                             </View>
                         </View>
                     )

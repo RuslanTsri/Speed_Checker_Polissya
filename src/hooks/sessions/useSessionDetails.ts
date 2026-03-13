@@ -26,8 +26,20 @@ export const useSessionDetails = (session: TeamSession) => {
         if (!session?.id) return;
         setIsLoading(true);
         const { data, error } = await resultsService.getByTeam(session.id);
-        if (!error && data) setRawResults(data);
-        else setRawResults([]);
+
+        if (!error && data) {
+            // Додаємо розрахунок середнього спліту для кожної спроби
+            const enhancedData = data.map(result => {
+                const segments = (result.splits?.length || 0) + 1;
+                return {
+                    ...result,
+                    avgSplit: result.time / segments
+                };
+            });
+            setRawResults(enhancedData);
+        } else {
+            setRawResults([]);
+        }
         setIsLoading(false);
     };
 
@@ -71,9 +83,15 @@ export const useSessionDetails = (session: TeamSession) => {
         }
         try { await exportResultsToCSV(rawResults, session.teamName); } catch (err) { console.error("Export handler error:", err); }
     };
-
+    const gateDistances = useMemo(() => {
+        if (rawResults.length > 0 && rawResults[0].splits_config) {
+            return rawResults[0].splits_config;
+        }
+        // Якщо немає конфігу, повертаємо порожній масив або логіку за замовчуванням
+        return [];
+    }, [rawResults]);
     return {
         subTab, setSubTab, roundFilter, setRoundFilter, selectedDistance, setSelectedDistance, predefinedDistances, rounds: [],
-        filteredAttempts: rawResults, sortedResults: groupedPlayers, handleExport, sessionStats, isLoading
+        filteredAttempts: rawResults, sortedResults: groupedPlayers, handleExport, sessionStats, isLoading, gateDistances
     };
 };

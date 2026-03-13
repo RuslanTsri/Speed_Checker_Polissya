@@ -60,8 +60,6 @@ export const Button = ({
         return base;
     };
 
-    const isSingleWord = !title.trim().includes(' ');
-
     return (
         <Pressable
             disabled={disabled || isLoading}
@@ -76,15 +74,16 @@ export const Button = ({
                     color={variant === 'primary' || variant === 'danger' ? '#F5F5F5' : '#FF6D00'}
                 />
             ) : (
-                <View className="flex-row items-center justify-center flex-1">
+                // 🔥 Прибрали flex-1, який ламав розрахунок ширини
+                <View className="flex-row items-center justify-center">
                     {icon && <View className="mr-3">{icon}</View>}
 
                     <Text
                         className={getTextClasses()}
                         style={[style, { textAlign: 'center' }]}
-                        numberOfLines={isSingleWord ? 1 : 2}
-                        adjustsFontSizeToFit={true}
-                        minimumFontScale={isSingleWord ? 0.4 : 0.8}
+                        // 🔥 Якщо текст довгий, він просто перенесеться на 2 рядки або обріжеться "..."
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
                     >
                         {title}
                     </Text>

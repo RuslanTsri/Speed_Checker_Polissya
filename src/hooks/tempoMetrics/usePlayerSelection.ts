@@ -9,20 +9,34 @@ export const usePlayerSelection = (teamId: string) => {
     const [allPlayers, setAllPlayers] = useState<Player[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [search, setSearch] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [isAddModalVisible, setAddModalVisible] = useState(false);
 
-    const loadPlayers = async () => {
-        setIsLoading(true);
+    // 🔥 Додано параметр silent
+    const loadPlayers = async (silent = false) => {
+        if (!silent) setIsLoading(true);
+
         const { data, error } = await playerService.getByTeam(teamId);
-        if (error) Alert.alert(t('tools.speed_checker.alert_error') as string, t('tools.speed_checker.error_load_players') as string); // 🔥
-        else setAllPlayers(data || []);
-        setIsLoading(false);
+
+        if (error) {
+            if (!silent) Alert.alert(t('tools.speed_checker.alert_error') as string, t('tools.speed_checker.error_load_players') as string);
+        } else {
+            setAllPlayers(data || []);
+        }
+
+        if (!silent) setIsLoading(false);
     };
 
+    // При першому завантаженні або зміні команди - показуємо лоадер
     useEffect(() => { if (teamId) loadPlayers(); }, [teamId]);
+
+    // При фоновій синхронізації - оновлюємо ТИХО
     useEffect(() => {
-        const unsubscribe = syncManager.subscribe(() => { if (!syncManager.getIsSyncing() && teamId) loadPlayers(); });
+        const unsubscribe = syncManager.subscribe(() => {
+            if (!syncManager.getIsSyncing() && teamId) {
+                loadPlayers(true); // 🔥 true = silent
+            }
+        });
         return unsubscribe;
     }, [teamId]);
 

@@ -11,24 +11,36 @@ export const useTeamSelection = () => {
     const [teams, setTeams] = useState<UITeamItem[]>([]);
     const [search, setSearch] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const loadTeams = async () => {
-        setIsLoading(true);
+    // 🔥 Додано параметр silent
+    const loadTeams = async (silent = false) => {
+        if (!silent) setIsLoading(true);
+
         const { data, error } = await teamService.getMyTeams();
-        if (error) { Alert.alert(t('tools.speed_checker.alert_error') as string, t('tools.speed_checker.error_load_teams') as string); }
-        else {
+
+        if (error) {
+            if (!silent) Alert.alert(t('tools.speed_checker.alert_error') as string, t('tools.speed_checker.error_load_teams') as string);
+        } else {
             const formattedTeams: UITeamItem[] = (data || []).map((team: any) => ({
-                id: team.id, name: team.name, players: team.players ? team.players.length : 0, lastSession: t('tools.speed_checker.no_data') as string // 🔥
+                id: team.id, name: team.name, players: team.players ? team.players.length : 0, lastSession: t('tools.speed_checker.no_data') as string
             }));
             setTeams(formattedTeams);
         }
-        setIsLoading(false);
+
+        if (!silent) setIsLoading(false);
     };
 
+    // При першому завантаженні екрану - показуємо лоадер
     useEffect(() => { loadTeams(); }, []);
+
+    // При фоновій синхронізації - оновлюємо ТИХО
     useEffect(() => {
-        const unsubscribe = syncManager.subscribe(() => { if (!syncManager.getIsSyncing()) loadTeams(); });
+        const unsubscribe = syncManager.subscribe(() => {
+            if (!syncManager.getIsSyncing()) {
+                loadTeams(true); // 🔥 true = silent
+            }
+        });
         return unsubscribe;
     }, []);
 

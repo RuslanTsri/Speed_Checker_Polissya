@@ -45,13 +45,14 @@ export const usePlayersLogic = () => {
     const [importMessage, setImportMessage] = useState('');
 
     // ===========================
-    // ЗАВАНТАЖЕННЯ ДАНИХ
+    // ЗАВАНТАЖЕННЯ ДАНИХ (🔥 Додано silent режим)
     // ===========================
-    const fetchTeams = useCallback(async () => {
-        setIsLoading(true);
+    const fetchTeams = useCallback(async (silent = false) => {
+        if (!silent) setIsLoading(true); // Крутимо лоадер тільки якщо не silent
         const { data, error } = await teamService.getMyTeams();
-        if (error) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_load_teams') as string);
-        else {
+        if (error) {
+            if (!silent) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_load_teams') as string);
+        } else {
             setTeams((data || []).map((teamData: any) => ({
                 id: teamData.id,
                 name: teamData.name,
@@ -61,25 +62,27 @@ export const usePlayersLogic = () => {
                 lastSessionDate: t('screens.players.no_data') as string
             })));
         }
-        setIsLoading(false);
+        if (!silent) setIsLoading(false);
     }, [t]);
 
-    const fetchPlayers = useCallback(async (teamId: string) => {
-        setIsLoading(true);
+    const fetchPlayers = useCallback(async (teamId: string, silent = false) => {
+        if (!silent) setIsLoading(true); // Крутимо лоадер тільки якщо не silent
         const { data } = await playerService.getByTeam(teamId);
         setPlayers(data || []);
-        setIsLoading(false);
+        if (!silent) setIsLoading(false);
     }, []);
 
+    // При першому відкритті екрану завантажуємо НЕ тихо (щоб показати лоадер)
     useEffect(() => { fetchTeams(); }, [fetchTeams]);
     useEffect(() => { if (selectedTeam?.id) fetchPlayers(selectedTeam.id); else setPlayers([]); }, [selectedTeam, fetchPlayers]);
 
+    // А ось при фоновій синхронізації оновлюємо ТИХО (ajax-style)
     useEffect(() => {
         const unsubscribe = syncManager.subscribe(() => {
             if (!syncManager.getIsSyncing()) {
-                fetchTeams();
+                fetchTeams(true); // 🔥 true = silent
                 if (selectedTeam?.id) {
-                    fetchPlayers(selectedTeam.id);
+                    fetchPlayers(selectedTeam.id, true); // 🔥 true = silent
                 }
             }
         });
@@ -95,7 +98,7 @@ export const usePlayersLogic = () => {
         const { error } = await teamService.create({ name: newTeamName.trim() });
         setIsLoading(false);
         if (error) Alert.alert(t('screens.players.error_title') as string, error.message);
-        else { setNewTeamName(''); setAddTeamModalVisible(false); fetchTeams(); }
+        else { setNewTeamName(''); setAddTeamModalVisible(false); fetchTeams(true); } // 🔥 Оновлюємо тихо
     };
 
     const handleDeleteTeam = () => { setDropdownVisible(false); setDeleteTeamModalVisible(true); };
@@ -106,7 +109,7 @@ export const usePlayersLogic = () => {
         const { error } = await teamService.delete(selectedTeam.id);
         setIsLoading(false);
         if (error) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_delete_team') as string);
-        else { setDeleteTeamModalVisible(false); setSelectedTeam(null); fetchTeams(); }
+        else { setDeleteTeamModalVisible(false); setSelectedTeam(null); fetchTeams(true); } // 🔥 Оновлюємо тихо
     };
 
     const handleEditTeam = () => {
@@ -124,7 +127,7 @@ export const usePlayersLogic = () => {
         if (error) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_update_team') as string);
         else {
             setSelectedTeam({ ...selectedTeam, name: editingTeamName.trim() });
-            fetchTeams();
+            fetchTeams(true); // 🔥 Оновлюємо тихо
             setEditTeamModalVisible(false);
         }
     };
@@ -134,15 +137,15 @@ export const usePlayersLogic = () => {
     // ===========================
     const handleAddManualPlayer = async () => {
         if (!newPlayerName.trim() || !selectedTeam?.id) return;
-        setIsLoading(true);
+        setIsLoading(true); // Блокуємо кнопку на мить
         const { error } = await playerService.create({ name: newPlayerName.trim(), team_id: selectedTeam.id });
         setIsLoading(false);
         if (error) Alert.alert(t('screens.players.error_title') as string, error.message);
         else {
             setNewPlayerName('');
             setAddManualVisible(false);
-            fetchPlayers(selectedTeam.id);
-            fetchTeams();
+            fetchPlayers(selectedTeam.id, true); // 🔥 Оновлюємо тихо
+            fetchTeams(true); // 🔥 Оновлюємо тихо
         }
     };
 
@@ -162,7 +165,7 @@ export const usePlayersLogic = () => {
         if (error) {
             Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_update_player') as string);
         } else {
-            fetchPlayers(selectedTeam.id);
+            fetchPlayers(selectedTeam.id, true); // 🔥 Оновлюємо тихо
             setEditPlayerModalVisible(false);
             setEditingPlayer(null);
         }
@@ -184,8 +187,8 @@ export const usePlayersLogic = () => {
         if (error) {
             Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_delete_player') as string);
         } else {
-            fetchPlayers(selectedTeam.id);
-            fetchTeams();
+            fetchPlayers(selectedTeam.id, true); // 🔥 Оновлюємо тихо
+            fetchTeams(true); // 🔥 Оновлюємо тихо
             setDeletePlayerModalVisible(false);
             setPlayerToDelete(null);
         }
@@ -207,21 +210,35 @@ export const usePlayersLogic = () => {
 
     const handleConfirmImport = async () => {
         if (!selectedTeam?.id || importedPlayers.length === 0) return;
-        setIsLoading(true); setImportStatus('idle'); let successCount = 0;
 
+        setIsLoading(true); // Блокуємо кнопку
+        setImportStatus('idle');
+
+        let successCount = 0;
+
+        // Додаємо гравців
         for (const p of importedPlayers) {
             const response = await playerService.create({ name: p.name, team_id: selectedTeam.id });
             if (!response.error) successCount++;
         }
 
-        setIsLoading(false);
         if (successCount > 0) {
-            setImportStatus('success'); setImportMessage(t('screens.players.import_success_count', { count: successCount }) as string);
-            fetchPlayers(selectedTeam.id); fetchTeams();
-            setTimeout(() => handleSetImportVisible(false), 1500);
-        } else { setImportStatus('error'); setImportMessage(t('screens.players.error_import_add') as string); }
-    };
+            setImportStatus('success');
 
+            // ВАЖЛИВО: Спочатку дочікуємося, поки гравці з'являться в стейті
+            await fetchPlayers(selectedTeam.id, true);
+            await fetchTeams(true);
+
+            // І ТІЛЬКИ ПІСЛЯ ЦЬОГО знімаємо блокування кнопки і закриваємо модалку
+            setIsLoading(false);
+            handleSetImportVisible(false);
+
+        } else {
+            setImportStatus('error');
+            setImportMessage(t('screens.players.error_import_add') as string);
+            setIsLoading(false); // Знімаємо блокування, якщо помилка
+        }
+    };
     const handleMockImport = () => { handleSetImportVisible(true); };
     const getInitials = (name: string) => name.charAt(0).toUpperCase();
     const filteredTeams = teams.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));

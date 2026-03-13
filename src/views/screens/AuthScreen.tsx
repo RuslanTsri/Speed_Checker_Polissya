@@ -1,6 +1,6 @@
 import React from 'react';
-import {View, Text, KeyboardAvoidingView, Platform, ScrollView, Linking} from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Linking, Image } from 'react-native'; // 🔥 Додали Image
+import { Feather } from '@expo/vector-icons'; // 🔥 Прибрали Ionicons (бо блискавка більше не потрібна)
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +10,8 @@ import { TextField } from '../components/ui/TextField';
 import { AppBackground } from '../components/ui/AppBackground';
 import { Button } from '../components/ui/Button';
 
+
+import TempoMetricWhiteNoBackground from '../../../assets/tempometrics_white_nobackground.svg';
 interface AuthScreenProps {
     onLogin: () => void;
 }
@@ -35,8 +37,8 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     showsVerticalScrollIndicator={false}
                 >
                     <View className="items-center mb-10">
-                        <View className="w-24 h-24 rounded-[32px] items-center justify-center mb-6 bg-surface-card border border-surface-border shadow-2xl">
-                            <Ionicons name="flash" size={48} color="#FF6D00" />
+                        <View className="w-24 h-24 rounded-[32px] items-center justify-center mb-6 bg-surface-card border border-surface-border shadow-2xl overflow-hidden">
+                          <TempoMetricWhiteNoBackground width={64} height={64} fill="#FF6D00" />
                         </View>
 
                         <Text className="text-h1 font-black tracking-tight text-center mb-2 text-text-main font-unbounded">

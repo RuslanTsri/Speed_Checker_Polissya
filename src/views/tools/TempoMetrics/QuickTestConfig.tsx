@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTestConfiguration } from '../../../hooks/tempoMetrics/useTestConfiguration';
 import { useBle } from '../../../context/BleContext';
@@ -24,7 +24,7 @@ const AdjustButton = ({ direction, onPress }: { direction: 'left' | 'right', onP
     </Pressable>
 );
 
-export default function QuickTestConfig({ onBack, onStart, onOpenBluetooth }: any) {
+export default function QuickTestConfig({ onBack, onStart, onOpenBluetooth, onOpenPlacementCheck }: any) {
     const { t } = useTranslation();
     const { distance, setDistance, splitPositions, adjustSplit, sensorsCount, intermediateCount } = useTestConfiguration();
     const { connected } = useBle();
@@ -60,7 +60,23 @@ export default function QuickTestConfig({ onBack, onStart, onOpenBluetooth }: an
                     <HeaderTabs tabs={distanceTabs} activeTab={distance.toString()} onTabChange={(id) => setDistance(parseInt(id))} />
                 </View>
 
-                <LayoutContainer title={t('tools.speed_checker.scheme_title')} subtitle={t('tools.speed_checker.scheme_desc')}>
+                {/* 🔥 Оновлений LayoutContainer з локалізованою кнопкою РАДАР */}
+                <LayoutContainer
+                    title={t('tools.speed_checker.scheme_title')}
+                    subtitle={t('tools.speed_checker.scheme_desc')}
+                    headerRight={
+                        <Pressable
+                            onPress={() => onOpenPlacementCheck({ distance, splitPositions })}
+                            className="flex-row items-center bg-brand-orange/15 px-2.5 py-1.5 rounded-lg border border-brand-orange/30 active:bg-brand-orange/30"
+                            style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
+                        >
+                            <MaterialCommunityIcons name="radar" size={14} color="#FF6D00" />
+                            <Text className="text-brand-orange font-evolventa-bold ml-1 text-[10px] tracking-widest uppercase">
+                                {t('tools.speed_checker.radar_btn_beta')}
+                            </Text>
+                        </Pressable>
+                    }
+                >
                     <LayoutTrack />
                     <LayoutMarker position={0} totalDistance={distance} label={t('tools.speed_checker.start_label')} type="start" />
                     {splitPositions.map((pos, i) => (

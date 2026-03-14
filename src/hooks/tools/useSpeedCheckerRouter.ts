@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Player } from '../../services/playerService';
 
-export type SpeedCheckerScreen = 'MODE_SELECT' | 'QUICK_CONFIG' | 'TEAM_SELECT' | 'PLAYER_SELECT' | 'TEST_RUN';
+// 🔥 1. Додали 'SENSOR_PLACEMENT' в список доступних екранів
+export type SpeedCheckerScreen = 'MODE_SELECT' | 'QUICK_CONFIG' | 'TEAM_SELECT' | 'PLAYER_SELECT' | 'TEST_RUN' | 'SENSOR_PLACEMENT';
 
 export interface TestConfig {
     mode: 'DEVICE' | 'MANUAL';
@@ -63,6 +64,16 @@ export const useSpeedCheckerRouter = () => {
         setCurrentScreen('TEST_RUN');
     };
 
+    // 🔥 2. Спеціальні функції для навігації в Радар і назад
+    const handleOpenPlacementCheck = (distance: number, splitPositions: number[]) => {
+        setTestConfig(prev => ({ ...prev, distance, splitPositions }));
+        setCurrentScreen('SENSOR_PLACEMENT');
+    };
+
+    const handleClosePlacementCheck = () => {
+        setCurrentScreen('QUICK_CONFIG');
+    };
+
     const handleBackFromConfig = () => setCurrentScreen(testConfig.type === 'QUICK' ? 'MODE_SELECT' : 'PLAYER_SELECT');
     const handleBackFromPlayers = () => setCurrentScreen('TEAM_SELECT');
     const handleBackFromTeam = () => setCurrentScreen('MODE_SELECT');
@@ -71,6 +82,12 @@ export const useSpeedCheckerRouter = () => {
     return {
         currentScreen, testConfig, goToModeSelect, handleModeSelect,
         handleTeamSelect, handlePlayersSelect, handleStartTest,
-        handleBackFromConfig, handleBackFromPlayers, handleBackFromTeam, handleBackFromRun
+        handleBackFromConfig, handleBackFromPlayers, handleBackFromTeam, handleBackFromRun,
+
+        // 🔥 3. Експортуємо нові методи та базові сеттери
+        handleOpenPlacementCheck,
+        handleClosePlacementCheck,
+        setCurrentScreen,
+        setTestConfig
     };
 };

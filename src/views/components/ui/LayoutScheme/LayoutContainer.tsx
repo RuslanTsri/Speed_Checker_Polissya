@@ -9,9 +9,10 @@ interface LayoutContainerProps {
     children: React.ReactNode;
     title: string;
     subtitle: string;
+    headerRight?: React.ReactNode; // 🔥 Додаємо можливість вставити щось справа
 }
 
-export const LayoutContainer = ({ children, title, subtitle }: LayoutContainerProps) => {
+export const LayoutContainer = ({ children, title, subtitle, headerRight }: LayoutContainerProps) => {
     const isAndroid = Platform.OS === 'android';
 
     return (
@@ -28,9 +29,13 @@ export const LayoutContainer = ({ children, title, subtitle }: LayoutContainerPr
             </View>
 
             <View className="p-5">
-                <Text className="text-text-main text-h3 font-unbounded-bold mb-1">
-                    {title}
-                </Text>
+                <View className="flex-row justify-between items-start mb-1">
+                    <Text className="text-text-main text-h3 font-unbounded-bold flex-1 pr-2">
+                        {title}
+                    </Text>
+                    {headerRight && <View className="mt-0.5">{headerRight}</View>}
+                </View>
+
                 <Text className="text-text-sub text-body font-evolventa tracking-wide mb-6">
                     {subtitle}
                 </Text>

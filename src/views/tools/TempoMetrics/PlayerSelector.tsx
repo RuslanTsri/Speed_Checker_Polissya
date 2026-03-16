@@ -9,7 +9,6 @@ import { Player } from '../../../services/playerService';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { Button, IconButton } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
-import { PlayerMod } from '../../components/ui/mods';
 import {
     ArrowIcon, ArrowIconActive, PhotoIcon,
     DocIcon, DocIconActive, UserIcon, UserIconActive,
@@ -34,6 +33,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
         isAddManualVisible, setAddManualVisible, newPlayerName, setNewPlayerName, handleAddManualPlayer,
         isAddPlayerOptionsVisible, setAddPlayerOptionsVisible,
         isImportVisible, setImportVisible, downloadTemplate, importedPlayers, handleSelectFile, handleConfirmImport,
+        excludedPlayers, toggleExcludePlayer, // ДОДАНО: Стейт та функція для викреслювання гравців
         isLoading: isLogicLoading
     } = usePlayersLogic();
 
@@ -100,7 +100,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                 />
                 <View className="flex-row gap-3 mt-4">
                     <Button variant="outline" title={t('screens.players.btn_cancel')} onPress={() => setAddManualVisible(false)} className="flex-1" />
-                    <Button variant="primary" title={t('screens.players.btn_add')} onPress={onPlayerCreate} className="flex-1" disabled={!newPlayerName?.trim() || isLogicLoading} isLoading={isLogicLoading} />
+                    <Button variant="primary" title={t('screens.players.btn_add')} onPress={onPlayerCreate} className="flex-1" disabled={!newPlayerName?.trim() || isLogicLoading} />
                 </View>
             </AppModal>
 
@@ -151,35 +151,57 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                             </View>
                             <View className="flex-1">
                                 <Text className="text-base text-[#F5F5F5] mb-0.5 font-unbounded-bold">
-                                    {t('tools.speed_checker.import_file_verified')}
+                                    {t('tools.speed_checker.import_file_verified') || 'Файл перевірений'}
                                 </Text>
                                 <Text className="text-xs text-emerald-500 font-evolventa-bold">
-                                    {t('tools.speed_checker.import_found_players', { count: importedPlayers.length })}
+                                    {t('tools.speed_checker.import_found_players', { count: importedPlayers.length }) || `Знайдено ${importedPlayers.length} гравців`}
                                 </Text>
                             </View>
                         </View>
 
                         <Text className="text-[11px] text-[#F5F5F5] mb-3 font-evolventa-bold">
-                            {t('tools.speed_checker.player_list')}
+                            Список гравців
                         </Text>
 
+                        <Text className="text-[11px] text-[#A3A3A3] mb-3 font-evolventa">
+                            Натисніть на гравця, щоб виділити його <Text className="text-red-500 font-bold">червоним</Text> (він не додасться до команди).
+                        </Text>
+
+                        {/* ДОДАНО: Новий ScrollView з TouchableOpacity для виключення гравців */}
                         <ScrollView
                             className="mb-6 max-h-[250px]"
-                            showsVerticalScrollIndicator={false}
+                            showsVerticalScrollIndicator={true}
                             contentContainerStyle={{ paddingBottom: 10 }}
                         >
-                            {importedPlayers.map((player, index) => (
-                                <View key={index} className="mb-2">
-                                    <PlayerMod name={player.name} />
-                                </View>
-                            ))}
+                            {importedPlayers?.map((player: any, index: number) => {
+                                const isExcluded = excludedPlayers.has(player.name);
+                                return (
+                                    <TouchableOpacity
+                                        key={index}
+                                        activeOpacity={0.7}
+                                        onPress={() => toggleExcludePlayer(player.name)}
+                                        className={`flex-row items-center px-4 py-3 rounded-xl mb-2 border transition-colors ${
+                                            isExcluded
+                                                ? 'border-red-500/50 bg-red-500/10'
+                                                : 'border-white/5 bg-[#0A0A0A]'
+                                        }`}
+                                    >
+                                        <View className="flex-1">
+                                            <Text className={`font-evolventa-bold text-base ${isExcluded ? 'text-red-500 line-through opacity-70' : 'text-[#F5F5F5]'}`}>
+                                                {player.name}
+                                            </Text>
+                                        </View>
+                                        {isExcluded && <Feather name="x-circle" size={18} color="#ef4444" />}
+                                    </TouchableOpacity>
+                                );
+                            })}
                         </ScrollView>
 
                         <Button
                             variant="primary"
-                            title={t('tools.speed_checker.import_confirm')}
+                            title={isLogicLoading ? "Зачекайте... йде імпортування" : (t('tools.speed_checker.import_confirm') || 'Імпортувати')}
                             onPress={() => handleConfirmImport()}
-                            isLoading={isLogicLoading}
+                            disabled={isLogicLoading}
                         />
                     </View>
                 )}

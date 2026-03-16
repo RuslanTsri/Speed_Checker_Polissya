@@ -3,6 +3,7 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Alert, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import * as XLSX from 'xlsx';
 
 const fs = FileSystem as any;
 const baseDir = fs.documentDirectory || fs.cacheDirectory;
@@ -10,6 +11,15 @@ const baseDir = fs.documentDirectory || fs.cacheDirectory;
 export interface CSVPlayer {
     name: string;
 }
+
+export interface ParseResult {
+    players: CSVPlayer[];
+    fileName: string;
+}
+
+const FIRST_NAME_KEYS = ['імʼя', "ім'я", 'імя', 'first name', 'firstname', 'first_name', 'name', 'имя'];
+const LAST_NAME_KEYS = ['прізвище', 'last name', 'lastname', 'last_name', 'surname', 'фамилия'];
+const FULL_NAME_KEYS = ['full name', 'fullname', 'full_name', 'pib', 'піб', 'фио', "повне ім'я", 'гравець', 'player', 'спортсмен', 'name'];
 
 export const useCSV = () => {
     const { t } = useTranslation();
@@ -28,47 +38,81 @@ export const useCSV = () => {
         URL.revokeObjectURL(url);
     };
 
-    const exportResultsToCSV = async (results: any[], teamName: string) => {
+    // НОВА ФУНКЦІЯ: Експорт результатів у форматі Excel (.xlsx)
+    const exportResultsToExcel = async (results: any[], teamName: string) => {
         try {
             if (!results || results.length === 0) {
-                Alert.alert(
-                    t('screens.common.info'),
-                    t('logs.warns.csv.no_data')
-                );
+                Alert.alert(t('screens.common.info'), t('logs.warns.csv.no_data'));
                 return;
             }
 
-            let csvContent = `${t('screens.csv.export_headers')}\n`;
+            // 1. Формуємо дані для таблиці (Масив масивів)
+            const sheetData: any[][] = [];
 
+            // Розбиваємо рядок заголовків з перекладу на масив і прибираємо зайві лапки
+            const headersStr = String(t('screens.csv.export_headers'));
+            const headers = headersStr.split(',').map(h => h.replace(/^"|"$/g, '').trim());
+            sheetData.push(headers);
+
+            // Додаємо рядки з результатами
             results.forEach((res) => {
-                const timeStr = `="${res.time.toFixed(2)}"`;
-                const distanceStr = res.distance ? `="${res.distance.toString()}"` : '"-"';
-                const splitsStr = res.splits && res.splits.length > 0 ? `="${res.splits.join(', ')}"` : '""';
-                const dateStr = `"${res.date || '-'}"`;
-                const typeStr = `"${res.testType || 'Sprint'}"`;
+                const distanceVal = res.distance ? res.distance.toString() : '-';
+                const timeVal = Number(res.time.toFixed(3)); // Excel любить чисті числа
+                const splitsVal = res.splits && res.splits.length > 0 ? res.splits.join(', ') : '';
+                const dateVal = res.date || '-';
+                const typeVal = res.testType || 'Sprint';
 
-                csvContent += `"${teamName}","${res.playerName}",${dateStr},${typeStr},${distanceStr},${timeStr},${splitsStr}\n`;
+                sheetData.push([
+                    teamName,
+                    res.playerName,
+                    dateVal,
+                    typeVal,
+                    distanceVal,
+                    timeVal,
+                    splitsVal
+                ]);
             });
 
-            const fileName = `Results_${teamName.replace(/\s+/g, '_')}_${Date.now()}.csv`;
+            // 2. Створюємо книгу та аркуш
+            const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+            const workbook = XLSX.utils.book_new();
 
+            // Налаштування ширини колонок для гарного вигляду
+            worksheet['!cols'] = [
+                { wch: 20 }, // Команда
+                { wch: 25 }, // Гравець
+                { wch: 15 }, // Дата
+                { wch: 15 }, // Тип
+                { wch: 12 }, // Дистанція
+                { wch: 10 }, // Час
+                { wch: 30 }  // Спліти
+            ];
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Results");
+
+            const fileName = `Results_${teamName.replace(/\s+/g, '_')}_${Date.now()}.xlsx`;
+
+            // 3. Збереження для Web
             if (Platform.OS === 'web') {
-                saveFileOnWeb(csvContent, fileName);
+                XLSX.writeFile(workbook, fileName);
                 return;
             }
 
+            // 4. Збереження для мобільних (iOS / Android)
+            const b64 = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' });
             const fileUri = baseDir.endsWith('/') ? `${baseDir}${fileName}` : `${baseDir}/${fileName}`;
 
-            await fs.writeAsStringAsync(fileUri, csvContent, {
-                encoding: fs.EncodingType?.UTF8 || 'utf8'
+            await fs.writeAsStringAsync(fileUri, b64, {
+                encoding: fs.EncodingType?.Base64 || 'base64'
             });
 
+            // 5. Виклик вікна "Поділитися"
             if (await Sharing.isAvailableAsync()) {
                 try {
                     await Sharing.shareAsync(fileUri, {
-                        mimeType: 'text/csv',
+                        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         dialogTitle: `${t('screens.csv.export_dialog')}: ${teamName}`,
-                        UTI: 'public.comma-separated-values-text'
+                        UTI: 'org.openxmlformats.spreadsheetml.sheet'
                     });
                 } catch (shareError) {
                     console.log("Share dismissed by user:", shareError);
@@ -78,9 +122,10 @@ export const useCSV = () => {
             }
         } catch (error) {
             console.error("Export Error:", error);
-            Alert.alert(t('screens.common.error'), "Не вдалося згенерувати файл");
+            Alert.alert(t('screens.common.error'), "Не вдалося згенерувати файл таблиці");
         }
     };
+
     const downloadPlayersTemplate = async () => {
         try {
             const header = t('screens.csv.template_header');
@@ -116,53 +161,110 @@ export const useCSV = () => {
         }
     };
 
-    const pickAndParseCSV = async (): Promise<CSVPlayer[] | null> => {
+    const pickAndParseCSV = async (): Promise<ParseResult | null> => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
-                type: ['text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel', 'text/plain'],
+                type: [
+                    'text/csv',
+                    'text/comma-separated-values',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'text/plain'
+                ],
                 copyToCacheDirectory: true
             });
 
             if (result.canceled) return null;
 
             const fileUri = result.assets[0].uri;
+            const originalFileName = result.assets[0].name;
+            const lowerFileName = originalFileName.toLowerCase();
+            const nameWithoutExt = originalFileName.replace(/\.[^/.]+$/, "");
+
             let content = '';
 
-            if (Platform.OS === 'web') {
-                const response = await fetch(fileUri);
-                content = await response.text();
+            if (lowerFileName.endsWith('.xlsx') || lowerFileName.endsWith('.xls')) {
+                const b64 = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.Base64 });
+                const workbook = XLSX.read(b64, { type: 'base64' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                content = XLSX.utils.sheet_to_csv(worksheet);
             } else {
-                content = await FileSystem.readAsStringAsync(fileUri, {
-                    encoding: FileSystem.EncodingType.UTF8
-                });
+                if (Platform.OS === 'web') {
+                    const response = await fetch(fileUri);
+                    content = await response.text();
+                } else {
+                    content = await FileSystem.readAsStringAsync(fileUri, {
+                        encoding: FileSystem.EncodingType.UTF8
+                    });
+                }
             }
 
-            const rows = content.split('\n');
+            if (content.charCodeAt(0) === 0xFEFF) {
+                content = content.slice(1);
+            }
+
+            const rows = content.split(/\r?\n/);
+            if (rows.length === 0) throw new Error(t('logs.errors.csv.file_empty') as string);
+
+            const sampleText = rows.slice(0, 5).join('');
+            const commaCount = (sampleText.match(/,/g) || []).length;
+            const semicolonCount = (sampleText.match(/;/g) || []).length;
+            const delimiter = semicolonCount > commaCount ? ';' : ',';
+
+            const splitRow = (row: string) =>
+                row.split(delimiter).map(c => c.trim().replace(/^"|"$/g, '').trim());
+
             const parsedPlayers: CSVPlayer[] = [];
+            let headerIdx = -1;
+            let pIdx = -1, iIdx = -1, fIdx = -1;
 
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i].trim();
-                if (!row) continue;
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                const cols = splitRow(rows[i].toLowerCase());
 
-                let name = row.split(';')[0];
-                if (name.includes(',')) name = name.split(',')[0];
+                pIdx = cols.findIndex(c => LAST_NAME_KEYS.some(key => c.includes(key)));
+                iIdx = cols.findIndex(c => FIRST_NAME_KEYS.some(key => c.includes(key)));
+                fIdx = cols.findIndex(c => FULL_NAME_KEYS.some(key => c.includes(key)));
 
-                name = name.trim();
+                if (fIdx !== -1 || (pIdx !== -1 && iIdx !== -1) || pIdx !== -1 || iIdx !== -1) {
+                    headerIdx = i;
+                    break;
+                }
+            }
 
-                if (name.length > 1) {
+            const startIdx = headerIdx !== -1 ? headerIdx + 1 : 0;
+
+            for (let i = startIdx; i < rows.length; i++) {
+                const rowContent = rows[i].trim();
+                if (!rowContent) continue;
+
+                const cols = splitRow(rowContent);
+                let name = "";
+
+                if (pIdx !== -1 && iIdx !== -1) {
+                    name = `${cols[pIdx] || ""} ${cols[iIdx] || ""}`.trim();
+                } else if (fIdx !== -1) {
+                    name = cols[fIdx] || "";
+                } else if (pIdx !== -1) {
+                    name = cols[pIdx] || "";
+                } else if (iIdx !== -1) {
+                    name = cols[iIdx] || "";
+                } else {
+                    name = cols.find(c => c.length > 0) || "";
+                }
+
+                if (name && name.length > 1 && name.toLowerCase() !== 'nan nan' && name.toLowerCase() !== 'nan') {
                     parsedPlayers.push({ name });
                 }
             }
 
             if (parsedPlayers.length === 0) throw new Error(t('logs.errors.csv.file_empty') as string);
 
-            return parsedPlayers;
+            return { players: parsedPlayers, fileName: nameWithoutExt };
 
         } catch (e: any) {
             console.error("CSV Parse Error:", e);
-            if (e.message === t('logs.errors.csv.file_empty')) {
-                throw e;
-            }
+            if (e.message === t('logs.errors.csv.file_empty')) throw e;
             throw new Error(t('logs.errors.csv.parse_failed') as string);
         }
     };
@@ -172,7 +274,7 @@ export const useCSV = () => {
     };
 
     return {
-        exportResultsToCSV,
+        exportResultsToExcel,
         downloadPlayersTemplate,
         pickAndParseCSV,
         importFromCSV

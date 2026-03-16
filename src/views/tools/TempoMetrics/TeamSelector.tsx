@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTeamSelection } from '../../../hooks/tempoMetrics/useTeamSelection';
@@ -9,7 +9,12 @@ import { SearchInput } from '../../components/ui/SearchInput';
 import { TeamsMod } from '../../components/ui/mods';
 import { Button, IconButton } from '../../components/ui/Button';
 import { RadioButton } from '../../components/ui/RadioButton';
-import { ArrowIcon, ArrowIconActive, TeamsIcon, TeamsIconActive } from '../../../../assets/icons';
+import {
+    ArrowIcon, ArrowIconActive,
+    TeamsIcon, TeamsIconActive,
+    DocIcon, DocIconActive,
+    UserIcon, UserIconActive
+} from '../../../../assets/icons';
 
 import { AppModal } from '../../components/AppModal';
 import { TextField } from '../../components/ui/TextField';
@@ -19,7 +24,11 @@ export default function TeamSelector({ onBack, onSelect }: any) {
     const { teams, search, setSearch, selectedId, setSelectedId, isLoading: isSelectionLoading } = useTeamSelection();
 
     const {
-        isAddTeamModalVisible, setAddTeamModalVisible, newTeamName, setNewTeamName, handleCreateTeam, isLoading: isLogicLoading
+        isAddTeamOptionsVisible, setAddTeamOptionsVisible,
+        isAddTeamImportVisible, setAddTeamImportVisible, excludedPlayers,
+        toggleExcludePlayer, handleSelectTeamFile, handleConfirmImportTeam,
+        isAddTeamModalVisible, setAddTeamModalVisible, newTeamName, setNewTeamName,
+        handleCreateTeamManual, importedPlayers, isLoading: isLogicLoading
     } = usePlayersLogic();
 
     const [pendingNewTeam, setPendingNewTeam] = useState<string | null>(null);
@@ -28,6 +37,7 @@ export default function TeamSelector({ onBack, onSelect }: any) {
     const isInitialLoading = isSelectionLoading && teams.length === 0;
     const isEmpty = teams.length === 0 && !isSelectionLoading;
 
+    // Авто-вибір щойно створеної команди
     useEffect(() => {
         if (pendingNewTeam) {
             const created = teams.find(t => t.name.toLowerCase() === pendingNewTeam.toLowerCase());
@@ -39,11 +49,20 @@ export default function TeamSelector({ onBack, onSelect }: any) {
         }
     }, [teams, pendingNewTeam, setSelectedId]);
 
+    // Обгортка для створення вручну
     const onTeamCreate = async () => {
         const nameToCreate = newTeamName.trim();
         if (!nameToCreate) return;
         setPendingNewTeam(nameToCreate);
-        await handleCreateTeam();
+        await handleCreateTeamManual();
+    };
+
+    // Обгортка для імпорту з файлу
+    const onTeamImport = async (skipPlayers: boolean) => {
+        const nameToCreate = newTeamName.trim();
+        if (!nameToCreate) return;
+        setPendingNewTeam(nameToCreate);
+        await handleConfirmImportTeam(skipPlayers);
     };
 
     const displayTeams = useMemo(() => {
@@ -54,26 +73,131 @@ export default function TeamSelector({ onBack, onSelect }: any) {
     }, [teams, topTeamId]);
 
     const modalsJSX = (
-        <AppModal type="fullscreen" visible={isAddTeamModalVisible} onClose={() => setAddTeamModalVisible(false)} title={t('screens.players.modal_new_team')}>
-            <View className="mt-8 px-2">
-                <TextField
-                    label={t('screens.players.label_team_name')}
-                    value={newTeamName}
-                    onChangeText={setNewTeamName}
-                    placeholder={t('screens.players.placeholder_team_example')}
-                    autoFocus
-                />
-                <View className="mt-8">
-                    <Button
-                        variant="primary"
-                        title={t('tools.speed_checker.btn_create_team')}
-                        onPress={onTeamCreate}
-                        disabled={!newTeamName?.trim() || isLogicLoading}
-                        isLoading={isLogicLoading}
-                    />
+        <>
+            {/* ВАРІАНТИ СТВОРЕННЯ КОМАНДИ */}
+            <AppModal type="bottom" visible={isAddTeamOptionsVisible} onClose={() => setAddTeamOptionsVisible(false)} title={t('tools.speed_checker.btn_create_team') || "Створити команду"}>
+                <View className="flex-row gap-3 mb-2 mt-4">
+                    <Pressable
+                        onPress={() => handleSelectTeamFile()}
+                        className="flex-1 rounded-3xl p-5 border border-white/5 bg-white/5 justify-between"
+                        style={({ pressed }) => [ { minHeight: 150 }, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] } ]}
+                    >
+                        {({ pressed }) => (
+                            <>
+                                <View className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 self-start mb-4 items-center justify-center w-12 h-12">
+                                    {pressed ? <DocIconActive width={24} height={24} /> : <DocIcon width={24} height={24} />}
+                                </View>
+                                <View>
+                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">З файлу</Text>
+                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">Excel (.xlsx) або CSV</Text>
+                                </View>
+                            </>
+                        )}
+                    </Pressable>
+
+                    <Pressable
+                        onPress={() => { setAddTeamOptionsVisible(false); setAddTeamModalVisible(true); }}
+                        className="flex-1 rounded-3xl p-5 border border-white/5 bg-white/5 justify-between"
+                        style={({ pressed }) => [ { minHeight: 150 }, pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] } ]}
+                    >
+                        {({ pressed }) => (
+                            <>
+                                <View className="bg-[#FF6D00]/10 p-3 rounded-xl border border-[#FF6D00]/20 self-start mb-4 items-center justify-center w-12 h-12">
+                                    {pressed ? <UserIconActive width={24} height={24} /> : <UserIcon width={24} height={24} />}
+                                </View>
+                                <View>
+                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">Вручну</Text>
+                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">Ввести назву</Text>
+                                </View>
+                            </>
+                        )}
+                    </Pressable>
                 </View>
-            </View>
-        </AppModal>
+            </AppModal>
+
+            {/* РУЧНЕ СТВОРЕННЯ КОМАНДИ */}
+            <AppModal type="center" visible={isAddTeamModalVisible} onClose={() => setAddTeamModalVisible(false)} title={t('screens.players.modal_new_team') || "Нова команда"}>
+                <View className="mt-4 px-2">
+                    <TextField
+                        value={newTeamName}
+                        onChangeText={setNewTeamName}
+                        placeholder={t('screens.players.placeholder_team_example')}
+                        autoFocus
+                    />
+                    <View className="flex-row gap-3 mt-4">
+                        <Button variant="outline" title={t('screens.players.btn_cancel') || "Скасувати"} onPress={() => setAddTeamModalVisible(false)} className="flex-1" />
+                        <Button
+                            variant="primary"
+                            title={isLogicLoading ? "Зачекайте..." : (t('screens.players.btn_create_team') || "Створити")}
+                            onPress={onTeamCreate}
+                            className="flex-1"
+                            disabled={!newTeamName?.trim() || isLogicLoading}
+                        />
+                    </View>
+                </View>
+            </AppModal>
+
+            {/* СТВОРЕННЯ КОМАНДИ З ФАЙЛУ */}
+            <AppModal type="bottom" visible={isAddTeamImportVisible} onClose={() => setAddTeamImportVisible(false)} title="Команда з файлу">
+                <View className="mt-2 w-full">
+                    <TextField
+                        label="Назва команди (з файлу)"
+                        value={newTeamName}
+                        onChangeText={setNewTeamName}
+                        placeholder="Введіть назву"
+                    />
+
+                    <Text className="text-[11px] text-[#A3A3A3] mb-3 mt-4 font-evolventa">
+                        Знайдено {importedPlayers?.length || 0} гравців. Натисніть на гравця, щоб виділити його <Text className="text-red-500 font-bold">червоним</Text> (він не додасться до команди).
+                    </Text>
+
+                    <ScrollView
+                        className="mb-6 max-h-[300px]"
+                        showsVerticalScrollIndicator={true}
+                        contentContainerStyle={{ paddingBottom: 10 }}
+                    >
+                        {importedPlayers?.map((player: any, index: number) => {
+                            const isExcluded = excludedPlayers.has(player.name);
+                            return (
+                                <TouchableOpacity
+                                    key={index}
+                                    activeOpacity={0.7}
+                                    onPress={() => toggleExcludePlayer(player.name)}
+                                    className={`flex-row items-center px-4 py-3 rounded-xl mb-2 border transition-colors ${
+                                        isExcluded
+                                            ? 'border-red-500/50 bg-red-500/10'
+                                            : 'border-white/5 bg-[#0A0A0A]'
+                                    }`}
+                                >
+                                    <View className="flex-1">
+                                        <Text className={`font-evolventa-bold text-base ${isExcluded ? 'text-red-500 line-through opacity-70' : 'text-[#F5F5F5]'}`}>
+                                            {player.name}
+                                        </Text>
+                                    </View>
+                                    {isExcluded && <Feather name="x-circle" size={18} color="#ef4444" />}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
+
+                    <View className="flex-row gap-3">
+                        <Button
+                            variant="outline"
+                            title="Створити порожню"
+                            onPress={() => onTeamImport(true)}
+                            className="flex-1"
+                        />
+                        <Button
+                            variant="primary"
+                            title={isLogicLoading ? "Зачекайте..." : "Створити з гравцями"}
+                            onPress={() => onTeamImport(false)}
+                            className="flex-[1.5]"
+                            disabled={!newTeamName?.trim() || isLogicLoading}
+                        />
+                    </View>
+                </View>
+            </AppModal>
+        </>
     );
 
     return (
@@ -125,7 +249,7 @@ export default function TeamSelector({ onBack, onSelect }: any) {
                         <Button
                             variant="primary"
                             title={t('tools.speed_checker.btn_create_team')}
-                            onPress={() => setAddTeamModalVisible(true)}
+                            onPress={() => setAddTeamOptionsVisible(true)}
                             className="w-full mb-3"
                         />
                         <Button variant="outline" title={t('tools.speed_checker.btn_go_back')} onPress={onBack} className="w-full" />
@@ -147,7 +271,7 @@ export default function TeamSelector({ onBack, onSelect }: any) {
                             {t('tools.speed_checker.select_team_title')}
                         </Text>
                         <IconButton
-                            onPress={() => setAddTeamModalVisible(true)}
+                            onPress={() => setAddTeamOptionsVisible(true)}
                             icon={<Feather name="plus" size={24} color="#F5F5F5" />}
                         />
                     </View>

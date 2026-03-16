@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TextInputProps, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, TextInputProps, StyleSheet, Pressable } from 'react-native';
 
 interface MyTextFieldProps extends TextInputProps {
     label?: string;
@@ -12,6 +12,9 @@ export const TextField = ({
                               label, error, icon, disabled = false, className, onFocus, onBlur, value, ...props
                           }: MyTextFieldProps) => {
     const [isFocused, setIsFocused] = useState(false);
+
+    // 1. Створюємо ref для керування фокусом інпута
+    const inputRef = useRef<TextInput>(null);
 
     const handleFocus = (e: any) => { setIsFocused(true); onFocus?.(e); };
     const handleBlur = (e: any) => { setIsFocused(false); onBlur?.(e); };
@@ -49,11 +52,17 @@ export const TextField = ({
                 </Text>
             )}
 
-            <View className={containerStyles}>
+            {/* 2. Змінюємо View на Pressable і передаємо фокус при кліку */}
+            <Pressable
+                className={containerStyles}
+                onPress={() => !disabled && inputRef.current?.focus()}
+            >
                 {icon && <View className="mr-3 opacity-70 z-10">{icon}</View>}
 
                 <TextInput
-                    className={`flex-1 text-base font-evolventa ${disabled ? 'text-text-muted' : 'text-text-main'}`}
+                    ref={inputRef} // 3. Прив'язуємо ref до інпута
+                    // 4. Додав h-full, щоб інпут розтягувався на всю висоту контейнера
+                    className={`flex-1 h-full text-base font-evolventa ${disabled ? 'text-text-muted' : 'text-text-main'}`}
                     placeholderTextColor="#717171"
                     editable={!disabled}
                     onFocus={handleFocus}
@@ -64,7 +73,7 @@ export const TextField = ({
                     style={styles.inputReset}
                     {...props}
                 />
-            </View>
+            </Pressable>
 
             <View className="h-5 mt-1 ml-1">
                 {error && <Text className="text-small text-status-error font-evolventa">{error}</Text>}

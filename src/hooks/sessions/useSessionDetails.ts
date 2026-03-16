@@ -28,7 +28,7 @@ export const useSessionDetails = (session: TeamSession) => {
     const predefinedDistances = [30, 60, 100];
     const [selectedDistance, setSelectedDistance] = useState<number>(30);
 
-    const { exportResultsToCSV } = useCSV();
+    const { exportResultsToExcel } = useCSV();
 
     const loadTeamResults = async () => {
         if (!session?.id) return;
@@ -108,7 +108,7 @@ export const useSessionDetails = (session: TeamSession) => {
             Alert.alert(t('tools.sessions.alert_attention') as string, t('tools.sessions.alert_no_data') as string);
             return;
         }
-        try { await exportResultsToCSV(rawResults, session.teamName); } catch (err) { console.error("Export handler error:", err); }
+        try { await exportResultsToExcel(rawResults, session.teamName); } catch (err) { console.error("Export handler error:", err); }
     };
 
     const gateDistances = useMemo(() => {

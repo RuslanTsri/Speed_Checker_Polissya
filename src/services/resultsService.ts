@@ -198,7 +198,6 @@ class ResultsService extends BaseService<Result> {
                     splits: item.gates || [],
                     testType: session?.test_type || 'STATIC',
                     distance: session?.total_distance || 30,
-                    // 🔥 ДОДАНО ПОЛЯ:
                     gateDistances: session?.splits_config || [],
                     avgSplit: gatesCount > 0 ? Number(item.full_time) / (gatesCount + 1) : Number(item.full_time),
                     date: new Date(item.created_at || Date.now()).toLocaleDateString(),

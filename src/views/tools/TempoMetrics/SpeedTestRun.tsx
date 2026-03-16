@@ -7,6 +7,7 @@ import { useSpeedTestSession } from '../../../hooks/tempoMetrics/useSpeedTestSes
 import { AppModal } from '../../components/AppModal';
 import { Mod } from '../../components/ui/mods';
 import { Button } from '../../components/ui/Button';
+import { Checkbox } from '../../components/ui/Checkbox';
 import { ArrowIcon, ArrowIconActive } from '../../../../assets/icons';
 
 const RunMarker = ({ position, totalDistance, label, type, triggered, timeDisplay }: any) => {
@@ -59,8 +60,9 @@ export default function SpeedTestRun({ config, onBack, onFinish, onNavigate }: a
         showIndividualModal, confirmIndividualRun, retryIndividualRun,
         showSummaryModal, saveAllResults, isSaving,
         localResults, currentRunResult, formatTime,
-        restartWholeSession
-    } = useSpeedTestSession(config, onFinish, onNavigate); // 🔥 ПЕРЕДАЄМО onNavigate СЮДИ
+        restartWholeSession,
+        selectedForRetry, toggleRetrySelection, retrySelectedPlayers // ДОДАНО
+    } = useSpeedTestSession(config, onFinish, onNavigate);
 
     const animatedProgress = useRef(new Animated.Value(0)).current;
 
@@ -172,34 +174,68 @@ export default function SpeedTestRun({ config, onBack, onFinish, onNavigate }: a
 
             <AppModal
                 visible={showSummaryModal}
-                onClose={restartWholeSession}
+                onClose={() => {}} // Блокуємо закриття кліком по фону, щоб юзер прийняв рішення
                 title={t('tools.speed_checker.modal_summary', { count: localResults?.length || 0 })}
                 type="center"
             >
-                <View className="h-96 w-full">
+                <View className="h-[520px] w-full">
+                    {/* ДОДАНО: Статичне поле з назвою сесії */}
+                    <View className="mb-4">
+                        <Text className="text-[10px] text-text-sub font-evolventa mb-1 ml-1 uppercase tracking-widest">Назва сесії (Тест)</Text>
+                        <View className="bg-surface-bg border border-surface-border rounded-2xl p-4">
+                            <Text className="text-text-main font-evolventa-bold text-sm">Статична Сесія #12 (Демо)</Text>
+                        </View>
+                    </View>
+
+                    <Text className="text-[10px] text-text-sub font-evolventa mb-2 ml-1 uppercase tracking-widest">
+                        {selectedForRetry.length > 0 ? `Вибрано для повтору: ${selectedForRetry.length}` : 'Результати'}
+                    </Text>
+
                     <FlatList
                         data={localResults || []}
                         keyExtractor={(_, i) => i.toString()}
-                        renderItem={({item}) => (
-                            <View className="py-3 border-b border-surface-border flex-row justify-between">
-                                <Text className="text-text-main font-evolventa">{item.player.name}</Text>
-                                <Text className="text-brand-orange font-unbounded-bold">{item.fullTime.toFixed(3)}s</Text>
-                            </View>
-                        )}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({item}) => {
+                            const id = item.player.id || item.player.name;
+                            const isSelected = selectedForRetry.includes(id);
+                            return (
+                                <Pressable
+                                    onPress={() => toggleRetrySelection(id)}
+                                    className={`py-3 px-3 mb-2 rounded-2xl border flex-row items-center justify-between transition-colors ${
+                                        isSelected ? 'bg-status-error/10 border-status-error/30' : 'bg-surface-card border-surface-border'
+                                    }`}
+                                >
+                                    <View className="flex-row items-center gap-3">
+                                        <View pointerEvents="none">
+                                            <Checkbox checked={isSelected} onChange={() => {}} />
+                                        </View>
+                                        <Text className={`font-evolventa-bold ${isSelected ? 'text-status-error' : 'text-text-main'}`}>
+                                            {item.player.name}
+                                        </Text>
+                                    </View>
+                                    <Text className="text-brand-orange font-unbounded-bold">{item.fullTime.toFixed(3)}s</Text>
+                                </Pressable>
+                            )
+                        }}
                     />
-                    <Button
-                        variant="primary"
-                        title={t('tools.speed_checker.btn_save_db')}
-                        onPress={saveAllResults}
-                        isLoading={isSaving}
-                        className="mt-4"
-                    />
-                    <Button
-                        variant="outline"
-                        title={t('tools.speed_checker.btn_retry_team', 'Перебігти всім')}
-                        onPress={restartWholeSession}
-                        className="mt-2 border-status-error/30 bg-status-error/10"
-                    />
+
+                    <View className="pt-3 mt-1 border-t border-surface-border bg-surface-bg">
+                        <Button
+                            variant="primary"
+                            title={t('tools.speed_checker.btn_save_db', 'Зберегти всі результати')}
+                            onPress={saveAllResults}
+                            isLoading={isSaving}
+                            className="mb-2"
+                        />
+                        <Button
+                            variant="outline"
+                            title={selectedForRetry.length > 0
+                                ? `Перебігти вибраним (${selectedForRetry.length})`
+                                : t('tools.speed_checker.btn_retry_team', 'Перебігти всім')}
+                            onPress={retrySelectedPlayers}
+                            className="border-status-error/30 bg-status-error/10"
+                        />
+                    </View>
                 </View>
             </AppModal>
 

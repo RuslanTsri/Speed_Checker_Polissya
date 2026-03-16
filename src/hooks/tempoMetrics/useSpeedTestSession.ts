@@ -15,10 +15,22 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     const { t } = useTranslation();
     const { state, elapsedTime, sensors, startTraining, stopTraining, resetSession } = useBle();
 
+    // 🔥 Зберігаємо оригінальну чергу, щоб мати змогу до неї повернутися
+    const originalQueue = useMemo(() => config.selectedPlayers?.length > 0
+            ? config.selectedPlayers
+            : [{ id: 'guest', name: t('tools.speed_checker.guest') as string, number: '-' }],
+        [config.selectedPlayers, t]);
+
+    // Черга тепер є стейтом (ми можемо її змінювати, якщо перебігають не всі)
+    const [playersQueue, setPlayersQueue] = useState(originalQueue);
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [localResults, setLocalResults] = useState<LocalResult[]>([]);
     const [currentRunResult, setCurrentRunResult] = useState<LocalResult | null>(null);
+
+    // Стейт для фінальної модалки: кого вибрали для перебігання
+    const [selectedForRetry, setSelectedForRetry] = useState<string[]>([]);
 
     const [showIndividualModal, setShowIndividualModal] = useState(false);
     const [showSummaryModal, setShowSummaryModal] = useState(false);
@@ -31,10 +43,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     const isRunning  = state === 'active';
     const isFinished = state === 'finished';
     const isReady    = state === 'armed';
-
-    const playersQueue = config.selectedPlayers?.length > 0
-        ? config.selectedPlayers
-        : [{ id: 'guest', name: t('tools.speed_checker.guest') as string, number: '-' }];
 
     const currentPlayerObj = playersQueue[currentPlayerIndex];
     const isLastPlayer = currentPlayerIndex === playersQueue.length - 1;
@@ -75,7 +83,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
                 .map(s => Number((s.triggerTime! / 1000).toFixed(3))),
         };
 
-        console.log(`${TAG} 📊 Зберігаємо результат пробігу для модалки:`, result);
         setCurrentRunResult(result);
         setShowIndividualModal(true);
     }, [currentPlayerObj]);
@@ -84,7 +91,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
         if (!isScreenInitialized) return;
 
         if (isFinished && !hasProcessedRun.current) {
-            console.log(`${TAG} 🏁 ОБРОБКА ФІНІШУ (Заморожуємо час)`);
             const sensorSnapshot = sensors
                 .filter(s => s.status === 'active')
                 .sort((a, b) => a.id - b.id);
@@ -101,14 +107,12 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
         }
 
         if (isReady || isRunning) {
-            if (hasProcessedRun.current) console.log(`${TAG} 🔄 Скидаємо запобіжник фінішу (Новий забіг)`);
             hasProcessedRun.current = false;
             setFrozenTime(null);
         }
     }, [isFinished, isReady, isRunning, sensors, elapsedTime, handleRunFinish, isScreenInitialized]);
 
     const confirmIndividualRun = () => {
-        console.log(`${TAG} Юзер натиснув 'Зарахувати'`);
         if (currentRunResult) {
             setLocalResults(prev => [...prev, currentRunResult]);
             setShowIndividualModal(false);
@@ -122,9 +126,47 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     };
 
     const retryIndividualRun = () => {
-        console.log(`${TAG} Юзер натиснув 'Перебігти'`);
         setShowIndividualModal(false);
         setCurrentRunResult(null);
+        resetSession();
+        hasProcessedRun.current = false;
+    };
+
+    // 🔥 ДОДАНО: Логіка виділення та перебігання конкретних гравців
+    const toggleRetrySelection = (id: string) => {
+        setSelectedForRetry(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const retrySelectedPlayers = () => {
+        // Якщо нікого не вибрали - перебігають ВСІ
+        if (selectedForRetry.length === 0) {
+            restartWholeSession();
+            return;
+        }
+
+        // Отримуємо об'єкти гравців, яких вибрали
+        const playersToRetry = localResults
+            .filter(r => selectedForRetry.includes(r.player.id || r.player.name))
+            .map(r => r.player);
+
+        // Видаляємо їхні старі результати зі списку (інші результати залишаться недоторканими)
+        setLocalResults(prev => prev.filter(r => !selectedForRetry.includes(r.player.id || r.player.name)));
+
+        // Встановлюємо нову чергу ТІЛЬКИ з цих гравців
+        setPlayersQueue(playersToRetry);
+        setCurrentPlayerIndex(0);
+        setSelectedForRetry([]);
+        setShowSummaryModal(false);
+        resetSession();
+        hasProcessedRun.current = false;
+    };
+
+    const restartWholeSession = () => {
+        setShowSummaryModal(false);
+        setLocalResults([]);
+        setPlayersQueue(originalQueue); // Повертаємо початкову повну чергу
+        setCurrentPlayerIndex(0);
+        setSelectedForRetry([]);
         resetSession();
         hasProcessedRun.current = false;
     };
@@ -187,14 +229,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
                 t('tools.speed_checker.error_save') as string,
             );
         }
-    };
-
-    const restartWholeSession = () => {
-        setShowSummaryModal(false);
-        setLocalResults([]);
-        setCurrentPlayerIndex(0);
-        resetSession();
-        hasProcessedRun.current = false;
     };
 
     const nextPlayer = () => {
@@ -272,13 +306,13 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     }, [activeSensors, isFinished]);
 
     const formatTime = (totalSeconds: number) => {
-        if (!totalSeconds && totalSeconds !== 0) return { main: '00:00', decimal: '.00' };
+        if (!totalSeconds && totalSeconds !== 0) return { main: '00:00', decimal: '.000' };
         const mins = Math.floor(totalSeconds / 60);
         const secs = Math.floor(totalSeconds % 60);
-        const ms = Math.floor((totalSeconds % 1) * 100);
+        const ms = Math.floor((totalSeconds % 1) * 1000);
         return {
             main: `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`,
-            decimal: `.${ms.toString().padStart(2, '0')}`,
+            decimal: `.${ms.toString().padStart(3, '0')}`,
         };
     };
 
@@ -290,11 +324,12 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
         isRunning: isScreenInitialized ? isRunning : false,
         isFinished: isScreenInitialized ? isFinished : false,
         isReady: isScreenInitialized ? isReady : false,
-        timeObj: isScreenInitialized ? formatTime(displayTime / 1000) : { main: '00:00', decimal: '.00' },
+        timeObj: isScreenInitialized ? formatTime(displayTime / 1000) : { main: '00:00', decimal: '.000' },
         progressPercent: isScreenInitialized ? progressPercent : 0,
         activeSensors, splitRows,
         startTraining, stopTraining, resetSession, nextPlayer, formatTime,
         currentRunResult, localResults, showIndividualModal, confirmIndividualRun,
         retryIndividualRun, showSummaryModal, saveAllResults, restartWholeSession, isSaving,
+        selectedForRetry, toggleRetrySelection, retrySelectedPlayers // ДОДАНО
     };
 };

@@ -295,6 +295,8 @@ export const useTrainingBle = () => {
                 }
                 break;
             case 21:
+
+
                 if (data.status === 'FINISHED') {
                     stateRef.current = 'finished';
                     setState('finished');

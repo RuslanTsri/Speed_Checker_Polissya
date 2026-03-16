@@ -48,7 +48,7 @@ const SplitsBlock = ({ splits, totalTime, avgSplit, title }: any) => {
                             <Text className="text-[8px] text-text-muted font-evolventa uppercase mb-0.5">
                                 {t('tools.sessions.start_0m')}
                             </Text>
-                            <Text className="text-caption text-text-main font-unbounded-bold">0.00s</Text>
+                            <Text className="text-caption text-text-main font-unbounded-bold">0.000s</Text>
                         </View>
 
                         {/* 2. ПРОМІЖНІ ГЕЙТИ */}
@@ -58,7 +58,7 @@ const SplitsBlock = ({ splits, totalTime, avgSplit, title }: any) => {
                                     {t('tools.sessions.gate_n', { number: idx + 1 })}
                                 </Text>
                                 <Text className="text-caption text-text-main font-unbounded-bold">
-                                    {splitTime.toFixed(2)}s
+                                    {splitTime.toFixed(3)}s
                                 </Text>
                             </View>
                         ))}
@@ -68,21 +68,8 @@ const SplitsBlock = ({ splits, totalTime, avgSplit, title }: any) => {
                             <Text className="text-[8px] text-brand-orange font-evolventa uppercase mb-0.5">
                                 {t('tools.sessions.finish')}
                             </Text>
-                            <Text className="text-caption text-brand-orange font-unbounded-bold">{totalTime.toFixed(2)}s</Text>
+                            <Text className="text-caption text-brand-orange font-unbounded-bold">{totalTime.toFixed(3)}s</Text>
                         </View>
-                    </View>
-
-                    {/* СЕРЕДНІЙ СПЛІТ */}
-                    <View className="mt-3 pt-2.5 border-t border-surface-border/30 flex-row justify-between items-center">
-                        <View className="flex-row items-center">
-                            <MaterialCommunityIcons name="timer-sand" size={12} color="#717171" />
-                            <Text className="text-[10px] text-text-muted font-evolventa ml-1">
-                                {t('tools.sessions.avg_split_time')}
-                            </Text>
-                        </View>
-                        <Text className="text-caption text-text-main font-unbounded-medium">
-                            {avgSplit ? avgSplit.toFixed(2) : '--'} s
-                        </Text>
                     </View>
                 </View>
             )}
@@ -101,7 +88,6 @@ export default function SessionDetails({ session, onBack }: any) {
 
     const mainTabs = [
         { id: 'BEST', label: t('tools.sessions.tab_summary', 'Підсумок (Best)') },
-        { id: 'ALL', label: t('tools.sessions.tab_all_attempts', 'Усі спроби') }
     ];
 
     const activeDistances = subTab === 'BEST' ? predefinedDistances : ['ALL', ...predefinedDistances];
@@ -178,13 +164,13 @@ export default function SessionDetails({ session, onBack }: any) {
                         <View>
                             <Text className="text-caption text-text-sub uppercase font-evolventa mb-0.5">{t('tools.sessions.best', 'Найкращий')}</Text>
                             <Text className="text-h2 text-brand-yellow font-unbounded-black leading-tight">
-                                {sessionStats.best > 0 ? sessionStats.best.toFixed(2) : '--'}
+                                {sessionStats.best > 0 ? sessionStats.best.toFixed(3) : '--'}
                             </Text>
                         </View>
                         <View className="items-end">
                             <Text className="text-caption text-text-sub uppercase font-evolventa mb-0.5">{t('tools.sessions.average', 'Середній')}</Text>
                             <Text className="text-h2 text-brand-orange font-unbounded-black leading-tight">
-                                {sessionStats.avg > 0 ? sessionStats.avg.toFixed(2) : '--'}
+                                {sessionStats.avg > 0 ? sessionStats.avg.toFixed(3) : '--'}
                             </Text>
                         </View>
                     </View>
@@ -217,7 +203,6 @@ export default function SessionDetails({ session, onBack }: any) {
                 renderItem={({ item, index }) => (
                     subTab === 'BEST' ? (
                         <View className="mb-4 bg-surface-card rounded-3xl border border-surface-border p-1">
-                            {/* Рейтинг найкращої спроби */}
                             <RatingMod
                                 rank={index + 1}
                                 name={item.playerName}
@@ -226,7 +211,7 @@ export default function SessionDetails({ session, onBack }: any) {
                                         {t('tools.sessions.attempt_number', { num: item.bestAttemptNumber })} • {selectedDistance} {t('tools.speed_checker.meters_short', 'м')}
                                     </Text>
                                 }
-                                resultValue={item.bestTime.toFixed(2)}
+                                resultValue={item.bestTime.toFixed(3)}
                                 secondaryValue={<Text className="text-[9px] text-text-muted mt-0.5">{t('tools.sessions.seconds_short')}</Text>}
                                 className="border-0 bg-transparent mb-1"
                             />
@@ -242,7 +227,6 @@ export default function SessionDetails({ session, onBack }: any) {
                         </View>
                     ) : (
                         <View className="p-4 mb-3 bg-surface-card rounded-3xl border border-surface-border">
-                            {/* ВЕРХНЯ ЧАСТИНА КАРТКИ */}
                             <View className="flex-row items-center justify-between mb-4">
                                 <View className="flex-row items-center gap-3">
                                     <View className="w-10 h-10 rounded-full bg-brand-orange/10 items-center justify-center border border-brand-orange/20">
@@ -256,7 +240,7 @@ export default function SessionDetails({ session, onBack }: any) {
                                     </View>
                                 </View>
                                 <View className="items-end">
-                                    <Text className="text-h3 text-brand-orange font-unbounded-black leading-none">{item.time.toFixed(2)}s</Text>
+                                    <Text className="text-h3 text-brand-orange font-unbounded-black leading-none">{item.time.toFixed(3)}s</Text>
                                     <Text className="text-[9px] text-text-muted font-evolventa uppercase tracking-tighter">
                                         {t('tools.sessions.total_time')}
                                     </Text>

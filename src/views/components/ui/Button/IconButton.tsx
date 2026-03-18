@@ -25,7 +25,6 @@ export const IconButton = ({ icon, onPress, className = '', optimizeForList = fa
             {({ pressed }) => (
                 <View className={`w-12 h-12 rounded-full overflow-hidden items-center justify-center border border-white/10 ${className}`}>
 
-                    {/* Фон для Android без блюру */}
                     {isAndroid && optimizeForList ? (
                         <View style={StyleSheet.absoluteFill} className={pressed ? 'bg-surface-cardPressed' : 'bg-surface-card'} />
                     ) : (

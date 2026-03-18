@@ -53,7 +53,7 @@ export const usePlayersLogic = () => {
         if (!silent) setIsLoading(true);
         const { data, error } = await teamService.getMyTeams();
         if (error) {
-            if (!silent) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_load_teams') as string);
+            if (!silent) Alert.alert(t('screens.players.error_title', 'Помилка') as string, t('screens.players.error_load_teams', 'Не вдалося завантажити команди') as string);
         } else {
             setTeams((data || []).map((teamData: any) => ({
                 id: teamData.id,
@@ -61,7 +61,7 @@ export const usePlayersLogic = () => {
                 coach_id: teamData.coach_id,
                 playerCount: teamData.players ? teamData.players.length : 0,
                 isMyTeam: true,
-                lastSessionDate: t('screens.players.no_data') as string
+                lastSessionDate: t('screens.players.no_data', 'Немає даних') as string
             })));
         }
         if (!silent) setIsLoading(false);
@@ -76,7 +76,6 @@ export const usePlayersLogic = () => {
 
     useEffect(() => { fetchTeams(); }, [fetchTeams]);
 
-    // ДОДАНО: Безпечне приведення (as string), якщо id обов'язково є
     useEffect(() => {
         if (selectedTeam?.id) fetchPlayers(selectedTeam.id as string);
         else setPlayers([]);
@@ -99,7 +98,7 @@ export const usePlayersLogic = () => {
         setIsLoading(true);
         const { error } = await teamService.create({ name: newTeamName.trim() });
         setIsLoading(false);
-        if (error) Alert.alert(t('screens.players.error_title') as string, error.message);
+        if (error) Alert.alert(t('screens.players.error_title', 'Помилка') as string, error.message);
         else { setNewTeamName(''); setAddTeamModalVisible(false); fetchTeams(true); }
     };
 
@@ -108,13 +107,16 @@ export const usePlayersLogic = () => {
             const parsedData = await pickAndParseCSV();
             if (parsedData) {
                 setImportedPlayers(parsedData.players);
-                setNewTeamName(parsedData.fileName || ''); // Запобіжник
+                setNewTeamName(parsedData.fileName || '');
                 setExcludedPlayers(new Set());
                 setAddTeamOptionsVisible(false);
                 setAddTeamImportVisible(true);
             }
         } catch (e: any) {
-            Alert.alert('Помилка', e.message || 'Помилка файлу');
+            Alert.alert(
+                t('screens.common.error', 'Помилка') as string,
+                e.message || t('screens.players.error_file', 'Помилка файлу') as string
+            );
         }
     };
 
@@ -129,7 +131,10 @@ export const usePlayersLogic = () => {
 
     const handleConfirmImportTeam = async (skipPlayers: boolean = false) => {
         if (!newTeamName.trim()) {
-            Alert.alert("Увага", "Введіть назву команди");
+            Alert.alert(
+                t('screens.common.warning', 'Увага') as string,
+                t('screens.players.enter_team_name', 'Введіть назву команди') as string
+            );
             return;
         }
 
@@ -138,14 +143,16 @@ export const usePlayersLogic = () => {
 
         if (teamError || !teamData) {
             setIsLoading(false);
-            Alert.alert(t('screens.players.error_title') as string, teamError?.message || "Помилка");
+            Alert.alert(
+                t('screens.players.error_title', 'Помилка') as string,
+                teamError?.message || t('screens.common.error', 'Помилка') as string
+            );
             return;
         }
 
         if (!skipPlayers) {
             const playersToAdd = importedPlayers.filter(p => !excludedPlayers.has(p.name));
             for (const p of playersToAdd) {
-                // ДОДАНО: teamData.id as string
                 await playerService.create({ name: p.name, team_id: teamData.id as string });
             }
         }
@@ -164,13 +171,12 @@ export const usePlayersLogic = () => {
         setIsLoading(true);
         const { error } = await teamService.delete(selectedTeam.id as string);
         setIsLoading(false);
-        if (error) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_delete_team') as string);
+        if (error) Alert.alert(t('screens.players.error_title', 'Помилка') as string, t('screens.players.error_delete_team', 'Не вдалося видалити команду') as string);
         else { setDeleteTeamModalVisible(false); setSelectedTeam(null); fetchTeams(true); }
     };
 
     const handleEditTeam = () => {
         if (!selectedTeam) return;
-        // ДОДАНО: fallback || '', щоб TS не сварився на string | undefined
         setEditingTeamName(selectedTeam.name || '');
         setDropdownVisible(false);
         setEditTeamModalVisible(true);
@@ -181,9 +187,8 @@ export const usePlayersLogic = () => {
         setIsLoading(true);
         const { error } = await teamService.update(selectedTeam.id as string, { name: editingTeamName.trim() });
         setIsLoading(false);
-        if (error) Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_update_team') as string);
+        if (error) Alert.alert(t('screens.players.error_title', 'Помилка') as string, t('screens.players.error_update_team', 'Не вдалося оновити команду') as string);
         else {
-            // ДОДАНО: type assertion as UITeam для безпеки
             setSelectedTeam({ ...selectedTeam, name: editingTeamName.trim() } as UITeam);
             fetchTeams(true);
             setEditTeamModalVisible(false);
@@ -195,7 +200,7 @@ export const usePlayersLogic = () => {
         setIsLoading(true);
         const { error } = await playerService.create({ name: newPlayerName.trim(), team_id: selectedTeam.id as string });
         setIsLoading(false);
-        if (error) Alert.alert(t('screens.players.error_title') as string, error.message);
+        if (error) Alert.alert(t('screens.players.error_title', 'Помилка') as string, error.message);
         else {
             setNewPlayerName('');
             setAddManualVisible(false);
@@ -206,7 +211,6 @@ export const usePlayersLogic = () => {
 
     const handleEditPlayer = (player: Player) => {
         setEditingPlayer(player);
-        // ДОДАНО: fallback || ''
         setEditingPlayerName(player.name || '');
         setEditPlayerModalVisible(true);
     };
@@ -217,7 +221,7 @@ export const usePlayersLogic = () => {
         const { error } = await playerService.update(editingPlayer.id as string, { name: editingPlayerName.trim() });
         setIsLoading(false);
         if (error) {
-            Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_update_player') as string);
+            Alert.alert(t('screens.players.error_title', 'Помилка') as string, t('screens.players.error_update_player', 'Не вдалося оновити гравця') as string);
         } else {
             fetchPlayers(selectedTeam.id as string, true);
             setEditPlayerModalVisible(false);
@@ -237,7 +241,7 @@ export const usePlayersLogic = () => {
         const { error } = await playerService.delete(playerToDelete.id as string);
         setIsLoading(false);
         if (error) {
-            Alert.alert(t('screens.players.error_title') as string, t('screens.players.error_delete_player') as string);
+            Alert.alert(t('screens.players.error_title', 'Помилка') as string, t('screens.players.error_delete_player', 'Не вдалося видалити гравця') as string);
         } else {
             fetchPlayers(selectedTeam.id as string, true);
             fetchTeams(true);
@@ -260,7 +264,10 @@ export const usePlayersLogic = () => {
                 setExcludedPlayers(new Set());
             }
         }
-        catch (e: any) { setImportStatus('error'); setImportMessage(e.message || 'Помилка'); }
+        catch (e: any) {
+            setImportStatus('error');
+            setImportMessage(e.message || t('screens.common.error', 'Помилка') as string);
+        }
     };
 
     const handleConfirmImport = async () => {
@@ -269,7 +276,6 @@ export const usePlayersLogic = () => {
         setImportStatus('idle');
         let successCount = 0;
 
-        // ДОДАНО: Фільтруємо гравців, відкидаючи тих, хто у списку excludedPlayers
         const playersToAdd = importedPlayers.filter(p => !excludedPlayers.has(p.name));
 
         for (const p of playersToAdd) {
@@ -285,7 +291,7 @@ export const usePlayersLogic = () => {
             handleSetImportVisible(false);
         } else {
             setImportStatus('error');
-            setImportMessage(t('screens.players.error_import_add') as string);
+            setImportMessage(t('screens.players.error_import_add', 'Помилка імпорту') as string);
             setIsLoading(false);
         }
     };

@@ -88,7 +88,7 @@ export default function SpeedCheckerModeSelector({ onBack, onSelect, onOpenBluet
                     onPress={() => onSelect('DEVICE', 'TEAM')}
                 />
 
-                {/* РОЗДІЛ: КАЛІБРУВАННЯ */}
+                {/* РОЗДІЛ: КАЛІБРУВАННЯ
                 <Text className="text-caption uppercase tracking-widest text-text-muted font-evolventa-bold mt-4 mb-3 ml-1">
                     {t('tools.speed_checker.menu_section_tools')}
                 </Text>
@@ -98,7 +98,7 @@ export default function SpeedCheckerModeSelector({ onBack, onSelect, onOpenBluet
                     Icon={({ width, fill }: any) => <MaterialCommunityIcons name="radio-tower" size={width} color={fill} />}
                     ActiveIcon={({ width, fill }: any) => <MaterialCommunityIcons name="radio-tower" size={width} color={fill} />}
                     onPress={onOpenCalibration}
-                />
+                /> */}
             </ScrollView>
         </View>
     );

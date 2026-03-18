@@ -60,12 +60,11 @@ export default function QuickTestConfig({ onBack, onStart, onOpenBluetooth, onOp
                     <HeaderTabs tabs={distanceTabs} activeTab={distance.toString()} onTabChange={(id) => setDistance(parseInt(id))} />
                 </View>
 
-                {/* 🔥 Оновлений LayoutContainer з локалізованою кнопкою РАДАР */}
                 <LayoutContainer
                     title={t('tools.speed_checker.scheme_title')}
                     subtitle={t('tools.speed_checker.scheme_desc')}
-                    headerRight={
-                        <Pressable
+                    /* headerRight={
+                       <Pressable
                             onPress={() => onOpenPlacementCheck({ distance, splitPositions })}
                             className="flex-row items-center bg-brand-orange/15 px-2.5 py-1.5 rounded-lg border border-brand-orange/30 active:bg-brand-orange/30"
                             style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
@@ -75,7 +74,9 @@ export default function QuickTestConfig({ onBack, onStart, onOpenBluetooth, onOp
                                 {t('tools.speed_checker.radar_btn_beta')}
                             </Text>
                         </Pressable>
+
                     }
+                    */
                 >
                     <LayoutTrack />
                     <LayoutMarker position={0} totalDistance={distance} label={t('tools.speed_checker.start_label')} type="start" />

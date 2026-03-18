@@ -41,7 +41,6 @@ export default function PlayersScreen() {
         downloadTemplate, importedPlayers, handleSelectFile, handleConfirmImport
     } = usePlayersLogic();
 
-    // ДОДАНО: Перевірка на те, чи список команд порожній
     const isEmpty = teams.length === 0 && !isLoading;
 
     if (selectedTeam) {
@@ -91,7 +90,7 @@ export default function PlayersScreen() {
                                             )}
                                         </View>
                                         <Text className="font-medium text-sm text-[#F5F5F5] font-evolventa">
-                                            {t('screens.players.menu_edit')}
+                                            {t('screens.players.menu_edit', 'Редагувати')}
                                         </Text>
                                     </>
                                 )}
@@ -100,7 +99,7 @@ export default function PlayersScreen() {
                             <TouchableOpacity onPress={() => { setDropdownVisible(false); handleDeleteTeam(); }} className="flex-row items-center px-4 py-4 active:bg-red-500/10">
                                 <Feather name="trash-2" size={18} color="#ef4444" style={{ marginRight: 12 }} />
                                 <Text className="text-red-500 font-medium text-sm font-evolventa">
-                                    {t('screens.players.menu_delete')}
+                                    {t('screens.players.menu_delete', 'Видалити')}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -109,14 +108,14 @@ export default function PlayersScreen() {
 
                 <View className="flex-row justify-between px-6 pb-4 border-b border-white/5 mb-4">
                     <Text className="text-[10px] font-bold tracking-widest uppercase text-[#A3A3A3] font-evolventa-bold">
-                        {t('screens.players.label_players_count', { count: players.length })}
+                        {t('screens.players.label_players_count', { count: players.length } as any)}
                     </Text>
                 </View>
 
                 <View className="px-4 mb-6 mt-2">
                     <Mod
-                        title={t('screens.players.btn_add_players')}
-                        subtitle={t('screens.players.modal_players_title')}
+                        title={t('screens.players.btn_add_players', 'Додати гравців')}
+                        subtitle={t('screens.players.modal_players_title', 'Гравці')}
                         onPress={() => setAddPlayerOptionsVisible(true)}
                         icon={<Feather name="user-plus" size={24} color="#FF6D00" />}
                     />
@@ -140,46 +139,46 @@ export default function PlayersScreen() {
                         <View className="items-center justify-center py-10 opacity-50">
                             <Feather name="users" size={48} color="#A3A3A3" />
                             <Text className="mt-4 text-[#A3A3A3] font-evolventa">
-                                {t('screens.players.empty_players')}
+                                {t('screens.players.empty_players', 'Список порожній')}
                             </Text>
                         </View>
                     )}
                 />
 
-                <AppModal type="center" visible={isEditTeamModalVisible} onClose={() => setEditTeamModalVisible(false)} title={t('screens.players.modal_edit_team') || "Редагувати команду"}>
+                <AppModal type="center" visible={isEditTeamModalVisible} onClose={() => setEditTeamModalVisible(false)} title={t('screens.players.modal_edit_team', 'Редагувати команду')}>
                     <TextField
                         value={editingTeamName}
                         onChangeText={setEditingTeamName}
-                        placeholder={t('screens.players.placeholder_team_example')}
+                        placeholder={t('screens.players.placeholder_team_example', 'Наприклад: Динамо')}
                         autoFocus
                     />
                     <View className="flex-row gap-3 mt-4">
-                        <Button variant="outline" title={t('screens.players.btn_cancel')} onPress={() => setEditTeamModalVisible(false)} className="flex-1" />
-                        <Button variant="primary" title={t('screens.players.btn_save')} onPress={() => handleUpdateTeam()} className="flex-1" disabled={!editingTeamName?.trim()} />
+                        <Button variant="outline" title={t('screens.players.btn_cancel', 'Скасувати')} onPress={() => setEditTeamModalVisible(false)} className="flex-1" />
+                        <Button variant="primary" title={t('screens.players.btn_save', 'Зберегти')} onPress={() => handleUpdateTeam()} className="flex-1" disabled={!editingTeamName?.trim()} />
                     </View>
                 </AppModal>
 
-                <AppModal type="center" visible={isDeleteTeamModalVisible} onClose={() => setDeleteTeamModalVisible(false)} title={t('screens.players.modal_delete_title')}>
+                <AppModal type="center" visible={isDeleteTeamModalVisible} onClose={() => setDeleteTeamModalVisible(false)} title={t('screens.players.modal_delete_title', 'Видалити?')}>
                     <View className="items-center mb-6 mt-2">
                         <View className="w-16 h-16 bg-red-500/10 rounded-full items-center justify-center mb-4 border border-red-500/20">
                             <Feather name="alert-triangle" size={32} color="#ef4444" />
                         </View>
                         <Text className="text-lg font-unbounded-bold text-center mb-2 text-white">
-                            Видалити команду?
+                            {t('screens.players.delete_team_confirm_title', 'Видалити команду?')}
                         </Text>
                         <Text className="text-center text-sm px-4 text-[#A3A3A3] font-evolventa">
-                            Ви впевнені, що хочете видалити команду <Text className="text-white font-evolventa-bold">{selectedTeam?.name}</Text>? Всі гравці та їх результати будуть втрачені.
+                            {t('screens.players.delete_team_confirm_desc', { name: selectedTeam?.name } as any)}
                         </Text>
                     </View>
                     <View className="flex-row gap-3">
-                        <Button variant="outline" title={t('screens.players.btn_cancel')} onPress={() => setDeleteTeamModalVisible(false)} className="flex-1" />
+                        <Button variant="outline" title={t('screens.players.btn_cancel', 'Скасувати')} onPress={() => setDeleteTeamModalVisible(false)} className="flex-1" />
                         <TouchableOpacity onPress={() => handleConfirmDeleteTeam()} className="flex-1 bg-red-600 p-4 rounded-xl items-center justify-center active:opacity-60">
-                            <Text className="text-white font-bold tracking-wide">{t('screens.players.btn_delete')}</Text>
+                            <Text className="text-white font-bold tracking-wide">{t('screens.players.btn_delete', 'Видалити')}</Text>
                         </TouchableOpacity>
                     </View>
                 </AppModal>
 
-                <AppModal type="bottom" visible={isAddPlayerOptionsVisible} onClose={() => setAddPlayerOptionsVisible(false)} title={t('screens.players.modal_players_title')}>
+                <AppModal type="bottom" visible={isAddPlayerOptionsVisible} onClose={() => setAddPlayerOptionsVisible(false)} title={t('screens.players.modal_players_title', 'Додавання гравців')}>
                     <View className="flex-row gap-3 mb-2 mt-4">
                         <Pressable
                             onPress={() => { setAddPlayerOptionsVisible(false); setImportVisible(true); }}
@@ -195,8 +194,8 @@ export default function PlayersScreen() {
                                         {pressed ? <DocIconActive width={24} height={24} /> : <DocIcon width={24} height={24} />}
                                     </View>
                                     <View>
-                                        <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.import_from_file')}</Text>
-                                        <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.import_desc_csv')}</Text>
+                                        <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.import_from_file', 'З файлу')}</Text>
+                                        <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.import_desc_csv', 'Excel або CSV')}</Text>
                                     </View>
                                 </>
                             )}
@@ -216,8 +215,8 @@ export default function PlayersScreen() {
                                         {pressed ? <UserIconActive width={24} height={24} /> : <UserIcon width={24} height={24} />}
                                     </View>
                                     <View>
-                                        <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.add_manual')}</Text>
-                                        <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.add_manual_desc')}</Text>
+                                        <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.add_manual', 'Вручну')}</Text>
+                                        <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.add_manual_desc', 'Додати вручну')}</Text>
                                     </View>
                                 </>
                             )}
@@ -225,49 +224,49 @@ export default function PlayersScreen() {
                     </View>
                 </AppModal>
 
-                <AppModal type="center" visible={isAddManualVisible} onClose={() => setAddManualVisible(false)} title={t('screens.players.modal_new_player')}>
+                <AppModal type="center" visible={isAddManualVisible} onClose={() => setAddManualVisible(false)} title={t('screens.players.modal_new_player', 'Новий гравець')}>
                     <TextField
                         value={newPlayerName}
                         onChangeText={setNewPlayerName}
-                        placeholder={t('screens.players.placeholder_player_name')}
+                        placeholder={t('screens.players.placeholder_player_name', 'Введіть ім\'я')}
                         autoFocus
                     />
                     <View className="flex-row gap-3 mt-4">
-                        <Button variant="outline" title={t('screens.players.btn_cancel')} onPress={() => setAddManualVisible(false)} className="flex-1" />
-                        <Button variant="primary" title={t('screens.players.btn_add')} onPress={() => handleAddManualPlayer()} className="flex-1" disabled={!newPlayerName?.trim()} />
+                        <Button variant="outline" title={t('screens.players.btn_cancel', 'Скасувати')} onPress={() => setAddManualVisible(false)} className="flex-1" />
+                        <Button variant="primary" title={t('screens.players.btn_add', 'Додати')} onPress={() => handleAddManualPlayer()} className="flex-1" disabled={!newPlayerName?.trim()} />
                     </View>
                 </AppModal>
 
-                <AppModal type="center" visible={isEditPlayerModalVisible} onClose={() => setEditPlayerModalVisible(false)} title={t('screens.players.modal_edit_player')}>
+                <AppModal type="center" visible={isEditPlayerModalVisible} onClose={() => setEditPlayerModalVisible(false)} title={t('screens.players.modal_edit_player', 'Редагувати гравця')}>
                     <TextField
                         value={editingPlayerName}
                         onChangeText={setEditingPlayerName}
-                        placeholder={t('screens.players.placeholder_player_name')}
+                        placeholder={t('screens.players.placeholder_player_name_short', 'Ім\'я гравця')}
                         autoFocus
                     />
                     <View className="flex-row gap-3 mt-4">
-                        <Button variant="outline" title={t('screens.players.btn_cancel')} onPress={() => setEditPlayerModalVisible(false)} className="flex-1" />
-                        <Button variant="primary" title={t('screens.players.btn_save')} onPress={() => handleUpdatePlayer()} className="flex-1" disabled={!editingPlayerName?.trim()} />
+                        <Button variant="outline" title={t('screens.players.btn_cancel', 'Скасувати')} onPress={() => setEditPlayerModalVisible(false)} className="flex-1" />
+                        <Button variant="primary" title={t('screens.players.btn_save', 'Зберегти')} onPress={() => handleUpdatePlayer()} className="flex-1" disabled={!editingPlayerName?.trim()} />
                     </View>
                 </AppModal>
 
-                <AppModal type="center" visible={isDeletePlayerModalVisible} onClose={() => setDeletePlayerModalVisible(false)} title={t('screens.players.modal_delete_title')}>
+                <AppModal type="center" visible={isDeletePlayerModalVisible} onClose={() => setDeletePlayerModalVisible(false)} title={t('screens.players.modal_delete_title', 'Видалити?')}>
                     <View className="items-center mb-6 mt-2">
                         <View className="w-16 h-16 bg-red-500/10 rounded-full items-center justify-center mb-4 border border-red-500/20">
                             <Feather name="alert-triangle" size={32} color="#ef4444" />
                         </View>
-                        <Text className="text-lg font-unbounded-bold text-center mb-2 text-white">{t('screens.players.delete_player_confirm_title')}</Text>
-                        <Text className="text-center text-sm px-4 text-[#A3A3A3] font-evolventa">{t('screens.players.delete_player_confirm_desc', { name: playerToDelete?.name })}</Text>
+                        <Text className="text-lg font-unbounded-bold text-center mb-2 text-white">{t('screens.players.delete_player_confirm_title', 'Видалити гравця?')}</Text>
+                        <Text className="text-center text-sm px-4 text-[#A3A3A3] font-evolventa">{t('screens.players.delete_player_confirm_desc', { name: playerToDelete?.name } as any)}</Text>
                     </View>
                     <View className="flex-row gap-3">
-                        <Button variant="outline" title={t('screens.players.btn_cancel')} onPress={() => setDeletePlayerModalVisible(false)} className="flex-1" />
+                        <Button variant="outline" title={t('screens.players.btn_cancel', 'Скасувати')} onPress={() => setDeletePlayerModalVisible(false)} className="flex-1" />
                         <TouchableOpacity onPress={() => handleConfirmDeletePlayer()} className="flex-1 bg-red-600 p-4 rounded-xl items-center justify-center active:opacity-60">
-                            <Text className="text-white font-bold tracking-wide">{t('screens.players.btn_delete')}</Text>
+                            <Text className="text-white font-bold tracking-wide">{t('screens.players.btn_delete', 'Видалити')}</Text>
                         </TouchableOpacity>
                     </View>
                 </AppModal>
 
-                <AppModal type="bottom" visible={isImportVisible} onClose={() => setImportVisible(false)} title={importedPlayers.length > 0 ? "Перевірка файлу" : t('screens.players.import_title')}>
+                <AppModal type="bottom" visible={isImportVisible} onClose={() => setImportVisible(false)} title={importedPlayers.length > 0 ? t('screens.players.file_verified', 'Файл перевірено') : t('screens.players.import_title', 'Імпорт')}>
                     {importedPlayers.length === 0 ? (
                         <>
                             <Pressable
@@ -281,8 +280,8 @@ export default function PlayersScreen() {
                                             {pressed ? <ExportIconActive width={24} height={24} /> : <ExportIcon width={24} height={24} fill="#34d399" />}
                                         </View>
                                         <View className="flex-1">
-                                            <Text className="text-base text-white font-unbounded-bold">{t('screens.players.import_template')}</Text>
-                                            <Text className="text-xs text-[#A3A3A3] font-evolventa">{t('screens.players.import_template_desc')}</Text>
+                                            <Text className="text-base text-white font-unbounded-bold">{t('screens.players.import_template', 'Шаблон')}</Text>
+                                            <Text className="text-xs text-[#A3A3A3] font-evolventa">{t('screens.players.import_template_desc', 'Завантажити шаблон')}</Text>
                                         </View>
                                         <Feather name="chevron-right" size={20} color="#A3A3A3" />
                                     </>
@@ -300,7 +299,7 @@ export default function PlayersScreen() {
                                             {pressed ? <ImportIconActive width={36} height={36} /> : <ImportIcon width={36} height={36} fill="#FF6D00" />}
                                         </View>
                                         <Text className="text-[#FF6D00] font-evolventa-bold">
-                                            {t('screens.players.import_click_select')}
+                                            {t('screens.players.import_click_select', 'Натисніть щоб обрати файл')}
                                         </Text>
                                     </>
                                 )}
@@ -314,20 +313,22 @@ export default function PlayersScreen() {
                                 </View>
                                 <View className="flex-1">
                                     <Text className="text-base text-[#F5F5F5] mb-0.5 font-unbounded-bold">
-                                        Файл перевірений
+                                        {t('screens.players.file_verified', 'Файл перевірений')}
                                     </Text>
                                     <Text className="text-xs text-emerald-500 font-evolventa-bold">
-                                        Знайдено {importedPlayers.length} гравців
+                                        {t('screens.players.found_players', { count: importedPlayers.length } as any)}
                                     </Text>
                                 </View>
                             </View>
 
                             <Text className="text-[11px] text-[#F5F5F5] mb-3 font-evolventa-bold">
-                                Список гравців
+                                {t('screens.players.player_list', 'Список гравців')}
                             </Text>
 
                             <Text className="text-[11px] text-[#A3A3A3] mb-3 font-evolventa">
-                                Натисніть на гравця, щоб виділити його <Text className="text-red-500 font-bold">червоним</Text> (він не додасться до команди).
+                                {t('screens.players.players_click_red', 'Натисніть на гравця, щоб виділити його ')}
+                                <Text className="text-red-500 font-bold">{t('screens.players.red_color', 'червоним')}</Text>
+                                {t('screens.players.wont_be_added', ' (він не додасться до команди).')}
                             </Text>
 
                             <ScrollView
@@ -361,7 +362,7 @@ export default function PlayersScreen() {
 
                             <Button
                                 variant="primary"
-                                title={isLoading ? "Зачекайте... йде імпортування" : (t('screens.players.import_confirm') || 'Імпортувати')}
+                                title={isLoading ? t('screens.players.status_wait_importing', "Зачекайте... йде імпортування") : t('screens.players.import_confirm', 'Імпортувати')}
                                 onPress={() => handleConfirmImport()}
                                 disabled={isLoading}
                             />
@@ -376,9 +377,8 @@ export default function PlayersScreen() {
         <View className="flex-1 pt-4 relative">
             <View className="flex-row items-center justify-between px-4 mb-6 relative z-10">
                 <Text className="text-h2 flex-1 text-text-main font-unbounded-bold">
-                    {t('screens.players.title')}
+                    {t('screens.players.title', 'Команди')}
                 </Text>
-                {/* Ховаємо іконку плюсика, якщо команд взагалі немає (бо буде велика кнопка по центру) */}
                 {!isEmpty && (
                     <IconButton
                         onPress={() => setAddTeamOptionsVisible(true)}
@@ -387,30 +387,28 @@ export default function PlayersScreen() {
                 )}
             </View>
 
-            {/* ДОДАНО: Якщо команд немає - показуємо красивий блок Empty State */}
             {isEmpty ? (
                 <View className="items-center justify-center flex-1 px-6 pb-20">
                     <View className="w-20 h-20 bg-surface-card border border-surface-border rounded-full items-center justify-center mb-6">
                         <Feather name="shield" size={32} color="#717171" />
                     </View>
                     <Text className="text-text-sub text-center mb-8 font-evolventa text-body leading-5">
-                        {t('tools.speed_checker.team_empty_no_teams_desc') || "У вас ще немає жодної команди. Створіть першу команду, щоб додати гравців."}
+                        {t('screens.players.empty_teams_desc', 'У вас ще немає жодної команди. Створіть першу команду.')}
                     </Text>
                     <Button
                         variant="primary"
-                        title={t('tools.speed_checker.btn_create_team') || "Створити команду"}
+                        title={t('screens.players.btn_create_team', 'Створити команду')}
                         onPress={() => setAddTeamOptionsVisible(true)}
                         className="w-full mb-3"
                     />
                 </View>
             ) : (
-                /* Якщо команди є - показуємо пошук і список як зазвичай */
                 <>
                     <View className="px-4 mb-6 z-10">
                         <SearchInput
                             value={searchQuery}
                             onChangeText={setSearchQuery}
-                            placeholder={t('screens.players.search_placeholder')}
+                            placeholder={t('screens.players.search_placeholder', 'Пошук')}
                         />
                     </View>
 
@@ -426,14 +424,14 @@ export default function PlayersScreen() {
                                         <View className="flex-row items-center px-2 py-1 rounded-md border border-white/10 bg-white/5">
                                             <Feather name="users" size={10} color="#DCDCDC" style={{ marginRight: 6 }} />
                                             <Text className="text-[10px] text-[#DCDCDC] font-evolventa-bold">
-                                                {t('screens.players.label_players_count_short', { count: item.playerCount || 0 })}
+                                                {t('screens.players.label_players_count_short', { count: item.playerCount || 0 } as any)}
                                             </Text>
                                         </View>
                                         {item.isMyTeam && (
                                             <View className="flex-row items-center bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20">
                                                 <Feather name="check-circle" size={10} color="#34d399" style={{ marginRight: 4 }} />
                                                 <Text className="text-emerald-500 text-[10px] font-evolventa-bold">
-                                                    {t('screens.players.label_your_team')}
+                                                    {t('screens.players.label_your_team', 'Ваша команда')}
                                                 </Text>
                                             </View>
                                         )}
@@ -451,8 +449,7 @@ export default function PlayersScreen() {
                 </>
             )}
 
-            {/* ВАРІАНТИ СТВОРЕННЯ КОМАНДИ */}
-            <AppModal type="bottom" visible={isAddTeamOptionsVisible} onClose={() => setAddTeamOptionsVisible(false)} title="Створити команду">
+            <AppModal type="bottom" visible={isAddTeamOptionsVisible} onClose={() => setAddTeamOptionsVisible(false)} title={t('screens.players.modal_new_team', 'Створити команду')}>
                 <View className="flex-row gap-3 mb-2 mt-4">
                     <Pressable
                         onPress={() => handleSelectTeamFile()}
@@ -465,8 +462,8 @@ export default function PlayersScreen() {
                                     {pressed ? <DocIconActive width={24} height={24} /> : <DocIcon width={24} height={24} />}
                                 </View>
                                 <View>
-                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">З файлу</Text>
-                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">Excel (.xlsx) або CSV</Text>
+                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.from_file', 'З файлу')}</Text>
+                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.file_format_desc', 'Excel (.xlsx) або CSV')}</Text>
                                 </View>
                             </>
                         )}
@@ -483,8 +480,8 @@ export default function PlayersScreen() {
                                     {pressed ? <UserIconActive width={24} height={24} /> : <UserIcon width={24} height={24} />}
                                 </View>
                                 <View>
-                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">Вручну</Text>
-                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">Ввести назву</Text>
+                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.manual', 'Вручну')}</Text>
+                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.enter_name_desc', 'Ввести назву')}</Text>
                                 </View>
                             </>
                         )}
@@ -492,34 +489,32 @@ export default function PlayersScreen() {
                 </View>
             </AppModal>
 
-            {/* РУЧНЕ СТВОРЕННЯ КОМАНДИ */}
-            <AppModal type="center" visible={isAddTeamModalVisible} onClose={() => setAddTeamModalVisible(false)} title={t('screens.players.modal_new_team')}>
+            <AppModal type="center" visible={isAddTeamModalVisible} onClose={() => setAddTeamModalVisible(false)} title={t('screens.players.modal_new_team', 'Нова команда')}>
                 <View className="mt-4 px-2">
                     <TextField
                         value={newTeamName}
                         onChangeText={setNewTeamName}
-                        placeholder={t('screens.players.placeholder_team_example')}
+                        placeholder={t('screens.players.placeholder_team_example', 'Наприклад: Динамо')}
                         autoFocus
                     />
                     <View className="flex-row gap-3 mt-4">
-                        <Button variant="outline" title={t('screens.players.btn_cancel')} onPress={() => setAddTeamModalVisible(false)} className="flex-1" />
-                        <Button variant="primary" title={t('screens.players.btn_create_team')} onPress={() => handleCreateTeamManual()} className="flex-1" disabled={!newTeamName?.trim()} />
+                        <Button variant="outline" title={t('screens.players.btn_cancel', 'Скасувати')} onPress={() => setAddTeamModalVisible(false)} className="flex-1" />
+                        <Button variant="primary" title={t('screens.players.btn_create_team', 'Створити команду')} onPress={() => handleCreateTeamManual()} className="flex-1" disabled={!newTeamName?.trim()} />
                     </View>
                 </View>
             </AppModal>
 
-            {/* СТВОРЕННЯ КОМАНДИ З ФАЙЛУ */}
-            <AppModal type="bottom" visible={isAddTeamImportVisible} onClose={() => setAddTeamImportVisible(false)} title="Команда з файлу">
+            <AppModal type="bottom" visible={isAddTeamImportVisible} onClose={() => setAddTeamImportVisible(false)} title={t('screens.players.team_from_file', 'Команда з файлу')}>
                 <View className="mt-2 w-full">
                     <TextField
-                        label="Назва команди (з файлу)"
+                        label={t('screens.players.team_name_from_file', 'Назва команди (з файлу)')}
                         value={newTeamName}
                         onChangeText={setNewTeamName}
-                        placeholder="Введіть назву"
+                        placeholder={t('screens.players.placeholder_team_example', 'Введіть назву')}
                     />
 
                     <Text className="text-[11px] text-[#A3A3A3] mb-3 mt-4 font-evolventa">
-                        Знайдено {importedPlayers.length} гравців. Натисніть на гравця, щоб виділити його <Text className="text-red-500 font-bold">червоним</Text> (він не додасться до команди).
+                        {t('screens.players.found_players_desc', 'Знайдено ')} {importedPlayers.length} {t('screens.players.players_click_red', 'гравців. Натисніть на гравця, щоб виділити його ')} <Text className="text-red-500 font-bold">{t('screens.players.red_color', 'червоним')}</Text> {t('screens.players.wont_be_added', '(він не додасться до команди).')}
                     </Text>
 
                     <ScrollView
@@ -554,13 +549,13 @@ export default function PlayersScreen() {
                     <View className="flex-row gap-3">
                         <Button
                             variant="outline"
-                            title="Створити порожню"
+                            title={t('screens.players.btn_create_empty', 'Створити порожню')}
                             onPress={() => handleConfirmImportTeam(true)}
                             className="flex-1"
                         />
                         <Button
                             variant="primary"
-                            title={isLoading ? "Зачекайте..." : "Створити з гравцями"}
+                            title={isLoading ? t('screens.players.status_wait', 'Зачекайте...') : t('screens.players.btn_create_with_players', 'Створити з гравцями')}
                             onPress={() => handleConfirmImportTeam(false)}
                             className="flex-[1.5]"
                             disabled={!newTeamName?.trim() || isLoading}

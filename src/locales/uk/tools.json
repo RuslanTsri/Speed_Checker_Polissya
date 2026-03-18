@@ -81,7 +81,17 @@
     "gate_n": "Гейт {{number}}",
     "finish": "Фініш",
     "avg_split_time": "Середній час відрізка:",
-    "total_time": "Загальний час"
+    "total_time": "Загальний час",
+    "all_teams": "Всі команди",
+    "select_session_desc": "Оберіть сесію для перегляду результатів",
+    "delete_all_session": "Видалити ВСЮ сесію",
+    "btn_cancel": "Скасувати",
+    "delete_distance": "Видалити обрану дистанцію",
+    "delete_action_desc": "Ви можете видалити результати лише для активної дистанції, або ж видалити всю сесію цілком.",
+    "choose_action": "Оберіть дію",
+    "delete_data_title": "Видалити дані?"
+
+
   },
   "timer": {
     "title": "Секундомір",
@@ -197,6 +207,13 @@
     "menu_section_tools": "Інструменти",
     "radar_btn_beta": "Радар (Beta)",
     "radar_tool_title": "Радіо-Рулетка",
-    "radar_tool_desc": "Перевірка якості зв'язку та розстановки"
+    "radar_tool_desc": "Перевірка якості зв'язку та розстановки",
+    "session_name_label": "Назва сесії (співпаде - доповнить)",
+    "session_name_placeholder": "Введіть назву сесії",
+    "selected_for_retry": "Вибрано для повтору: {{count}}",
+    "results_title": "Результати",
+    "btn_save_all": "Зберегти всі результати",
+    "btn_retry_selected": "Перебігти вибраним ({{count}})",
+    "btn_retry_team": "Перебігти всім"
   }
 }

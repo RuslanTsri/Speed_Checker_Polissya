@@ -8,6 +8,7 @@ import { AppModal } from '../../components/AppModal';
 import { Mod } from '../../components/ui/mods';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { TextField } from '../../components/ui/TextField';
 import { ArrowIcon, ArrowIconActive } from '../../../../assets/icons';
 
 const RunMarker = ({ position, totalDistance, label, type, triggered, timeDisplay }: any) => {
@@ -55,13 +56,15 @@ export default function SpeedTestRun({ config, onBack, onFinish, onNavigate }: a
     const { t } = useTranslation();
 
     const {
-        currentPlayerObj, teamName, currentPlayerIndex, totalPlayers, isRunning, isFinished, isReady,
+        currentPlayerObj, teamName,
+        sessionName, setSessionName,
+        currentPlayerIndex, totalPlayers, isRunning, isFinished, isReady,
         timeObj, progressPercent, activeSensors, startTraining, stopTraining, resetSession, nextPlayer,
         showIndividualModal, confirmIndividualRun, retryIndividualRun,
         showSummaryModal, saveAllResults, isSaving,
         localResults, currentRunResult, formatTime,
         restartWholeSession,
-        selectedForRetry, toggleRetrySelection, retrySelectedPlayers // ДОДАНО
+        selectedForRetry, toggleRetrySelection, retrySelectedPlayers
     } = useSpeedTestSession(config, onFinish, onNavigate);
 
     const animatedProgress = useRef(new Animated.Value(0)).current;
@@ -119,7 +122,7 @@ export default function SpeedTestRun({ config, onBack, onFinish, onNavigate }: a
                         {activeSensors.map((sensor: any, index: number) => {
                             const isTriggered = index === 0 ? (isRunning || isFinished) : (sensor.triggerTime ?? 0) > 0;
                             let timeDisplay = '--:--';
-                            if (index === 0 && (isRunning || isFinished)) timeDisplay = '00:00.00';
+                            if (index === 0 && (isRunning || isFinished)) timeDisplay = '00:00.000';
                             else if (sensor.triggerTime) {
                                 const tf = formatTime(sensor.triggerTime / 1000);
                                 timeDisplay = `${tf.main}${tf.decimal}`;
@@ -174,21 +177,25 @@ export default function SpeedTestRun({ config, onBack, onFinish, onNavigate }: a
 
             <AppModal
                 visible={showSummaryModal}
-                onClose={() => {}} // Блокуємо закриття кліком по фону, щоб юзер прийняв рішення
+                onClose={() => {}}
                 title={t('tools.speed_checker.modal_summary', { count: localResults?.length || 0 })}
                 type="center"
             >
                 <View className="h-[520px] w-full">
-                    {/* ДОДАНО: Статичне поле з назвою сесії */}
-                    <View className="mb-4">
-                        <Text className="text-[10px] text-text-sub font-evolventa mb-1 ml-1 uppercase tracking-widest">Назва сесії (Тест)</Text>
-                        <View className="bg-surface-bg border border-surface-border rounded-2xl p-4">
-                            <Text className="text-text-main font-evolventa-bold text-sm">Статична Сесія #12 (Демо)</Text>
-                        </View>
+                    <View className="mb-4 mt-2">
+                        <TextField
+                            label={t('tools.speed_checker.session_name_label', 'Назва сесії (співпаде - доповнить)')}
+                            value={sessionName}
+                            onChangeText={setSessionName}
+                            placeholder={t('tools.speed_checker.session_name_placeholder', 'Введіть назву сесії')}
+                        />
                     </View>
 
                     <Text className="text-[10px] text-text-sub font-evolventa mb-2 ml-1 uppercase tracking-widest">
-                        {selectedForRetry.length > 0 ? `Вибрано для повтору: ${selectedForRetry.length}` : 'Результати'}
+                        {selectedForRetry.length > 0
+                            ? t('tools.speed_checker.selected_for_retry', { count: selectedForRetry.length })
+                            : t('tools.speed_checker.results_title', 'Результати')
+                        }
                     </Text>
 
                     <FlatList
@@ -222,7 +229,7 @@ export default function SpeedTestRun({ config, onBack, onFinish, onNavigate }: a
                     <View className="pt-3 mt-1 border-t border-surface-border bg-surface-bg">
                         <Button
                             variant="primary"
-                            title={t('tools.speed_checker.btn_save_db', 'Зберегти всі результати')}
+                            title={t('tools.speed_checker.btn_save_all', 'Зберегти всі результати')}
                             onPress={saveAllResults}
                             isLoading={isSaving}
                             className="mb-2"
@@ -230,7 +237,7 @@ export default function SpeedTestRun({ config, onBack, onFinish, onNavigate }: a
                         <Button
                             variant="outline"
                             title={selectedForRetry.length > 0
-                                ? `Перебігти вибраним (${selectedForRetry.length})`
+                                ? t('tools.speed_checker.btn_retry_selected', { count: selectedForRetry.length })
                                 : t('tools.speed_checker.btn_retry_team', 'Перебігти всім')}
                             onPress={retrySelectedPlayers}
                             className="border-status-error/30 bg-status-error/10"

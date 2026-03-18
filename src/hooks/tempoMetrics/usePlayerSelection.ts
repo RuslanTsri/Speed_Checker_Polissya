@@ -12,7 +12,6 @@ export const usePlayerSelection = (teamId: string) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isAddModalVisible, setAddModalVisible] = useState(false);
 
-    // 🔥 Додано параметр silent
     const loadPlayers = async (silent = false) => {
         if (!silent) setIsLoading(true);
 
@@ -27,10 +26,8 @@ export const usePlayerSelection = (teamId: string) => {
         if (!silent) setIsLoading(false);
     };
 
-    // При першому завантаженні або зміні команди - показуємо лоадер
     useEffect(() => { if (teamId) loadPlayers(); }, [teamId]);
 
-    // При фоновій синхронізації - оновлюємо ТИХО
     useEffect(() => {
         const unsubscribe = syncManager.subscribe(() => {
             if (!syncManager.getIsSyncing() && teamId) {

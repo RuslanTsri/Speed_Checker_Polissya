@@ -23,12 +23,10 @@ export const useLoraDistance = (
     const prevRssi = useRef(rssiVal);
 
     useEffect(() => {
-        // Експоненційне згладжування
         const newSmoothed = (rssiVal * smoothingFactor) + (prevRssi.current * (1 - smoothingFactor));
         prevRssi.current = newSmoothed;
         setSmoothedRssi(newSmoothed);
 
-        // Математика дистанції
         if (newSmoothed >= txPower) {
             setCalculatedDistance(1);
         } else if (newSmoothed <= -110) {
@@ -38,17 +36,16 @@ export const useLoraDistance = (
             const distance = Math.pow(10, ratio);
             setCalculatedDistance(Math.round(distance));
         }
-    }, [rssiVal, environment]); // Перераховуємо, якщо змінилась погода
+    }, [rssiVal, environment]);
 
-    // Логіка статусів залежить від режиму (Конкретні метри або MAX)
+
     let status: 'IDEAL' | 'GOOD' | 'FAR' | 'LOST' = 'FAR';
 
     if (smoothedRssi <= -105) {
         status = 'LOST';
     } else if (targetDistance === 'MAX') {
-        // Режим пошуку максимальної дальності
-        if (smoothedRssi >= -85) status = 'IDEAL'; // Сигнал надійний
-        else if (smoothedRssi >= -100) status = 'GOOD'; // Сигнал на межі
+        if (smoothedRssi >= -85) status = 'IDEAL';
+        else if (smoothedRssi >= -100) status = 'GOOD';
     } else {
         // Режим розстановки по метрах
         const diff = Math.abs(calculatedDistance - targetDistance);

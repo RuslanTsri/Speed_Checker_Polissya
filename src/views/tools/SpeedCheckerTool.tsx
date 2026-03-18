@@ -5,7 +5,6 @@ import QuickTestConfig from './TempoMetrics/QuickTestConfig';
 import TeamSelector from './TempoMetrics/TeamSelector';
 import PlayerSelector from './TempoMetrics/PlayerSelector';
 import SpeedTestRun from './TempoMetrics/SpeedTestRun';
-// 🔥 1. Імпортуємо Радар
 import SensorPlacementCheck from './TempoMetrics/SensorPlacementCheck';
 import { useSpeedCheckerRouter } from '../../hooks/tools/useSpeedCheckerRouter';
 
@@ -18,7 +17,6 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth, onNavigate }
         currentScreen, testConfig, handleModeSelect, handleTeamSelect,
         handlePlayersSelect, handleStartTest, handleBackFromConfig,
         handleBackFromPlayers, handleBackFromTeam, handleBackFromRun,
-        // 🔥 2. Витягуємо нові методи з хука
         handleOpenPlacementCheck, handleClosePlacementCheck
     } = useSpeedCheckerRouter();
 
@@ -37,7 +35,6 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth, onNavigate }
                 case 'TEST_RUN':
                     handleBackFromRun();
                     return true;
-                // 🔥 3. Обробляємо системну кнопку Назад для Радара
                 case 'SENSOR_PLACEMENT':
                     handleClosePlacementCheck();
                     return true;
@@ -80,12 +77,10 @@ export default function SpeedCheckerTool({ onBack, onOpenBluetooth, onNavigate }
                         playerCount={testConfig.selectedPlayers.length}
                         testType={testConfig.type}
                         onOpenBluetooth={onOpenBluetooth}
-                        // 🔥 4. Обробка натискання "Радар (Beta)" на схемі
                         onOpenPlacementCheck={({ distance, splitPositions }: any) => handleOpenPlacementCheck(distance, splitPositions)}
                     />
                 </ScreenContainer>
             );
-        // 🔥 5. Рендеримо сам екран Радара
         case 'SENSOR_PLACEMENT':
             return (
                 <ScreenContainer>

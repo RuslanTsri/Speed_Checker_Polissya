@@ -81,7 +81,6 @@ class SyncManager {
             console.log(`🔄 [SyncManager] Syncing started... (${this.queue.length} jobs)`);
 
             while (this.queue.length > 0) {
-                // Беремо найперше завдання (FIFO)
                 const job = this.queue[0];
 
                 try {

@@ -87,12 +87,11 @@ export const Footer = ({ activeTab, onSwitch, isToolActive = false }: FooterProp
                 />
             </View>
 
-            {/* 🔥 ЦЕНТРАЛЬНА КНОПКА (Тепер вона має absolute позиціювання і не залежить від Flexbox) */}
             <View
                 className="absolute z-10"
                 style={{
                     left: '50%',
-                    marginLeft: -32, // Рівно половина ширини кнопки (64px / 2), гарантує ідеальний центр
+                    marginLeft: -32,
                     top: -25
                 }}
             >
@@ -103,14 +102,12 @@ export const Footer = ({ activeTab, onSwitch, isToolActive = false }: FooterProp
                 />
             </View>
 
-            {/* ТАБИ (Ліва і Права сторона) */}
             <View className="flex-row justify-between items-start h-[92px] px-4">
                 <View className="flex-row">
                     {renderTab(tabs[0])}
                     {renderTab(tabs[1])}
                 </View>
 
-                {/* Центральна порожнеча (кнопка вже висить зверху в absolute) */}
 
                 <View className="flex-row">
                     {renderTab(tabs[2])}
@@ -118,7 +115,6 @@ export const Footer = ({ activeTab, onSwitch, isToolActive = false }: FooterProp
                 </View>
             </View>
 
-            {/* Відступ для системної панелі */}
             <View style={{ height: insets.bottom }} />
 
         </View>

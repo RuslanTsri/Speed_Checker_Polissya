@@ -2,7 +2,8 @@
   "errors": {
     "validation": {
       "name_required": "Назва обов'язкова",
-      "team_name_required": "Назва команди обов'язкова"
+      "team_name_required": "Назва команди обов'язкова",
+      "session_name_required": "Введіть назву сесії"
     },
     "auth": {
       "rate_limit": "Забагато спроб. Зачекайте трохи і спробуйте знову.",
@@ -21,7 +22,8 @@
       "pin_incorrect": "Поточний PIN-код введено невірно",
       "pin_mismatch": "Нові PIN-коди не співпадають",
       "pin_same": "Новий PIN має відрізнятися від старого",
-      "pin_update_failed": "Не вдалося змінити PIN-код. Спробуйте пізніше."
+      "pin_update_failed": "Не вдалося змінити PIN-код. Спробуйте пізніше.",
+      "session_id_failed": "Не вдалося отримати ID сесії."
     },
     "csv": {
       "sharing_unavailable": "Поширення недоступне на цьому пристрої.",

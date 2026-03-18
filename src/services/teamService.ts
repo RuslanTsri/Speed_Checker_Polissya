@@ -3,7 +3,7 @@ import { BaseService } from './BaseService';
 import { supabase } from '../lib/supabase';
 import NetInfo from '@react-native-community/netinfo';
 import { syncManager } from './SyncManager';
-import i18n from 'i18next'; // 🔥 Імпортуємо глобальний i18next
+import i18n from 'i18next';
 
 export const TeamSchema = z.object({
     id: z.string().optional(),

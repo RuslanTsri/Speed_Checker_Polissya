@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Player } from '../../services/playerService';
 
-// 🔥 1. Додали 'SENSOR_PLACEMENT' в список доступних екранів
 export type SpeedCheckerScreen = 'MODE_SELECT' | 'QUICK_CONFIG' | 'TEAM_SELECT' | 'PLAYER_SELECT' | 'TEST_RUN' | 'SENSOR_PLACEMENT';
 
 export interface TestConfig {
@@ -64,7 +63,6 @@ export const useSpeedCheckerRouter = () => {
         setCurrentScreen('TEST_RUN');
     };
 
-    // 🔥 2. Спеціальні функції для навігації в Радар і назад
     const handleOpenPlacementCheck = (distance: number, splitPositions: number[]) => {
         setTestConfig(prev => ({ ...prev, distance, splitPositions }));
         setCurrentScreen('SENSOR_PLACEMENT');
@@ -84,7 +82,6 @@ export const useSpeedCheckerRouter = () => {
         handleTeamSelect, handlePlayersSelect, handleStartTest,
         handleBackFromConfig, handleBackFromPlayers, handleBackFromTeam, handleBackFromRun,
 
-        // 🔥 3. Експортуємо нові методи та базові сеттери
         handleOpenPlacementCheck,
         handleClosePlacementCheck,
         setCurrentScreen,

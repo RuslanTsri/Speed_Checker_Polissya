@@ -12,37 +12,44 @@ import { SearchInput } from '../components/ui/SearchInput';
 interface SessionsScreenProps {
     initialTab?: SessionTabType;
     openSession?: any;
-    // 🔥 Додані пропси
+    openTeam?: any;
     sessionDetailsOpen?: boolean;
     setSessionDetailsOpen?: (val: boolean) => void;
 }
 
-export default function SessionsScreen({ initialTab, openSession, sessionDetailsOpen, setSessionDetailsOpen }: SessionsScreenProps) {
+export default function SessionsScreen({ initialTab, openSession, openTeam, sessionDetailsOpen, setSessionDetailsOpen }: SessionsScreenProps) {
     const { t } = useTranslation();
     const {
         activeTab, setActiveTab, searchQuery, setSearchQuery,
         selectedTeamSession, setSelectedTeamSession, clearSelection
     } = useSessionsManager(initialTab);
 
+    const actualSession = openSession && !openSession.isJustTeam ? openSession : null;
+    const actualTeam = openTeam || (openSession && openSession.isJustTeam ? openSession : null);
+
     useEffect(() => {
         if (initialTab) setActiveTab(initialTab);
     }, [initialTab]);
 
     useEffect(() => {
-        if (openSession) {
-            setSelectedTeamSession(openSession);
+        if (actualSession) {
+            setSelectedTeamSession(actualSession);
             setActiveTab('TEAM');
         }
-    }, [openSession]);
+    }, [actualSession]);
 
-    // 🔥 1. Кажемо глобальному AppLogic, чи відкриті зараз деталі сесії
+    useEffect(() => {
+        if (actualTeam) {
+            setActiveTab('TEAM');
+        }
+    }, [actualTeam]);
+
     useEffect(() => {
         if (setSessionDetailsOpen) {
             setSessionDetailsOpen(!!selectedTeamSession);
         }
     }, [selectedTeamSession]);
 
-    // 🔥 2. Слухаємо AppLogic: якщо він каже "закрити" (по кнопці Назад) — очищаємо сесію
     useEffect(() => {
         if (sessionDetailsOpen === false && selectedTeamSession) {
             clearSelection();
@@ -54,15 +61,15 @@ export default function SessionsScreen({ initialTab, openSession, sessionDetails
     }
 
     const tabs = [
-        { id: 'TEAM', label: t('screens.sessions.tab_team') as string },
-        { id: 'GENERAL', label: t('screens.sessions.tab_general') as string }
+        { id: 'TEAM', label: t('sessions.tab_team', 'Командні') as string },
+        { id: 'GENERAL', label: t('sessions.tab_general', 'Загальні / Швидкі') as string }
     ];
 
     return (
         <View className="flex-1 pt-4">
             <View className="items-center px-4 mb-4">
                 <Text className="text-h3 font-bold text-text-main font-unbounded">
-                    {t('screens.sessions.title') as string}
+                    {t('sessions.title', 'Результати') as string}
                 </Text>
             </View>
 
@@ -78,7 +85,7 @@ export default function SessionsScreen({ initialTab, openSession, sessionDetails
                 <SearchInput
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    placeholder={t('screens.sessions.search_placeholder') as string}
+                    placeholder={t('sessions.search_placeholder', 'Пошук') as string}
                 />
             </View>
 
@@ -86,6 +93,7 @@ export default function SessionsScreen({ initialTab, openSession, sessionDetails
                 <SessionsTeam
                     searchQuery={searchQuery}
                     onSelectSession={setSelectedTeamSession}
+                    openTeam={actualTeam}
                 />
             ) : (
                 <SessionsGeneral

@@ -21,14 +21,85 @@ class ResultsService extends BaseService<Result> {
     }
 
     async saveResult(data: Partial<Result>) {
-        console.log("🚀 [ResultsService] Збереження результату забігу...");
         return this.create(data);
     }
 
-    async getBySession(sessionId: string) {
-        console.log(`🔍 [ResultsService] Запит результатів сесії ${sessionId}...`);
+    async getBySessionGroup(teamId: string, sessionName: string) {
+        console.log(`🔍 [ResultsService] Запит групи сесій: ${sessionName}`);
         const state = await NetInfo.fetch();
-        const cacheKey = `results_session_${sessionId}`;
+        const cacheKey = `results_group_${teamId}_${sessionName}`;
+
+        const pendingSessions = syncManager.getPendingItems('sessions')
+            .filter((s: any) => s.team_id === teamId && s.name === sessionName);
+        const pendingSessionIds = pendingSessions.map((s: any) => s.id);
+
+        const pendingResults = syncManager.getPendingItems('results')
+            .filter((r: any) => pendingSessionIds.includes(r.session_id))
+            .map((item: any) => {
+                const session = pendingSessions.find((s: any) => s.id === item.session_id);
+                return {
+                    id: item.id,
+                    playerId: item.player_id || 'guest',
+                    playerName: item.player_name || 'Синхронізація...',
+                    playerNumber: '-',
+                    time: Number(item.full_time),
+                    splits: item.gates || [],
+                    distance: session?.total_distance || 30,
+                    round: 0,
+                    date: new Date(item.created_at || Date.now()).toLocaleTimeString()
+                };
+            });
+
+        let serverFormatted: any[] = [];
+
+        if (state.isConnected) {
+            try {
+                const { data, error } = await supabase
+                    .from(this.tableName)
+                    .select(`
+                        id, full_time, gates, created_at, player_id,
+                        players (name),
+                        sessions!inner (id, team_id, name, test_type, total_distance)
+                    `)
+                    .eq('sessions.team_id', teamId)
+                    .eq('sessions.name', sessionName)
+                    .order('created_at', { ascending: false });
+
+                if (!error && data) {
+                    serverFormatted = data.map((item: any, index: number) => ({
+                        id: item.id,
+                        playerId: item.player_id || 'guest',
+                        playerName: item.players?.name || 'Гість',
+                        playerNumber: '-',
+                        time: Number(item.full_time),
+                        splits: item.gates || [],
+                        distance: item.sessions.total_distance,
+                        round: data.length - index,
+                        date: new Date(item.created_at).toLocaleTimeString()
+                    }));
+                    // @ts-ignore
+                    await this.saveToCache(cacheKey, { formatted: serverFormatted });
+                }
+            } catch (e) {
+                console.log("⚠️ Помилка мережі");
+            }
+        }
+
+        if (!state.isConnected || serverFormatted.length === 0) {
+            // @ts-ignore
+            const cached = await this.getFromCache(cacheKey);
+            if (cached) serverFormatted = cached.formatted;
+        }
+
+        const combined = [...pendingResults, ...serverFormatted];
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+
+        return { data: unique, error: null };
+    }
+
+    async getBySession(sessionId: string) {
+        const state = await NetInfo.fetch();
+        const cacheKey = `results_session_v2_${sessionId}`;
 
         const pendingResults = syncManager.getPendingItems('results')
             .filter((r: any) => r.session_id === sessionId)
@@ -47,7 +118,6 @@ class ResultsService extends BaseService<Result> {
 
         if (state.isConnected) {
             try {
-                console.log("🌐 [ResultsService] Онлайн, тягнемо результати...");
                 const { data, error } = await supabase
                     .from(this.tableName)
                     .select(`*, players (name)`)
@@ -59,6 +129,7 @@ class ResultsService extends BaseService<Result> {
                     serverFormatted = data.map((item: any, index: number) => ({
                         id: item.id,
                         playerId: item.player_id || 'guest',
+                        playerName: item.players?.name || 'Гість',
                         playerNumber: '-',
                         time: Number(item.full_time),
                         splits: item.gates,
@@ -68,13 +139,10 @@ class ResultsService extends BaseService<Result> {
                     // @ts-ignore
                     await this.saveToCache(cacheKey, { formatted: serverFormatted, raw: data });
                 }
-            } catch (e) {
-                console.log("⚠️ [ResultsService] Помилка мережі");
-            }
+            } catch (e) {}
         }
 
         if (!state.isConnected || serverFormatted.length === 0) {
-            console.log("📴 [ResultsService] Офлайн, читаємо з кешу");
             // @ts-ignore
             const cached = await this.getFromCache(cacheKey);
             if (cached) {
@@ -85,21 +153,17 @@ class ResultsService extends BaseService<Result> {
 
         const combined = [...pendingResults, ...serverFormatted];
         const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
-
         return { data: unique, rawData, error: null };
     }
 
     async getRecentResults(limit = 50) {
-        console.log("🔍 [ResultsService] Запит останніх результатів...");
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return { data: [], error: 'Not auth' };
-
         const state = await NetInfo.fetch();
         let serverFormatted: any[] = [];
 
         if (state.isConnected) {
             try {
-                console.log("🌐 [ResultsService] Онлайн, тягнемо останні результати...");
                 const { data, error } = await supabase
                     .from('results')
                     .select(`id, full_time, gates, created_at, players (name), sessions (created_at, teams (name))`)
@@ -118,99 +182,14 @@ class ResultsService extends BaseService<Result> {
                     // @ts-ignore
                     await this.saveToCache('recent_results', serverFormatted);
                 }
-            } catch (e) {
-                console.log("⚠️ [ResultsService] Помилка мережі");
-            }
+            } catch (e) {}
         }
 
         if (!state.isConnected || serverFormatted.length === 0) {
-            console.log("📴 [ResultsService] Офлайн, читаємо останні результати з кешу");
             // @ts-ignore
             serverFormatted = await this.getFromCache('recent_results') || [];
         }
-
         return { data: serverFormatted, error: null };
-    }
-    async getByTeam(teamId: string) {
-        console.log(`🔍 [ResultsService] Запит результатів команди ${teamId}...`);
-        const state = await NetInfo.fetch();
-        const cacheKey = `results_team_${teamId}`;
-
-        let serverFormatted: any[] = [];
-        let rawData: any[] = [];
-
-        if (state.isConnected) {
-            try {
-                const { data, error } = await supabase
-                    .from(this.tableName)
-                    .select(`
-                        id, full_time, gates, created_at, player_id,
-                        players (name),
-                        sessions!inner (id, team_id, test_type, total_distance)
-                    `)
-                    .eq('sessions.team_id', teamId)
-                    .order('created_at', { ascending: false });
-
-                if (!error && data) {
-                    rawData = data;
-                    serverFormatted = data.map((item: any) => ({
-                        id: item.id,
-                        playerId: item.player_id || 'guest',
-                        playerName: item.players?.name || 'Гість',
-                        playerNumber: '-',
-                        time: Number(item.full_time),
-                        splits: item.gates,
-                        testType: item.sessions?.test_type || 'STATIC',
-                        distance: item.sessions?.total_distance || 30,
-                        date: new Date(item.created_at).toLocaleDateString(),
-                        round: 0
-                    }));
-                    // @ts-ignore
-                    await this.saveToCache(cacheKey, { formatted: serverFormatted, raw: data });
-                }
-            } catch (e) { console.log("⚠️ Помилка мережі"); }
-        }
-
-        if (!state.isConnected || serverFormatted.length === 0) {
-            // @ts-ignore
-            const cached = await this.getFromCache(cacheKey);
-            if (cached) {
-                serverFormatted = cached.formatted;
-                rawData = cached.raw;
-            }
-        }
-
-        const pendingSessions = syncManager.getPendingItems('sessions').filter((s: any) => s.team_id === teamId);
-        const pendingSessionIds = pendingSessions.map((s: any) => s.id);
-        const pendingResults = syncManager.getPendingItems('results')
-            .filter((r: any) => pendingSessionIds.includes(r.session_id))
-            .map((item: any) => {
-                const session = pendingSessions.find((s: any) => s.id === item.session_id);
-                // Захист від ділення на нуль або помилок, якщо gates ще немає
-                const gatesCount = item.gates ? item.gates.length : 0;
-
-                return {
-                    id: item.id,
-                    playerId: item.player_id || 'guest',
-                    playerName: 'Синхронізація...',
-                    playerNumber: '-',
-                    time: Number(item.full_time),
-                    splits: item.gates || [],
-                    testType: session?.test_type || 'STATIC',
-                    distance: session?.total_distance || 30,
-                    gateDistances: session?.splits_config || [],
-                    avgSplit: gatesCount > 0 ? Number(item.full_time) / (gatesCount + 1) : Number(item.full_time),
-                    date: new Date(item.created_at || Date.now()).toLocaleDateString(),
-                    round: 0
-                };
-            });
-
-        const deletedIds = syncManager.getDeletedIds('results');
-        const combined = [...pendingResults, ...serverFormatted];
-        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
-            .filter(item => !deletedIds.includes(item.id));
-
-        return { data: unique, rawData, error: null };
     }
 }
 

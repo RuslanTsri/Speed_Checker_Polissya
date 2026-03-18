@@ -9,7 +9,7 @@ interface LayoutContainerProps {
     children: React.ReactNode;
     title: string;
     subtitle: string;
-    headerRight?: React.ReactNode; // 🔥 Додаємо можливість вставити щось справа
+    headerRight?: React.ReactNode;
 }
 
 export const LayoutContainer = ({ children, title, subtitle, headerRight }: LayoutContainerProps) => {

@@ -2,7 +2,8 @@
   "errors": {
     "validation": {
       "name_required": "Name is required",
-      "team_name_required": "Team name is required"
+      "team_name_required": "Team name is required",
+      "session_name_required": "Session name is required"
     },
     "auth": {
       "rate_limit": "Too many requests. Please wait a moment and try again.",
@@ -21,7 +22,8 @@
       "pin_incorrect": "Current PIN is incorrect",
       "pin_mismatch": "New PINs do not match",
       "pin_same": "New PIN must be different from the old one",
-      "pin_update_failed": "Failed to update PIN. Please try again later."
+      "pin_update_failed": "Failed to update PIN. Please try again later.",
+      "session_id_failed": "Failed to get session ID."
     },
     "csv": {
       "sharing_unavailable": "Sharing is not available on this device.",

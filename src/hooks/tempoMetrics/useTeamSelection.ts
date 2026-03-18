@@ -13,7 +13,6 @@ export const useTeamSelection = () => {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // 🔥 Додано параметр silent
     const loadTeams = async (silent = false) => {
         if (!silent) setIsLoading(true);
 
@@ -34,11 +33,10 @@ export const useTeamSelection = () => {
     // При першому завантаженні екрану - показуємо лоадер
     useEffect(() => { loadTeams(); }, []);
 
-    // При фоновій синхронізації - оновлюємо ТИХО
     useEffect(() => {
         const unsubscribe = syncManager.subscribe(() => {
             if (!syncManager.getIsSyncing()) {
-                loadTeams(true); // 🔥 true = silent
+                loadTeams(true);
             }
         });
         return unsubscribe;

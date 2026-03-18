@@ -74,15 +74,15 @@ export const Button = ({
                     color={variant === 'primary' || variant === 'danger' ? '#F5F5F5' : '#FF6D00'}
                 />
             ) : (
-                // 🔥 Прибрали flex-1, який ламав розрахунок ширини
-                <View className="flex-row items-center justify-center">
+                <View className="flex-row items-center justify-center flex-shrink-1">
                     {icon && <View className="mr-3">{icon}</View>}
 
                     <Text
-                        className={getTextClasses()}
+                        className={`${getTextClasses()} flex-shrink-1`}
                         style={[style, { textAlign: 'center' }]}
-                        // 🔥 Якщо текст довгий, він просто перенесеться на 2 рядки або обріжеться "..."
-                        numberOfLines={2}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit={true}
+                        minimumFontScale={0.7}
                         ellipsizeMode="tail"
                     >
                         {title}

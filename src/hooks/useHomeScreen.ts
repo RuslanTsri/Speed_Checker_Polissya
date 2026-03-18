@@ -116,7 +116,7 @@ export const useHomeScreen = (onNavigate: (tab: TabType, params?: any) => void) 
         if (recentActivity) {
             onNavigate('SESSIONS', {
                 subTab: 'TEAM',
-                openSession: {
+                openTeam: {
                     id: recentActivity.teamId,
                     teamName: recentActivity.teamName,
                     hasResults: true,

@@ -38,7 +38,6 @@ export const useCSV = () => {
         URL.revokeObjectURL(url);
     };
 
-    // НОВА ФУНКЦІЯ: Експорт результатів у форматі Excel (.xlsx)
     const exportResultsToExcel = async (results: any[], teamName: string) => {
         try {
             if (!results || results.length === 0) {
@@ -46,15 +45,12 @@ export const useCSV = () => {
                 return;
             }
 
-            // 1. Формуємо дані для таблиці (Масив масивів)
             const sheetData: any[][] = [];
 
-            // Розбиваємо рядок заголовків з перекладу на масив і прибираємо зайві лапки
             const headersStr = String(t('screens.csv.export_headers'));
             const headers = headersStr.split(',').map(h => h.replace(/^"|"$/g, '').trim());
             sheetData.push(headers);
 
-            // Додаємо рядки з результатами
             results.forEach((res) => {
                 const distanceVal = res.distance ? res.distance.toString() : '-';
                 const timeVal = Number(res.time.toFixed(3)); // Excel любить чисті числа
@@ -73,32 +69,28 @@ export const useCSV = () => {
                 ]);
             });
 
-            // 2. Створюємо книгу та аркуш
             const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
             const workbook = XLSX.utils.book_new();
 
-            // Налаштування ширини колонок для гарного вигляду
             worksheet['!cols'] = [
-                { wch: 20 }, // Команда
-                { wch: 25 }, // Гравець
-                { wch: 15 }, // Дата
-                { wch: 15 }, // Тип
-                { wch: 12 }, // Дистанція
-                { wch: 10 }, // Час
-                { wch: 30 }  // Спліти
+                { wch: 20 },
+                { wch: 25 },
+                { wch: 15 },
+                { wch: 15 },
+                { wch: 12 },
+                { wch: 10 },
+                { wch: 30 }
             ];
 
             XLSX.utils.book_append_sheet(workbook, worksheet, "Results");
 
             const fileName = `Results_${teamName.replace(/\s+/g, '_')}_${Date.now()}.xlsx`;
 
-            // 3. Збереження для Web
             if (Platform.OS === 'web') {
                 XLSX.writeFile(workbook, fileName);
                 return;
             }
 
-            // 4. Збереження для мобільних (iOS / Android)
             const b64 = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' });
             const fileUri = baseDir.endsWith('/') ? `${baseDir}${fileName}` : `${baseDir}/${fileName}`;
 
@@ -106,7 +98,6 @@ export const useCSV = () => {
                 encoding: fs.EncodingType?.Base64 || 'base64'
             });
 
-            // 5. Виклик вікна "Поділитися"
             if (await Sharing.isAvailableAsync()) {
                 try {
                     await Sharing.shareAsync(fileUri, {

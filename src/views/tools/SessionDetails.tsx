@@ -1,19 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, LayoutAnimation, Platform, UIManager, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSessionDetails } from '../../hooks/sessions/useSessionDetails';
 
+import { AppModal } from '../components/AppModal';
 import { Mod, RatingMod } from '../components/ui/mods';
 import { HeaderTabs, SubTabs } from '../components/ui/tabs/';
 import { ExportIcon, ArrowIcon, ArrowIconActive } from '../../../assets/icons';
 
-// Дозволяємо LayoutAnimation на Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// 🔥 Оновлений інтерактивний компонент з локалізацією
 const SplitsBlock = ({ splits, totalTime, avgSplit, title }: any) => {
     const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
@@ -43,7 +42,6 @@ const SplitsBlock = ({ splits, totalTime, avgSplit, title }: any) => {
             {isExpanded && (
                 <View className="px-3 pb-3">
                     <View className="flex-row flex-wrap gap-2 mt-1">
-                        {/* 1. ЗАВЖДИ СТАРТ */}
                         <View className="bg-surface-card px-3 py-1.5 rounded-xl border border-surface-border flex-1 min-w-[80px]">
                             <Text className="text-[8px] text-text-muted font-evolventa uppercase mb-0.5">
                                 {t('tools.sessions.start_0m')}
@@ -51,7 +49,6 @@ const SplitsBlock = ({ splits, totalTime, avgSplit, title }: any) => {
                             <Text className="text-caption text-text-main font-unbounded-bold">0.000s</Text>
                         </View>
 
-                        {/* 2. ПРОМІЖНІ ГЕЙТИ */}
                         {splits && splits.slice(0, -1).map((splitTime: number, idx: number) => (
                             <View key={idx} className="bg-surface-card px-3 py-1.5 rounded-xl border border-surface-border flex-1 min-w-[80px]">
                                 <Text className="text-[8px] text-text-muted font-evolventa uppercase mb-0.5">
@@ -63,7 +60,6 @@ const SplitsBlock = ({ splits, totalTime, avgSplit, title }: any) => {
                             </View>
                         ))}
 
-                        {/* 3. ЗАВЖДИ ФІНІШ */}
                         <View className="bg-brand-orange/10 px-3 py-1.5 rounded-xl border border-brand-orange/30 flex-1 min-w-[80px]">
                             <Text className="text-[8px] text-brand-orange font-evolventa uppercase mb-0.5">
                                 {t('tools.sessions.finish')}
@@ -81,7 +77,8 @@ export default function SessionDetails({ session, onBack }: any) {
     const { t } = useTranslation();
     const {
         subTab, setSubTab, selectedDistance, setSelectedDistance, predefinedDistances,
-        filteredAttempts, sortedResults, sessionStats, handleExport
+        filteredAttempts, sortedResults, sessionStats, handleExport,
+        isDeleteModalVisible, setDeleteModalVisible, isDeleting, handleDeleteSession
     } = useSessionDetails(session);
 
     const [localAllDistance, setLocalAllDistance] = useState<number | 'ALL'>('ALL');
@@ -150,7 +147,7 @@ export default function SessionDetails({ session, onBack }: any) {
                 </Pressable>
 
                 <View className="items-center flex-1">
-                    <Text className="text-h4 text-text-main font-unbounded-bold">{t('tools.sessions.results_title', 'Результати')}</Text>
+                    <Text className="text-h4 text-text-main font-unbounded-bold">{session.sessionName || t('tools.sessions.results_title', 'Результати')}</Text>
                 </View>
 
                 <Pressable onPress={handleExport} className="p-2 active:opacity-60">
@@ -159,22 +156,31 @@ export default function SessionDetails({ session, onBack }: any) {
             </View>
 
             <View className="px-4 mb-3">
-                <Mod title={session.teamName} subtitle={t('tools.sessions.team', 'Команда')}>
-                    <View className="flex-row justify-between items-end border-t border-surface-border pt-2 mt-0">
-                        <View>
-                            <Text className="text-caption text-text-sub uppercase font-evolventa mb-0.5">{t('tools.sessions.best', 'Найкращий')}</Text>
-                            <Text className="text-h2 text-brand-yellow font-unbounded-black leading-tight">
-                                {sessionStats.best > 0 ? sessionStats.best.toFixed(3) : '--'}
-                            </Text>
+                <View className="relative">
+                    <Mod title={session.teamName} subtitle={t('tools.sessions.team', 'Команда')}>
+                        <View className="flex-row justify-between items-end border-t border-surface-border pt-2 mt-0">
+                            <View>
+                                <Text className="text-caption text-text-sub uppercase font-evolventa mb-0.5">{t('tools.sessions.best', 'Найкращий')}</Text>
+                                <Text className="text-h2 text-brand-yellow font-unbounded-black leading-tight">
+                                    {sessionStats.best > 0 ? sessionStats.best.toFixed(3) : '--'}
+                                </Text>
+                            </View>
+                            <View className="items-end">
+                                <Text className="text-caption text-text-sub uppercase font-evolventa mb-0.5">{t('tools.sessions.average', 'Середній')}</Text>
+                                <Text className="text-h2 text-brand-orange font-unbounded-black leading-tight">
+                                    {sessionStats.avg > 0 ? sessionStats.avg.toFixed(3) : '--'}
+                                </Text>
+                            </View>
                         </View>
-                        <View className="items-end">
-                            <Text className="text-caption text-text-sub uppercase font-evolventa mb-0.5">{t('tools.sessions.average', 'Середній')}</Text>
-                            <Text className="text-h2 text-brand-orange font-unbounded-black leading-tight">
-                                {sessionStats.avg > 0 ? sessionStats.avg.toFixed(3) : '--'}
-                            </Text>
-                        </View>
-                    </View>
-                </Mod>
+                    </Mod>
+
+                    <Pressable
+                        onPress={() => setDeleteModalVisible(true)}
+                        className="absolute top-4 right-4 p-2 active:opacity-60 bg-status-error/10 rounded-full border border-status-error/20"
+                    >
+                        <Feather name="trash-2" size={16} color="#ef4444" />
+                    </Pressable>
+                </View>
             </View>
 
             <View className="px-4 mb-3">
@@ -257,6 +263,54 @@ export default function SessionDetails({ session, onBack }: any) {
                     )
                 )}
             />
+
+            <AppModal type="center" visible={isDeleteModalVisible} onClose={() => setDeleteModalVisible(false)} title={t('tools.sessions.delete_data_title', 'Видалити дані?')}>
+                <View className="items-center mb-6 mt-2">
+                    <View className="w-16 h-16 bg-status-error/10 rounded-full items-center justify-center mb-4 border border-status-error/20">
+                        <Feather name="alert-triangle" size={32} color="#ef4444" />
+                    </View>
+                    <Text className="text-lg font-unbounded-bold text-center mb-2 text-text-main">
+                        {t('tools.sessions.choose_action', 'Оберіть дію')}
+                    </Text>
+                    <Text className="text-center text-sm px-4 text-text-sub font-evolventa">
+                        {t('tools.sessions.delete_action_desc', 'Ви можете видалити результати лише для активної дистанції, або ж видалити всю сесію цілком.')}
+                    </Text>
+                </View>
+
+                <View className="gap-3">
+                    {activeSelectedDistance !== 'ALL' && (
+                        <TouchableOpacity
+                            onPress={() => handleDeleteSession(onBack, 'ACTIVE_DISTANCE', activeSelectedDistance as number)}
+                            disabled={isDeleting}
+                            className="w-full bg-surface-card border border-status-error/30 p-4 rounded-xl items-center justify-center active:opacity-60"
+                        >
+                            <Text className="text-status-error font-bold tracking-wide">
+                                {t('tools.sessions.delete_distance', { distance: activeSelectedDistance })}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity
+                        onPress={() => handleDeleteSession(onBack, 'ALL')}
+                        disabled={isDeleting}
+                        className="w-full bg-status-error p-4 rounded-xl items-center justify-center active:opacity-60"
+                    >
+                        {isDeleting ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text className="text-white font-bold tracking-wide">
+                                {t('tools.sessions.delete_all_session', 'Видалити ВСЮ сесію')}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => setDeleteModalVisible(false)} className="w-full mt-2 p-3 items-center justify-center active:opacity-60">
+                        <Text className="text-text-muted font-bold tracking-wide">
+                            {t('tools.sessions.btn_cancel', 'Скасувати')}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </AppModal>
         </View>
     );
 }

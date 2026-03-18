@@ -19,10 +19,8 @@ export const AppLoaderStart = ({ progress, statusText }: AppLoaderStartProps) =>
     const mainLogoOpacity = useRef(new Animated.Value(0)).current;
     const mainLogoScale = useRef(new Animated.Value(0.8)).current;
     const partnersOpacity = useRef(new Animated.Value(0)).current;
-    const partnersTranslateY = useRef(new Animated.Value(20)).current; // Логотипи партнерів трохи підніматимуться
-
+    const partnersTranslateY = useRef(new Animated.Value(20)).current;
     useEffect(() => {
-        // Анімація прогрес-бару
         Animated.timing(widthAnim, {
             toValue: progress,
             duration: 300,

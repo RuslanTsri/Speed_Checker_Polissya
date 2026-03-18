@@ -68,7 +68,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     console.error("❌ [UserContext] Помилка сесії:", error.message);
                     if (error.message.includes("Invalid Refresh Token") || error.message.includes("Not Found")) {
                         console.log("♻️ Токен невалідний -> Примусовий вихід");
-                        await logout(); // Чистимо все
+                        await logout();
                         return;
                     }
                     throw error;
@@ -100,7 +100,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
         checkSession();
 
-        // Слухач змін
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log(`📣 [Auth Event]: ${event}`);
 

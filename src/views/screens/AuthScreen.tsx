@@ -39,7 +39,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                     contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* 🔥 Єдиний контейнер для всього (прибрали flex-1, який розривав екран) */}
                     <View
                         className="px-8 w-full"
                         style={{
@@ -48,7 +47,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                         }}
                     >
 
-                        {/* Логотип */}
                         <View className="items-center mb-6">
                             <View className="w-24 h-24 rounded-[32px] items-center justify-center mb-4 bg-surface-card border border-surface-border shadow-2xl overflow-hidden">
                                 <TempoMetricWhiteNoBackground width={64} height={64} fill="#FF6D00" />
@@ -62,7 +60,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                             </Text>
                         </View>
 
-                        {/* Форма: Звузили gap-y-4 до gap-y-3 */}
                         <View className="w-full gap-y-3">
                             {isRegistering && (
                                 <TextField
@@ -97,7 +94,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                                 error={errorMessage || undefined}
                             />
 
-                            {/* Відступ перед головною кнопкою зменшили (mt-3 замість mt-6) */}
                             <Button
                                 title={isRegistering ? t('screens.auth.btn_register') : t('screens.auth.btn_login')}
                                 variant="primary"
@@ -107,7 +103,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                             />
                         </View>
 
-                        {/* Блок реєстрації прям під головною кнопкою */}
                         <View className="mt-6 items-center w-full">
                             <Text className="text-text-muted text-small mb-2 font-evolventa">
                                 {isRegistering ? t('screens.auth.switch_has_account') : t('screens.auth.switch_no_account')}
@@ -120,7 +115,6 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
                             />
                         </View>
 
-                        {/* Політика конфіденційності */}
                         <View className="mt-6 items-center px-4">
                             <Text className="text-text-muted text-xs text-center font-evolventa leading-5">
                                 {t('screens.auth.if_you_continued_privacy_policy')}{' '}

@@ -33,7 +33,6 @@ class PlayerService extends BaseService<Player> {
         const state = await NetInfo.fetch();
         const cacheKey = `players_team_${teamId}`;
 
-        // 1. Беремо офлайн-гравців з черги
         const pendingPlayers = syncManager.getPendingItems('players')
             .filter((p: any) => p.team_id === teamId);
 

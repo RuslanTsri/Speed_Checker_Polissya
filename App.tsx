@@ -73,11 +73,11 @@ const AppContentWrapper = () => {
     if (!isUserLoading) loadProgress += 40;
 
     if (fontsLoaded && !isLangLoading && !isUserLoading) {
-        loadStatus = "Готово до запуску...";
+        loadStatus = "Ready to start...";
     } else if (fontsLoaded && !isLangLoading) {
-        loadStatus = "Перевірка сесії...";
+        loadStatus = "Checking session...";
     } else if (fontsLoaded) {
-        loadStatus = "Налаштування мови...";
+        loadStatus = "Loading Language...";
     }
 
     useEffect(() => {
@@ -119,6 +119,7 @@ const AppContentWrapper = () => {
                     key={sessionsInitialTab}
                     initialTab={sessionsInitialTab}
                     openSession={navParams?.openSession}
+                    openTeam={navParams?.openTeam} // 🔥 ОСЬ ЦЕЙ РЯДОК ВСЕ ЛАГОДИТЬ!
                     sessionDetailsOpen={sessionDetailsOpen}
                     setSessionDetailsOpen={setSessionDetailsOpen}
                 />;

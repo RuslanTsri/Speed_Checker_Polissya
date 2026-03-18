@@ -33,7 +33,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
         isAddManualVisible, setAddManualVisible, newPlayerName, setNewPlayerName, handleAddManualPlayer,
         isAddPlayerOptionsVisible, setAddPlayerOptionsVisible,
         isImportVisible, setImportVisible, downloadTemplate, importedPlayers, handleSelectFile, handleConfirmImport,
-        excludedPlayers, toggleExcludePlayer, // ДОДАНО: Стейт та функція для викреслювання гравців
+        excludedPlayers, toggleExcludePlayer,
         isLoading: isLogicLoading
     } = usePlayersLogic();
 
@@ -51,7 +51,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
 
     const modalsJSX = (
         <>
-            <AppModal type="bottom" visible={isAddPlayerOptionsVisible} onClose={() => setAddPlayerOptionsVisible(false)} title={t('screens.players.modal_players_title')}>
+            <AppModal type="bottom" visible={isAddPlayerOptionsVisible} onClose={() => setAddPlayerOptionsVisible(false)} title={t('screens.players.modal_players_title', 'Додавання гравців')}>
                 <View className="flex-row gap-3 mb-2 mt-4">
                     <Pressable
                         onPress={() => { setAddPlayerOptionsVisible(false); setImportVisible(true); }}
@@ -64,8 +64,8 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                                     {pressed ? <DocIconActive width={24} height={24} /> : <DocIcon width={24} height={24} />}
                                 </View>
                                 <View>
-                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.import_from_file')}</Text>
-                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.import_desc_csv')}</Text>
+                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.import_from_file', 'З файлу')}</Text>
+                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.import_desc_csv', 'Excel (.xlsx) або CSV')}</Text>
                                 </View>
                             </>
                         )}
@@ -82,8 +82,8 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                                     {pressed ? <UserIconActive width={24} height={24} /> : <UserIcon width={24} height={24} />}
                                 </View>
                                 <View>
-                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.add_manual')}</Text>
-                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.add_manual_desc')}</Text>
+                                    <Text className="text-[#F5F5F5] text-sm leading-5 mb-1 font-unbounded-bold">{t('screens.players.add_manual', 'Вручну')}</Text>
+                                    <Text className="text-[#A3A3A3] text-[10px] leading-4 font-evolventa">{t('screens.players.add_manual_desc', 'Ввести ім\'я')}</Text>
                                 </View>
                             </>
                         )}
@@ -91,20 +91,20 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                 </View>
             </AppModal>
 
-            <AppModal type="center" visible={isAddManualVisible} onClose={() => setAddManualVisible(false)} title={t('screens.players.modal_new_player')}>
+            <AppModal type="center" visible={isAddManualVisible} onClose={() => setAddManualVisible(false)} title={t('screens.players.modal_new_player', 'Новий гравець')}>
                 <TextField
                     value={newPlayerName}
                     onChangeText={setNewPlayerName}
-                    placeholder={t('screens.players.placeholder_player_name')}
+                    placeholder={t('screens.players.placeholder_player_name', 'Введіть ім\'я гравця')}
                     autoFocus
                 />
                 <View className="flex-row gap-3 mt-4">
-                    <Button variant="outline" title={t('screens.players.btn_cancel')} onPress={() => setAddManualVisible(false)} className="flex-1" />
-                    <Button variant="primary" title={t('screens.players.btn_add')} onPress={onPlayerCreate} className="flex-1" disabled={!newPlayerName?.trim() || isLogicLoading} />
+                    <Button variant="outline" title={t('screens.players.btn_cancel', 'Скасувати')} onPress={() => setAddManualVisible(false)} className="flex-1" />
+                    <Button variant="primary" title={t('screens.players.btn_add', 'Додати')} onPress={onPlayerCreate} className="flex-1" disabled={!newPlayerName?.trim() || isLogicLoading} />
                 </View>
             </AppModal>
 
-            <AppModal type="bottom" visible={isImportVisible} onClose={() => setImportVisible(false)} title={importedPlayers.length > 0 ? t('tools.speed_checker.import_file_verified') : t('screens.players.import_title')}>
+            <AppModal type="bottom" visible={isImportVisible} onClose={() => setImportVisible(false)} title={importedPlayers.length > 0 ? t('tools.speed_checker.import_file_verified', 'Файл перевірений') : t('screens.players.import_title', 'Імпорт команди')}>
                 {importedPlayers.length === 0 ? (
                     <>
                         <Pressable
@@ -118,8 +118,8 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                                         {pressed ? <ExportIconActive width={24} height={24} /> : <ExportIcon width={24} height={24} fill="#34d399" />}
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-base text-white font-unbounded-bold">{t('screens.players.import_template')}</Text>
-                                        <Text className="text-xs text-[#A3A3A3] font-evolventa">{t('screens.players.import_template_desc')}</Text>
+                                        <Text className="text-base text-white font-unbounded-bold">{t('screens.players.import_template', 'Завантажити шаблон')}</Text>
+                                        <Text className="text-xs text-[#A3A3A3] font-evolventa">{t('screens.players.import_template_desc', 'Завантажте шаблон Excel файлу')}</Text>
                                     </View>
                                     <Feather name="chevron-right" size={20} color="#A3A3A3" />
                                 </>
@@ -137,7 +137,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                                         {pressed ? <ImportIconActive width={36} height={36} /> : <ImportIcon width={36} height={36} fill="#FF6D00" />}
                                     </View>
                                     <Text className="text-[#FF6D00] font-evolventa-bold">
-                                        {t('screens.players.import_click_select')}
+                                        {t('screens.players.import_click_select', 'Натисніть щоб обрати файл')}
                                     </Text>
                                 </>
                             )}
@@ -151,23 +151,24 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
                             </View>
                             <View className="flex-1">
                                 <Text className="text-base text-[#F5F5F5] mb-0.5 font-unbounded-bold">
-                                    {t('tools.speed_checker.import_file_verified') || 'Файл перевірений'}
+                                    {t('tools.speed_checker.import_file_verified', 'Файл перевірений')}
                                 </Text>
                                 <Text className="text-xs text-emerald-500 font-evolventa-bold">
-                                    {t('tools.speed_checker.import_found_players', { count: importedPlayers.length }) || `Знайдено ${importedPlayers.length} гравців`}
+                                    {t('tools.speed_checker.import_found_players', { count: importedPlayers.length } as any)}
                                 </Text>
                             </View>
                         </View>
 
                         <Text className="text-[11px] text-[#F5F5F5] mb-3 font-evolventa-bold">
-                            Список гравців
+                            {t('tools.speed_checker.player_list', 'Список гравців')}
                         </Text>
 
                         <Text className="text-[11px] text-[#A3A3A3] mb-3 font-evolventa">
-                            Натисніть на гравця, щоб виділити його <Text className="text-red-500 font-bold">червоним</Text> (він не додасться до команди).
+                            {t('screens.players.found_players_desc', 'Натисніть на гравця, щоб виділити його ')}
+                            <Text className="text-red-500 font-bold">{t('screens.players.red_color', 'червоним')}</Text>
+                            {t('screens.players.wont_be_added', ' (він не додасться до команди).')}
                         </Text>
 
-                        {/* ДОДАНО: Новий ScrollView з TouchableOpacity для виключення гравців */}
                         <ScrollView
                             className="mb-6 max-h-[250px]"
                             showsVerticalScrollIndicator={true}
@@ -199,7 +200,7 @@ export default function PlayerSelector({ teamId, onBack, onSelect }: Props) {
 
                         <Button
                             variant="primary"
-                            title={isLogicLoading ? "Зачекайте... йде імпортування" : (t('tools.speed_checker.import_confirm') || 'Імпортувати')}
+                            title={isLogicLoading ? t('screens.players.status_wait_importing', "Зачекайте... йде імпортування") : (t('tools.speed_checker.import_confirm', 'Імпортувати'))}
                             onPress={() => handleConfirmImport()}
                             disabled={isLogicLoading}
                         />

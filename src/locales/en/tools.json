@@ -76,7 +76,16 @@
     "gate_n": "Gate {{number}}",
     "finish": "Finish",
     "avg_split_time": "Average split time:",
-    "total_time": "Total time"
+    "total_time": "Total time",
+    "all_teams": "All teams",
+    "select_session_desc": "Select a session to view results",
+    "delete_all_session": "Delete ENTIRE session",
+    "btn_cancel": "Cancel",
+    "delete_distance": "Delete selected distance",
+    "delete_action_desc": "You can delete results only for the active distance, or delete the entire session.",
+    "choose_action": "Choose action",
+    "delete_data_title": "Delete data?"
+
   },
   "timer": {
     "title": "Stopwatch",
@@ -191,6 +200,13 @@
     "menu_section_tools": "Tools",
     "radar_btn_beta": "Radar (Beta)",
     "radar_tool_title": "Radio Ruler",
-    "radar_tool_desc": "Check signal quality and placement"
+    "radar_tool_desc": "Check signal quality and placement",
+    "session_name_label": "Session Name (matches will append)",
+    "session_name_placeholder": "Enter session name",
+    "selected_for_retry": "Selected for retry: {{count}}",
+    "results_title": "Results",
+    "btn_save_all": "Save All Results",
+    "btn_retry_selected": "Retry Selected ({{count}})",
+    "btn_retry_team": "Retry All"
   }
 }

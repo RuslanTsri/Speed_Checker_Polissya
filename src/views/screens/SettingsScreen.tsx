@@ -59,7 +59,6 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
 
     return (
         <View className="flex-1 pt-4 relative">
-            {/* Header */}
             <View className="px-4 mb-6">
                 <Text className="text-h2 text-text-main font-unbounded-bold">
                     {t('screens.settings.title')}

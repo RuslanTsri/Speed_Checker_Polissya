@@ -13,7 +13,6 @@ export const TextField = ({
                           }: MyTextFieldProps) => {
     const [isFocused, setIsFocused] = useState(false);
 
-    // 1. Створюємо ref для керування фокусом інпута
     const inputRef = useRef<TextInput>(null);
 
     const handleFocus = (e: any) => { setIsFocused(true); onFocus?.(e); };
@@ -52,7 +51,6 @@ export const TextField = ({
                 </Text>
             )}
 
-            {/* 2. Змінюємо View на Pressable і передаємо фокус при кліку */}
             <Pressable
                 className={containerStyles}
                 onPress={() => !disabled && inputRef.current?.focus()}
@@ -60,8 +58,7 @@ export const TextField = ({
                 {icon && <View className="mr-3 opacity-70 z-10">{icon}</View>}
 
                 <TextInput
-                    ref={inputRef} // 3. Прив'язуємо ref до інпута
-                    // 4. Додав h-full, щоб інпут розтягувався на всю висоту контейнера
+                    ref={inputRef}
                     className={`flex-1 h-full text-base font-evolventa ${disabled ? 'text-text-muted' : 'text-text-main'}`}
                     placeholderTextColor="#717171"
                     editable={!disabled}

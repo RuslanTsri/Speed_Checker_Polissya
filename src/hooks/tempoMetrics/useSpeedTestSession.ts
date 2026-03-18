@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useBle } from '../../context/BleContext';
 import { sessionsService } from '../../services/sessionsService';
 import { resultsService } from '../../services/resultsService';
+import { supabase } from '../../lib/supabase';
 
 const TAG = '[SESSION-DEBUG] 🟠';
 
@@ -15,23 +16,22 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     const { t } = useTranslation();
     const { state, elapsedTime, sensors, startTraining, stopTraining, resetSession } = useBle();
 
-    // 🔥 Зберігаємо оригінальну чергу, щоб мати змогу до неї повернутися
     const originalQueue = useMemo(() => config.selectedPlayers?.length > 0
             ? config.selectedPlayers
             : [{ id: 'guest', name: t('tools.speed_checker.guest') as string, number: '-' }],
         [config.selectedPlayers, t]);
 
-    // Черга тепер є стейтом (ми можемо її змінювати, якщо перебігають не всі)
     const [playersQueue, setPlayersQueue] = useState(originalQueue);
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionName, setSessionName] = useState<string>(
+        config.sessionName || `TEST ${new Date().toLocaleDateString()}`
+    );
+
     const [localResults, setLocalResults] = useState<LocalResult[]>([]);
     const [currentRunResult, setCurrentRunResult] = useState<LocalResult | null>(null);
 
-    // Стейт для фінальної модалки: кого вибрали для перебігання
     const [selectedForRetry, setSelectedForRetry] = useState<string[]>([]);
-
     const [showIndividualModal, setShowIndividualModal] = useState(false);
     const [showSummaryModal, setShowSummaryModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -49,18 +49,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
 
     useEffect(() => {
         resetSession();
-
-        const createSession = async () => {
-            const { data } = await sessionsService.create({
-                team_id: config.teamId || null,
-                name: config.teamName || (t('tools.speed_checker.free_training') as string),
-                total_distance: config.distance || 30,
-                test_type: config.testType || 'STATIC',
-            });
-            if (data?.id) setSessionId(data.id);
-        };
-        createSession();
-
         const initTimer = setTimeout(() => {
             setIsScreenInitialized(true);
         }, 150);
@@ -132,27 +120,21 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
         hasProcessedRun.current = false;
     };
 
-    // 🔥 ДОДАНО: Логіка виділення та перебігання конкретних гравців
     const toggleRetrySelection = (id: string) => {
         setSelectedForRetry(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     };
 
     const retrySelectedPlayers = () => {
-        // Якщо нікого не вибрали - перебігають ВСІ
         if (selectedForRetry.length === 0) {
             restartWholeSession();
             return;
         }
 
-        // Отримуємо об'єкти гравців, яких вибрали
         const playersToRetry = localResults
             .filter(r => selectedForRetry.includes(r.player.id || r.player.name))
             .map(r => r.player);
 
-        // Видаляємо їхні старі результати зі списку (інші результати залишаться недоторканими)
         setLocalResults(prev => prev.filter(r => !selectedForRetry.includes(r.player.id || r.player.name)));
-
-        // Встановлюємо нову чергу ТІЛЬКИ з цих гравців
         setPlayersQueue(playersToRetry);
         setCurrentPlayerIndex(0);
         setSelectedForRetry([]);
@@ -164,7 +146,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     const restartWholeSession = () => {
         setShowSummaryModal(false);
         setLocalResults([]);
-        setPlayersQueue(originalQueue); // Повертаємо початкову повну чергу
+        setPlayersQueue(originalQueue);
         setCurrentPlayerIndex(0);
         setSelectedForRetry([]);
         resetSession();
@@ -172,11 +154,50 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     };
 
     const saveAllResults = async () => {
-        if (!sessionId) return;
+        if (!sessionName.trim()) {
+            Alert.alert(
+                t('tools.speed_checker.alert_error') as string,
+                t('logs.errors.validation.session_name_required') as string
+            );
+            return;
+        }
         setIsSaving(true);
+
         try {
+            let currentSessionId = null;
+            const targetDistance = config.distance || 30;
+
+            let query = supabase.from('sessions')
+                .select('id')
+                .eq('name', sessionName.trim())
+                .eq('total_distance', targetDistance);
+
+            if (config.teamId) {
+                query = query.eq('team_id', config.teamId);
+            } else {
+                query = query.is('team_id', null);
+            }
+
+            const { data: existingSessions } = await query.order('created_at', { ascending: false }).limit(1);
+
+            if (existingSessions && existingSessions.length > 0) {
+                currentSessionId = existingSessions[0].id;
+                console.log(`${TAG} Found session (${currentSessionId}), appending...`);
+            } else {
+                console.log(`${TAG} Creating new session (different distance or name)...`);
+                const { data } = await sessionsService.create({
+                    team_id: config.teamId || null,
+                    name: sessionName.trim(),
+                    total_distance: targetDistance,
+                    test_type: config.testType || 'STATIC',
+                });
+                if (data?.id) currentSessionId = data.id;
+            }
+
+            if (!currentSessionId) throw new Error(t('logs.errors.app.session_id_failed') as string);
+
             const promises = localResults.map(res => resultsService.saveResult({
-                session_id: sessionId,
+                session_id: currentSessionId,
                 player_id: res.player.id !== 'guest' ? res.player.id : null,
                 full_time: res.fullTime,
                 gates: res.gates,
@@ -199,16 +220,17 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
 
                         if (onNavigate) {
                             if (config.teamId) {
-                                const mockSession = {
-                                    id: config.teamId,
+                                const sessionToOpen = {
+                                    isGroup: true,
+                                    teamId: config.teamId,
                                     teamName: config.teamName,
-                                    hasResults: true,
-                                    playerCount: localResults.length,
-                                    testType: config.testType || 'STATIC',
+                                    sessionName: sessionName.trim(),
+                                    distance: targetDistance
                                 };
+
                                 onNavigate('SESSIONS', {
                                     subTab: 'TEAM',
-                                    openSession: mockSession
+                                    openSession: sessionToOpen
                                 });
                             } else {
                                 onNavigate('SESSIONS', {
@@ -224,10 +246,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
         } catch (error) {
             console.error(error);
             setIsSaving(false);
-            Alert.alert(
-                t('tools.speed_checker.alert_error') as string,
-                t('tools.speed_checker.error_save') as string,
-            );
+            Alert.alert(t('tools.speed_checker.alert_error') as string, t('tools.speed_checker.error_save') as string);
         }
     };
 
@@ -281,28 +300,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     progressPercent = Math.max(0, Math.min(100, progressPercent));
 
     const splitRows = useMemo(() => {
-        const rows: { label: string; time: number }[] = [];
-        if (totalSensors > 1) {
-            for (let i = 1; i < totalSensors; i++) {
-                const current = activeSensors[i];
-                const prev = activeSensors[i - 1];
-                if (current.triggerTime !== undefined && prev.triggerTime !== undefined) {
-                    const diff = (current.triggerTime - prev.triggerTime) / 1000;
-                    let label: string;
-                    if (totalSensors === 2) {
-                        label = 'START ➔ FINISH';
-                    } else if (i === 1) {
-                        label = 'START ➔ GATE 1';
-                    } else if (i === totalSensors - 1) {
-                        label = `GATE ${i - 1} ➔ FINISH`;
-                    } else {
-                        label = `GATE ${i - 1} ➔ GATE ${i}`;
-                    }
-                    rows.push({ label, time: diff });
-                }
-            }
-        }
-        return rows;
+        return [];
     }, [activeSensors, isFinished]);
 
     const formatTime = (totalSeconds: number) => {
@@ -321,6 +319,7 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
     return {
         currentPlayerObj, currentPlayerIndex, totalPlayers: playersQueue.length,
         teamName: config.teamName || (t('tools.speed_checker.free_training') as string),
+        sessionName, setSessionName,
         isRunning: isScreenInitialized ? isRunning : false,
         isFinished: isScreenInitialized ? isFinished : false,
         isReady: isScreenInitialized ? isReady : false,
@@ -330,6 +329,6 @@ export const useSpeedTestSession = (config: any, onFinish: () => void, onNavigat
         startTraining, stopTraining, resetSession, nextPlayer, formatTime,
         currentRunResult, localResults, showIndividualModal, confirmIndividualRun,
         retryIndividualRun, showSummaryModal, saveAllResults, restartWholeSession, isSaving,
-        selectedForRetry, toggleRetrySelection, retrySelectedPlayers // ДОДАНО
+        selectedForRetry, toggleRetrySelection, retrySelectedPlayers
     };
 };

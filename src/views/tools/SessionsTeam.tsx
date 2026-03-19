@@ -119,7 +119,8 @@ export default function SessionsTeam({ searchQuery, onSelectSession, openTeam }:
                                         isGroup: true,
                                         teamId: selectedTeam.id,
                                         teamName: selectedTeam.teamName,
-                                        sessionName: item.name
+                                        sessionName: item.name,
+                                        sessionDate: item.created_at
                                     })}
                                     className="bg-surface-card border border-surface-border p-4 rounded-3xl mb-3 flex-row items-center justify-between"
                                 >

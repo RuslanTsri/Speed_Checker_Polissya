@@ -38,8 +38,12 @@ export const useCSV = () => {
         URL.revokeObjectURL(url);
     };
 
-    const exportResultsToExcel = async (results: any[], teamName: string) => {
+    const exportResultsToExcel = async (results: any[], teamName: string, sessionDate?: string) => {
         try {
+            console.log("\n=== 🚀 EXPORT DEBUG START ===");
+            console.log("📥 Прийнятий sessionDate:", sessionDate);
+            console.log("👥 Кількість результатів:", results?.length);
+
             if (!results || results.length === 0) {
                 Alert.alert(t('screens.common.info'), t('logs.warns.csv.no_data'));
                 return;
@@ -47,39 +51,101 @@ export const useCSV = () => {
 
             const sheetData: any[][] = [];
 
+            // 1. Заголовки
             const headersStr = String(t('screens.csv.export_headers'));
             const headers = headersStr.split(',').map(h => h.replace(/^"|"$/g, '').trim());
+
+            if (headers.length > 2) headers[2] = t('screens.csv.date_time', 'Дата і Час') as string;
+            if (headers.length > 3) headers.splice(3, 1); // Видаляємо Type
+
             sheetData.push(headers);
 
-            results.forEach((res) => {
+            results.forEach((res, index) => {
+                console.log(`\n--- 🔍 Обробка рядка ${index + 1} ---`);
+                console.log("Сирі дані результату:", {
+                    id: res.id,
+                    player: res.playerName,
+                    created_at: res.created_at,
+                    date: res.date
+                });
+
+                const rawTime = res.full_time ?? res.time ?? 0;
+                const timeVal = Number(Number(rawTime).toFixed(3));
                 const distanceVal = res.distance ? res.distance.toString() : '-';
-                const timeVal = Number(res.time.toFixed(3)); // Excel любить чисті числа
-                const splitsVal = res.splits && res.splits.length > 0 ? res.splits.join(', ') : '';
-                const dateVal = res.date || '-';
-                const typeVal = res.testType || 'Sprint';
+
+                // 2. ДАТА І ЧАС
+                let dateVal = '-';
+
+                // Перевіряємо, звідки брати дату
+                const rawDate = sessionDate || res.created_at;
+                console.log("Обрана сира дата (rawDate) для парсингу:", rawDate);
+
+                if (rawDate) {
+                    const d = new Date(rawDate);
+                    console.log("Об'єкт Date:", d, "isValid?", !isNaN(d.getTime()));
+
+                    if (!isNaN(d.getTime())) {
+                        // Ручне форматування, щоб обійти баги toLocaleString в React Native (Hermes)
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const year = d.getFullYear();
+                        const hours = String(d.getHours()).padStart(2, '0');
+                        const minutes = String(d.getMinutes()).padStart(2, '0');
+
+                        const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}`;
+                        dateVal = `\u200B${formattedDate}`;
+                        console.log("✅ Успішно відформатовано:", dateVal);
+                    } else {
+                        dateVal = `\u200B${rawDate}`;
+                        console.log("⚠️ Невалідний об'єкт Date, записано сиру строку:", dateVal);
+                    }
+                } else if (res.date) {
+                    // Фолбек
+                    dateVal = `\u200B${res.date}`;
+                    console.log("⚠️ Повної дати немає, використано res.date (тільки час):", dateVal);
+                } else {
+                    console.log("❌ Дати взагалі немає");
+                }
+
+                // 3. СПЛІТИ
+                const allGates = res.gates || res.splits || [];
+                const intermediateGates = allGates.length > 1 ? allGates.slice(0, -1) : [];
+
+                const startStr = "Старт (0м): 0.000с";
+
+                const middleSplits = intermediateGates.map((splitTime: string | number, idx: number) => {
+                    const distStr = (res.splits_config && res.splits_config[idx])
+                        ? ` (${res.splits_config[index]}м)`
+                        : '';
+                    return `Відмітка${distStr}: ${Number(splitTime).toFixed(3)}с`;
+                });
+
+                const finishStr = `Фініш (${res.distance || '?'}м): ${timeVal.toFixed(3)}с`;
+
+                const splitsVal = [startStr, ...middleSplits, finishStr].join('  |  ');
 
                 sheetData.push([
                     teamName,
                     res.playerName,
                     dateVal,
-                    typeVal,
                     distanceVal,
                     timeVal,
                     splitsVal
                 ]);
             });
 
+            console.log("\n=== 🏁 EXPORT DEBUG END ===");
+
             const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
             const workbook = XLSX.utils.book_new();
 
             worksheet['!cols'] = [
-                { wch: 20 },
-                { wch: 25 },
-                { wch: 15 },
-                { wch: 15 },
-                { wch: 12 },
-                { wch: 10 },
-                { wch: 30 }
+                { wch: 20 }, // Команда
+                { wch: 25 }, // Гравець
+                { wch: 18 }, // Дата і Час
+                { wch: 12 }, // Дистанція
+                { wch: 10 }, // Час
+                { wch: 70 }  // Спліти
             ];
 
             XLSX.utils.book_append_sheet(workbook, worksheet, "Results");

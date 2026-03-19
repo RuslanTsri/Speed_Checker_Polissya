@@ -39,6 +39,8 @@ export const useSessionDetails = (session: any) => {
         let data, error;
 
         if (session.isGroup) {
+            // Перевірте сервіс resultsService.getBySessionGroup
+            // Він має повертати 'created_at' з таблиці results
             const res = await resultsService.getBySessionGroup(session.teamId, session.sessionName);
             data = res.data;
             error = res.error;
@@ -53,6 +55,8 @@ export const useSessionDetails = (session: any) => {
                 const segments = (result.splits?.length || 0) + 1;
                 return {
                     ...result,
+                    // Додаємо created_at у кожен результат, якщо він є в БД
+                    created_at: result.created_at || session.sessionDate,
                     distance: result.distance || session.distance || 30,
                     avgSplit: result.time / segments
                 };
@@ -122,7 +126,12 @@ export const useSessionDetails = (session: any) => {
             Alert.alert(t('tools.sessions.alert_attention') as string, t('tools.sessions.alert_no_data') as string);
             return;
         }
-        try { await exportResultsToExcel(rawResults, session.teamName); } catch (err) { console.error("Export handler error:", err); }
+        try {
+            // 🔥 ПЕРЕДАЄМО ТРЕТІЙ ПАРАМЕТР: session.sessionDate
+            await exportResultsToExcel(rawResults, session.teamName, session.sessionDate);
+        } catch (err) {
+            console.error("Export handler error:", err);
+        }
     };
 
     const handleDeleteSession = async (onSuccessCallback: () => void, scope: 'ALL' | 'ACTIVE_DISTANCE', currentDist?: number) => {

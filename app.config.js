@@ -113,6 +113,12 @@ export default {
         }
       ]
     ],
+    runtimeVersion: {
+      policy: "appVersion"
+    },
+    updates: {
+      url: "https://u.expo.dev/1f49de81-20be-4d3d-955d-c08af4d41bbd"
+    },
     extra: {
       eas: {
         projectId: "1f49de81-20be-4d3d-955d-c08af4d41bbd"

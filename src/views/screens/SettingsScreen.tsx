@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Image, ActivityIndicator, TouchableOpacity, Pressable, Animated } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { AppModal } from '../components/AppModal';
 import { useSettingsScreen } from '../../hooks/useSettingsScreen';
+import { useOTAUpdate } from '../../hooks/useOTAUpdate';
 import { Switch } from '../components/ui/Switch';
 import { Mod, SettingsRow } from "../components/ui/mods";
 import { Button } from '../components/ui/Button';
@@ -35,6 +36,9 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
 
     const [isSupportVisible, setSupportVisible] = useState(false);
 
+    // Анімація для прогрес-бару оновлення
+    const [progressAnim] = useState(new Animated.Value(0));
+
     const {
         isLoading, userProfile, isNotifEnabled, isDark, setIsDarkMode, toggleNotif,
         isEditModalVisible, setEditModalVisible, tempName, setTempName, tempAvatar, setTempAvatar, currentLang,
@@ -44,6 +48,33 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
         onOpenBluetooth,
         onOpenSupport: () => setSupportVisible(true)
     });
+
+    // Підключаємо хук для оновлень
+    const { status: updateStatus, checkForUpdates, restartApp } = useOTAUpdate();
+
+    // Логіка зміни ширини прогрес-бару в залежності від статусу оновлення
+    useEffect(() => {
+        let toValue = 0;
+        if (updateStatus === 'checking') toValue = 33;
+        else if (updateStatus === 'downloading') toValue = 66;
+        else if (updateStatus === 'ready') toValue = 100;
+
+        Animated.timing(progressAnim, {
+            toValue,
+            duration: 400,
+            useNativeDriver: false // width не підтримує native driver
+        }).start();
+    }, [updateStatus]);
+
+    const getUpdateStatusText = () => {
+        switch (updateStatus) {
+            case 'checking': return t('screens.settings.update_checking', 'Шукаємо оновлення...');
+            case 'downloading': return t('screens.settings.update_downloading', 'Завантаження бандлу...');
+            case 'ready': return t('screens.settings.update_ready', 'Оновлено! Натисніть для перезапуску');
+            case 'error': return t('screens.settings.update_error', 'Помилка завантаження');
+            default: return t('screens.settings.update_idle', 'Перевірити зараз');
+        }
+    };
 
     if (isLoading) {
         return (
@@ -70,6 +101,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
+                {/* ПРОФІЛЬ */}
                 <Mod
                     title={userProfile.name}
                     subtitle={userProfile.role}
@@ -95,6 +127,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     className="mb-8"
                 />
 
+                {/* ОБЛАДНАННЯ */}
                 <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
                     {t('screens.settings.section_equipment')}
                 </Text>
@@ -109,6 +142,7 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     />
                 </Mod>
 
+                {/* СИСТЕМА */}
                 <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
                     {t('screens.settings.section_system')}
                 </Text>
@@ -127,10 +161,65 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     />
                 </Mod>
 
+                {/* ОНОВЛЕННЯ */}
+                <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
+                    {t('screens.settings.section_updates', 'Оновлення (OTA)')}
+                </Text>
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={updateStatus === 'ready' ? restartApp : checkForUpdates}
+                    disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+                    className="bg-surface-card border border-surface-border p-4 rounded-3xl mb-8 overflow-hidden"
+                >
+                    <View className="flex-row items-center justify-between">
+                        <View className="flex-row items-center">
+                            <View className={`w-10 h-10 rounded-2xl items-center justify-center mr-4 border ${updateStatus === 'ready' ? 'bg-status-success/10 border-status-success/20' : 'bg-brand-orange/10 border-brand-orange/20'}`}>
+                                <Feather
+                                    name={updateStatus === 'ready' ? "check" : "download-cloud"}
+                                    size={20}
+                                    color={updateStatus === 'ready' ? "#34d399" : "#FF6D00"}
+                                />
+                            </View>
+                            <View>
+                                <Text className="text-body text-text-main font-unbounded-bold">
+                                    {t('screens.settings.update_app', 'Оновлення системи')}
+                                </Text>
+                                <Text className={`text-[10px] font-evolventa mt-0.5 ${updateStatus === 'ready' ? 'text-status-success' : updateStatus === 'error' ? 'text-status-error' : 'text-text-sub'}`}>
+                                    {getUpdateStatusText()}
+                                </Text>
+                            </View>
+                        </View>
+
+                        {updateStatus === 'checking' || updateStatus === 'downloading' ? (
+                            <ActivityIndicator color="#FF6D00" size="small" />
+                        ) : (
+                            <Feather name={updateStatus === 'ready' ? "refresh-cw" : "chevron-right"} size={20} color="#717171" />
+                        )}
+                    </View>
+
+                    {/* Прогрес-бар */}
+                    {(updateStatus !== 'idle' && updateStatus !== 'error') && (
+                        <View className="w-full h-1 bg-surface-border mt-4 rounded-full overflow-hidden">
+                            <Animated.View
+                                style={{
+                                    height: '100%',
+                                    backgroundColor: updateStatus === 'ready' ? '#34d399' : '#FF6D00',
+                                    width: progressAnim.interpolate({
+                                        inputRange: [0, 100],
+                                        outputRange: ['0%', '100%']
+                                    })
+                                }}
+                                className="rounded-full"
+                            />
+                        </View>
+                    )}
+                </TouchableOpacity>
+
+                {/* ІНШЕ */}
                 <Text className="text-text-sub text-caption uppercase mb-4 ml-2 tracking-widest font-evolventa-bold">
                     {t('screens.settings.section_other')}
                 </Text>
-                <Mod title="">
+                <Mod title="" className="mb-4">
                     <SettingsRow
                         title={t('screens.settings.item_logout')}
                         icon={<Feather name="log-out" size={22} color="#f87171" />}
@@ -140,6 +229,8 @@ export default function SettingsScreen({ onLogout, onOpenPinChange, onOpenBlueto
                     />
                 </Mod>
             </ScrollView>
+
+            {/* МОДАЛКА РЕДАГУВАННЯ ПРОФІЛЮ */}
             <AppModal
                 type="bottom"
                 visible={isEditModalVisible}

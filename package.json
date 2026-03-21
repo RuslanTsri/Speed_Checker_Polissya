@@ -11,12 +11,15 @@
     "clean:prev": "cross-env APP_VARIANT=preview npx expo prebuild --platform android --clean",
     "build:dev": "npm run clean:dev && cross-env APP_VARIANT=development npx expo run:android",
     "build:prev": "npm run clean:prev && cross-env APP_VARIANT=preview npx expo run:android --variant release",
-    "build:both": "npm run build:dev && npm run build:prev"
+    "build:both": "npm run build:dev && npm run build:prev",
+    "update:prev": "cross-env APP_VARIANT=preview eas update --branch preview --message",
+    "update:prod": "cross-env APP_VARIANT=production eas update --branch production --message"
   },
   "overrides": {
     "lightningcss": "1.30.1"
   },
   "dependencies": {
+    "@expo/config-plugins": "^55.0.7",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "11.4.1",
     "@react-navigation/core": "^7.14.0",
@@ -25,6 +28,7 @@
     "@supabase/supabase-js": "^2.95.3",
     "babel-preset-expo": "~54.0.10",
     "buffer": "^6.0.3",
+    "dotenv": "^17.3.1",
     "expo": "~54.0.32",
     "expo-av": "~16.0.8",
     "expo-blur": "~15.0.8",

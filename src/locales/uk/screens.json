@@ -106,7 +106,30 @@
     "default_name": "Тренер",
     "default_role": "COACH",
     "export_title": "Експорт",
-    "export_msg": "Формування PDF..."
+    "export_msg": "Формування PDF...",
+
+    "section_update": "Система Оновлення",
+    "item_update": "Оновлення системи",
+    "update_status_checking": "Перевірка...",
+    "update_status_downloading": "Завантаження...",
+
+    "update_modal_available_title": "Доступна нова версія",
+    "update_modal_date": "Дата релізу:",
+    "update_modal_build": "Build ID:",
+    "update_btn_update": "Оновити зараз",
+    "update_btn_later": "Пізніше",
+
+    "update_modal_uptodate_title": "Оновлень не знайдено",
+    "update_modal_uptodate_desc": "У вас актуальна версія",
+    "update_modal_uptodate_info": "Система CLOUDE працює на базі останнього випущеного бандлу. Наступна перевірка за запитом.",
+    "update_btn_ok": "Зрозуміло",
+
+    "update_modal_error_title": "Помилка з'єднання",
+    "update_modal_error_desc": "Упс... Оновлення не вийшло",
+    "update_modal_error_reason": "Причина помилки:",
+    "update_modal_error_channel": "Канал (Channel):",
+    "update_modal_error_url": "URL Запиту:",
+    "update_modal_error_unknown": "Не визначено"
   },
   "sessions": {
     "title": "Результати",

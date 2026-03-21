@@ -1,9 +1,12 @@
+
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env'), override: true });
 const { withProjectBuildGradle } = require('@expo/config-plugins');
 
-const variant = process.env.APP_VARIANT;
+const variant = process.env.APP_VARIANT || "preview";
 
 let appName = "Tempo Metrics";
-let appIdentifier = "com.yourname.tempometrics";
+let appIdentifier = "com.citye.scienceparkztu.tempometrics";
 
 if (variant === "development") {
   appName = "Tempo DEV";
@@ -38,6 +41,7 @@ export default {
     name: appName,
     slug: "tempo-metrics",
     version: "1.0.0",
+    owner: "ruslan_tsri",
     orientation: "portrait",
     icon: "./assets/tempometrics_black.png",
     userInterfaceStyle: "dark",
@@ -53,22 +57,15 @@ export default {
         NSBluetoothAlwaysUsageDescription: "Додаток використовує Bluetooth для підключення до системи хронометражу.",
         NSBluetoothPeripheralUsageDescription: "Додаток використовує Bluetooth для обміну даними з датчиками.",
         NSLocationWhenInUseUsageDescription: "Додаток використовує геолокацію для пошуку Bluetooth пристроїв поблизу.",
-        UIBackgroundModes: [
-          "bluetooth-central"
-        ]
+        UIBackgroundModes: ["bluetooth-central"]
       }
     },
-    androidNavigationBar: {
-      backgroundColor: "#00000000",
-      barStyle: "light-content"
-    },
     android: {
+      package: appIdentifier,
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive_icon.png",
-        backgroundColor: "#0A0A0A",
-        resizeMode: "contain"
+        backgroundColor: "#0A0A0A"
       },
-      package: appIdentifier,
       permissions: [
         "BLUETOOTH",
         "BLUETOOTH_ADMIN",
@@ -76,6 +73,20 @@ export default {
         "BLUETOOTH_CONNECT",
         "ACCESS_FINE_LOCATION"
       ]
+    },
+    runtimeVersion: "1.0.0",
+    updates: {
+      enabled: true,
+      url: "https://u.expo.dev/1f49de81-20be-4d3d-955d-c08af4d41bbd",
+      channel: "preview",
+      requestHeaders: {
+        "expo-channel-name": "preview",
+      }
+    },
+    extra: {
+      eas: {
+        projectId: "1f49de81-20be-4d3d-955d-c08af4d41bbd"
+      }
     },
     plugins: [
       withAndroidResolutionStrategy,
@@ -87,7 +98,6 @@ export default {
             targetSdkVersion: 35,
             buildToolsVersion: "35.0.0",
             kotlinVersion: "2.1.20"
-
           }
         }
       ],
@@ -112,18 +122,6 @@ export default {
           locationAlwaysPermission: "Дозвольте доступ до локації для пошуку пристроїв поблизу."
         }
       ]
-    ],
-    runtimeVersion: {
-      policy: "appVersion"
-    },
-    updates: {
-      url: "https://u.expo.dev/1f49de81-20be-4d3d-955d-c08af4d41bbd"
-    },
-    extra: {
-      eas: {
-        projectId: "1f49de81-20be-4d3d-955d-c08af4d41bbd"
-      }
-    },
-    owner: "ruslan_tsri"
+    ]
   }
 };

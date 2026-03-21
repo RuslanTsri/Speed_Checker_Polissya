@@ -61,10 +61,10 @@ Developed and architected by Tsimbalyuck Ruslan.
 У проекті налаштовані зручні команди для генерації різних версій Expo:
 * Створення Preview версії:
     ```bash
-    npm run build:prev```
+    npm run build:prev
 * Створення Developer версії:
     ```bash
-    npm run build:dev``` 
+    npm run build:dev
 * Послідовна збірка обох версій (спочатку Dev, потім Prev):
     ```bash
   npm run build:both
@@ -102,7 +102,7 @@ Tempo_Metrics
  ┃ ┣ utils/            # Допоміжні утиліти
  ┃ ┗ views/            # UI-компоненти та екрани застосунку з тулзами
  ┣ App.tsx             # Точка входу в застосунок
- ┣ app.config.js       # Конфігурація Expo
+ ┣ app.config.js.bak       # Конфігурація Expo
  ┣ eas.json            # Конфігурація для EAS Build (хмарна збірка Expo)
  ┣ global.css          # Глобальні стилі (Tailwind / NativeWind)
  ┣ tailwind.config.js  # Налаштування Tailwind CSS

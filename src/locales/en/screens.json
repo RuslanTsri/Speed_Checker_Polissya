@@ -113,7 +113,30 @@
     "default_name": "Coach",
     "default_role": "COACH",
     "export_title": "Export",
-    "export_msg": "Generating PDF..."
+    "export_msg": "Generating PDF...",
+
+    "section_update": "Update System",
+    "item_update": "System Update",
+    "update_status_checking": "Checking...",
+    "update_status_downloading": "Downloading...",
+
+    "update_modal_available_title": "New Version Available",
+    "update_modal_date": "Release Date:",
+    "update_modal_build": "Build ID:",
+    "update_btn_update": "Update Now",
+    "update_btn_later": "Later",
+
+    "update_modal_uptodate_title": "No Updates Found",
+    "update_modal_uptodate_desc": "You have the latest version",
+    "update_modal_uptodate_info": "The CLOUDE system is running on the latest released bundle. Next check upon request.",
+    "update_btn_ok": "Got it",
+
+    "update_modal_error_title": "Connection Error",
+    "update_modal_error_desc": "Oops... Update failed",
+    "update_modal_error_reason": "Error reason:",
+    "update_modal_error_channel": "Channel:",
+    "update_modal_error_url": "Request URL:",
+    "update_modal_error_unknown": "Unknown"
 
   },
   "sessions": {

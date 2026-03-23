@@ -55,7 +55,7 @@ export const useOTAUpdate = () => {
             }
         } catch (error: any) {
             console.error("OTA Check Error:", error);
-            // Зберігаємо текст помилки і статус, таймер більше не скидає його автоматично
+
             setErrorDetails(error.message || String(error));
             setStatus('error');
         }
@@ -76,13 +76,13 @@ export const useOTAUpdate = () => {
     const resetStatus = useCallback(() => {
         setStatus('idle');
         setUpdateMetadata(null);
-        setErrorDetails(null); // Очищаємо помилку при закритті модалки
+        setErrorDetails(null);
     }, []);
 
     return {
         status,
         updateMetadata,
-        errorDetails, // Повертаємо помилку для UI
+        errorDetails,
         checkForUpdates,
         downloadAndRestart,
         resetStatus

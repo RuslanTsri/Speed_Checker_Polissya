@@ -29,6 +29,8 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { useAppLogic } from './src/hooks/useAppLogic';
 import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
 import './src/lib/i18n';
+import { useOTAUpdate } from "./src/hooks/useOTAUpdate";
+import {OTAUpdateToast} from "./src/views/components/ui/OTAUpdateToast";
 
 const AppContentWrapper = () => {
     const { t } = useTranslation();
@@ -36,8 +38,9 @@ const AppContentWrapper = () => {
     const { isDark } = useTheme();
     const { isLangLoading } = useLanguage();
 
+    const { status: updateStatus, checkForUpdates } = useOTAUpdate();
     const [isMinimumTimeElapsed, setIsMinimumTimeElapsed] = useState(false);
-
+    const [isUpdateToastVisible, setIsUpdateToastVisible] = useState(false);
     const [fontsLoaded] = useFonts({
         'Unbounded': require('./assets/fonts/Unbounded-Regular.ttf'),
         'Unbounded-Bold': require('./assets/fonts/Unbounded-Bold.ttf'),
@@ -57,7 +60,18 @@ const AppContentWrapper = () => {
         homeActiveTool, setHomeActiveTool,
         sessionDetailsOpen, setSessionDetailsOpen
     } = useAppLogic();
+    useEffect(() => {
+        if (fontsLoaded && !isLangLoading && user && updateStatus === 'idle') {
+            checkForUpdates();
+        }
+    }, [fontsLoaded, isLangLoading, user, updateStatus]);
 
+    // 🔥 2. ПОКАЗУЄМО TOAST, ЯКЩО Є ОНОВЛЕННЯ
+    useEffect(() => {
+        if (updateStatus === 'ready') {
+            setIsUpdateToastVisible(true);
+        }
+    }, [updateStatus]);
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsMinimumTimeElapsed(true);
@@ -137,7 +151,13 @@ const AppContentWrapper = () => {
     return (
         <BleProvider>
             <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
-
+            <OTAUpdateToast
+                visible={isUpdateToastVisible}
+                onPress={() => {
+                    handleNavigate('SETTINGS');
+                }}
+                onClose={() => setIsUpdateToastVisible(false)}
+            />
             <MainLayout
                 currentTab={currentTab === 'TOOLS' || currentTab === 'SETTINGS' ? 'SETTINGS' : currentTab}
                 onSwitchTab={(tab: TabType) => handleNavigate(tab)}
@@ -209,7 +229,7 @@ const AppContentWrapper = () => {
                                 <ActivityIndicator color="#000" />
                             ) : (
                                 <Text className="text-black font-black text-body uppercase tracking-widest font-unbounded">
-                                    {t('screens.app.btn_save_pin') as string}
+                                       {t('screens.app.btn_save_pin') as string}
                                 </Text>
                             )}
                         </TouchableOpacity>

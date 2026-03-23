@@ -10,5 +10,9 @@
   "edit_screen": {
     "title": "Open up the code for this screen:",
     "desc": "Change any of the text, save the file, and your app will automatically update."
+  },
+  "ota_updater": {
+    "toast_title": "Our app has been updated =)",
+    "toast_desc": "Tap here to go to settings and update. Or ignore, the app will update automatically on the next launch."
   }
 }

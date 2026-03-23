@@ -112,7 +112,7 @@ Tempo_Metrics
  ┃ ┣ utils/            # Допоміжні утиліти
  ┃ ┗ views/            # UI-компоненти та екрани застосунку з тулзами
  ┣ App.tsx             # Точка входу в застосунок
- ┣ app.config.js.bak       # Конфігурація Expo
+ ┣ app.config.js.bak   # Конфігурація Expo
  ┣ eas.json            # Конфігурація для EAS Build (хмарна збірка Expo)
  ┣ global.css          # Глобальні стилі (Tailwind / NativeWind)
  ┣ tailwind.config.js  # Налаштування Tailwind CSS

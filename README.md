@@ -27,6 +27,8 @@ Developed and architected by Tsimbalyuck Ruslan.
 * Гнучка ініціалізація сенсорів у будь-якому порядку.
 * Підтримка конфігурацій систем на 2 або 3 гейти (ворітця).
 * Вбудований точний секундомір.
+* Система оновлення через OTA
+  
 
 ### Режими тестування
 * **Швидке тестування:** Можливість провести замір у режимі "Гість" без попередньої реєстрації команди.
@@ -43,7 +45,10 @@ Developed and architected by Tsimbalyuck Ruslan.
 
 ### Інше
 * **Локалізація:** Повна підтримка української та англійської мов.
-
+### Система оновлення OTA (Over-The-Air)
+* Додаток підтримує "гарячі" оновлення по повітрю без необхідності перезбірки APK/AAB та проходження модерації в маркетах (стосується лише змін UI/логіки, які не зачіпають нативний код ОС).
+* Механізм реалізовано на базі **Expo Updates**. 
+* **Для користувача:** Щоб отримати актуальну версію, достатньо перейти у вкладку "Налаштування" та натиснути "Оновлення системи". Додаток сам завантажить бандл і м'яко перезавантажиться.
 ---
 
 ## Локальне розгортання
@@ -68,7 +73,9 @@ Developed and architected by Tsimbalyuck Ruslan.
 * Послідовна збірка обох версій (спочатку Dev, потім Prev):
     ```bash
   npm run build:both
-  
+* Деплой оновлення OTA на expo.dev:
+    ```bash
+   npm run update:prev --message
 ---
 Розроблено для покращення спортивних результатів та автоматизації процесів тестування.
 ## Конфігурація середовища (.env)
@@ -81,6 +88,9 @@ Developed and architected by Tsimbalyuck Ruslan.
 ```env
 EXPO_PUBLIC_SUPABASE_URL=ваша_url_адреса_supabase
 EXPO_PUBLIC_SUPABASE_ANON_KEY=ваш_анонімний_ключ_supabase
+APP_VARIANT="Варіант Збірки програми (preview/development/production)"
+EXPO_PUBLIC_UPDATE_URL="Посилання на проект expo.dev"
+EXPO_PUBLIC_UPDATE_CHANNEL="Канал для оновлень expo.dev (preview/development/production)"
 ```
 ---
 ### Для розробників (Архітектура та структура проєкту)
@@ -102,7 +112,7 @@ Tempo_Metrics
  ┃ ┣ utils/            # Допоміжні утиліти
  ┃ ┗ views/            # UI-компоненти та екрани застосунку з тулзами
  ┣ App.tsx             # Точка входу в застосунок
- ┣ app.config.js.bak       # Конфігурація Expo
+ ┣ app.config.js.bak   # Конфігурація Expo
  ┣ eas.json            # Конфігурація для EAS Build (хмарна збірка Expo)
  ┣ global.css          # Глобальні стилі (Tailwind / NativeWind)
  ┣ tailwind.config.js  # Налаштування Tailwind CSS

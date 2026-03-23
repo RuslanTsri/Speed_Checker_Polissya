@@ -77,10 +77,10 @@ export default {
     runtimeVersion: "1.0.0",
     updates: {
       enabled: true,
-      url: "https://u.expo.dev/1f49de81-20be-4d3d-955d-c08af4d41bbd",
-      channel: "preview",
+      url:process.env.EXPO_PUBLIC_UPDATE_URL,
+      channel:process.env.EXPO_PUBLIC_UPDATE_CHANNEL,
       requestHeaders: {
-        "expo-channel-name": "preview",
+        "expo-channel-name":process.env.EXPO_PUBLIC_UPDATE_CHANNEL,
       }
     },
     extra: {

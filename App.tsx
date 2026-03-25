@@ -263,7 +263,7 @@ export function App() {
         </LanguageProvider>
     );
 }
-const SHOW_STORYBOOK = false;
+const SHOW_STORYBOOK = true;
 
 let AppEntryPoint = App;
 

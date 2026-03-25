@@ -31,6 +31,7 @@ import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
 import './src/lib/i18n';
 import { useOTAUpdate } from "./src/hooks/useOTAUpdate";
 import {OTAUpdateToast} from "./src/views/components/ui/OTAUpdateToast";
+import {GDPRPopup} from "./src/views/components/GDPRPopup";
 
 const AppContentWrapper = () => {
     const { t } = useTranslation();
@@ -58,7 +59,10 @@ const AppContentWrapper = () => {
         isPinLoading, pinError,
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange,
         homeActiveTool, setHomeActiveTool,
-        sessionDetailsOpen, setSessionDetailsOpen
+        sessionDetailsOpen, setSessionDetailsOpen,
+        isGDPRVisible,
+        handleOpenGDPR,
+        handleCloseGDPR
     } = useAppLogic();
     useEffect(() => {
         if (fontsLoaded && !isLangLoading && user && updateStatus === 'idle') {
@@ -66,7 +70,6 @@ const AppContentWrapper = () => {
         }
     }, [fontsLoaded, isLangLoading, user, updateStatus]);
 
-    // 🔥 2. ПОКАЗУЄМО TOAST, ЯКЩО Є ОНОВЛЕННЯ
     useEffect(() => {
         if (updateStatus === 'ready') {
             setIsUpdateToastVisible(true);
@@ -133,7 +136,7 @@ const AppContentWrapper = () => {
                     key={sessionsInitialTab}
                     initialTab={sessionsInitialTab}
                     openSession={navParams?.openSession}
-                    openTeam={navParams?.openTeam} // 🔥 ОСЬ ЦЕЙ РЯДОК ВСЕ ЛАГОДИТЬ!
+                    openTeam={navParams?.openTeam}
                     sessionDetailsOpen={sessionDetailsOpen}
                     setSessionDetailsOpen={setSessionDetailsOpen}
                 />;
@@ -159,6 +162,7 @@ const AppContentWrapper = () => {
                 onClose={() => setIsUpdateToastVisible(false)}
             />
             <MainLayout
+                onOpenGDPR={handleOpenGDPR}
                 currentTab={currentTab === 'TOOLS' || currentTab === 'SETTINGS' ? 'SETTINGS' : currentTab}
                 onSwitchTab={(tab: TabType) => handleNavigate(tab)}
                 onLogout={handleLogout}
@@ -166,6 +170,12 @@ const AppContentWrapper = () => {
             >
                 {renderScreen()}
             </MainLayout>
+
+
+            <GDPRPopup
+                forceVisible={isGDPRVisible}
+                onClose={handleCloseGDPR}
+            />
 
             <AppModal
                 visible={isPinModalVisible}
@@ -240,7 +250,7 @@ const AppContentWrapper = () => {
     );
 };
 
-export default function App() {
+export function App() {
     return (
         <LanguageProvider>
             <ThemeProvider>
@@ -253,3 +263,13 @@ export default function App() {
         </LanguageProvider>
     );
 }
+const SHOW_STORYBOOK = false;
+
+let AppEntryPoint = App;
+
+if (SHOW_STORYBOOK) {
+    const StorybookUI = require('./.rnstorybook').default;
+    AppEntryPoint = StorybookUI;
+}
+
+export default AppEntryPoint;

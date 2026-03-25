@@ -1,0 +1,144 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Tempo Metrics API Documentation - v1.0.0</title><meta name="description" content="Documentation for Tempo Metrics API Documentation"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">Tempo Metrics API Documentation - v1.0.0</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>Tempo Metrics API Documentation - v1.0.0</h1></div><div class="tsd-panel tsd-typography"><div align="center">
+ <img src="media/tempometrics_black.png" alt="Логотип Tempo Metrics" width="250"/>
+<h1 id="tempo-metrics" class="tsd-anchor-link">Tempo Metrics<a href="#tempo-metrics" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p><strong>Сучасний крос-платформний мобільний застосунок для проведення спортивних тестувань, відстеження результатів та аналітики показників спортсменів.</strong></p>
+<p><em>Розроблено за підтримки Innovation HUB (наукової лабораторії ДУ «Житомирська політехніка») та футбольного клубу «Полісся».</em></p>
+<p>© 2026 Tempo Metrics. All rights reserved.
+Developed and architected by Tsimbalyuck Ruslan.</p>
+</div>
+<br>
+<h2 id="стек-технологій" class="tsd-anchor-link">Стек технологій<a href="#стек-технологій" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li><strong>Frontend:</strong> React Native, TypeScript</li>
+<li><strong>Styling:</strong> Tailwind CSS</li>
+<li><strong>Backend / Database:</strong> Supabase (PostgreSQL)</li>
+</ul>
+<h2 id="основні-можливості-features" class="tsd-anchor-link">Основні можливості (Features)<a href="#основні-можливості-features" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="взаємодія-з-обладнанням" class="tsd-anchor-link">Взаємодія з обладнанням<a href="#взаємодія-з-обладнанням" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>Підключення до сенсорів по Bluetooth.</li>
+<li>Гнучка ініціалізація сенсорів у будь-якому порядку.</li>
+<li>Підтримка конфігурацій систем на 2 або 3 гейти (ворітця).</li>
+<li>Вбудований точний секундомір.</li>
+<li>Система оновлення через OTA</li>
+</ul>
+<h3 id="режими-тестування" class="tsd-anchor-link">Режими тестування<a href="#режими-тестування" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li><strong>Швидке тестування:</strong> Можливість провести замір у режимі &quot;Гість&quot; без попередньої реєстрації команди.</li>
+<li><strong>Командне тестування:</strong> Повноцінний режим для фіксації результатів цілої команди.</li>
+</ul>
+<h3 id="управління-даними-та-гравцями" class="tsd-anchor-link">Управління даними та гравцями<a href="#управління-даними-та-гравцями" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>Гнучке створення команд.</li>
+<li>Масове завантаження списків гравців через <code>.csv</code> та <code>.xlsx</code> (Excel) файли, а також можливість ручного додавання.</li>
+<li>Надійна система авторизації з підтвердженням реєстрації через Email (на базі Supabase).</li>
+</ul>
+<h3 id="аналітика-та-експорт" class="tsd-anchor-link">Аналітика та експорт<a href="#аналітика-та-експорт" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>Система рейтингів: перегляд результатів конкретної команди або загальна статистика у вигляді сесій.</li>
+<li>Експорт даних: зручна система вивантаження результатів тестувань у зрозумілі табличні формати для подальшого аналізу тренерами.</li>
+</ul>
+<h3 id="інше" class="tsd-anchor-link">Інше<a href="#інше" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li><strong>Локалізація:</strong> Повна підтримка української та англійської мов.</li>
+</ul>
+<h3 id="система-оновлення-ota-over-the-air" class="tsd-anchor-link">Система оновлення OTA (Over-The-Air)<a href="#система-оновлення-ota-over-the-air" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>Додаток підтримує &quot;гарячі&quot; оновлення по повітрю без необхідності перезбірки APK/AAB та проходження модерації в маркетах (стосується лише змін UI/логіки, які не зачіпають нативний код ОС).</li>
+<li>Механізм реалізовано на базі <strong>Expo Updates</strong>.</li>
+<li><strong>Для користувача:</strong> Щоб отримати актуальну версію, достатньо перейти у вкладку &quot;Налаштування&quot; та натиснути &quot;Оновлення системи&quot;. Додаток сам завантажить бандл і м'яко перезавантажиться.</li>
+</ul>
+<hr>
+<h2 id="локальне-розгортання" class="tsd-anchor-link">Локальне розгортання<a href="#локальне-розгортання" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Для того, щоб запустити проєкт локально, виконайте наступні кроки:</p>
+<ol>
+<li>Встановіть усі необхідні залежності:<pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span>
+</code><button type="button">Copy</button></pre>
+
+</li>
+<li>Запустіть локальний сервер розробки Expo:<pre><code class="bash"><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-2">expo</span><span class="hl-1"> </span><span class="hl-2">start</span><br/>
+</code><button type="button">Copy</button></pre>
+
+</li>
+</ol>
+<h3 id="скрипти-збірки-builds" class="tsd-anchor-link">Скрипти збірки (Builds)<a href="#скрипти-збірки-builds" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>У проекті налаштовані зручні команди для генерації різних версій Expo:</p>
+<ul>
+<li>Створення Preview версії:<pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">build:prev</span>
+</code><button type="button">Copy</button></pre>
+
+</li>
+<li>Створення Developer версії:<pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">build:dev</span>
+</code><button type="button">Copy</button></pre>
+
+</li>
+<li>Послідовна збірка обох версій (спочатку Dev, потім Prev):<pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">build:both</span>
+</code><button type="button">Copy</button></pre>
+
+</li>
+<li>Деплой оновлення OTA на expo.dev:<pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">update:prev</span><span class="hl-1"> </span><span class="hl-3">--message</span>
+</code><button type="button">Copy</button></pre>
+
+</li>
+</ul>
+<hr>
+<p>Розроблено для покращення спортивних результатів та автоматизації процесів тестування.</p>
+<h2 id="конфігурація-середовища-env" class="tsd-anchor-link">Конфігурація середовища (.env)<a href="#конфігурація-середовища-env" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Для коректної роботи застосунку з базою даних та бекендом необхідно налаштувати змінні середовища.</p>
+<ol>
+<li>Створіть файл <code>.env</code> у кореневій папці проєкту.</li>
+<li>Скопіюйте туди наступні ключі та додайте ваші значення з панелі управління Supabase:</li>
+</ol>
+<pre><code class="env">EXPO_PUBLIC_SUPABASE_URL=ваша_url_адреса_supabase
+EXPO_PUBLIC_SUPABASE_ANON_KEY=ваш_анонімний_ключ_supabase
+APP_VARIANT="Варіант Збірки програми (preview/development/production)"
+EXPO_PUBLIC_UPDATE_URL="Посилання на проект expo.dev"
+EXPO_PUBLIC_UPDATE_CHANNEL="Канал для оновлень expo.dev (preview/development/production)"
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h3 id="для-розробників-архітектура-та-структура-проєкту" class="tsd-anchor-link">Для розробників (Архітектура та структура проєкту)<a href="#для-розробників-архітектура-та-структура-проєкту" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Проєкт побудовано за модульним принципом для зручного масштабування та підтримки. Нижче наведено опис основних директорій:</p>
+<pre>
+Tempo_Metrics
+ ┣ assets/             # Статичні ресурси (шрифти, іконки, логотипи InHub та Полісся)
+ ┃ ┣ fonts/            # Кастомні шрифти Figma
+ ┃ ┣ icons/            # Іконки застосунку
+ ┃ ┗ web/              # Файли для веб-версій / сторінки для email, privacy policy тощо
+ ┣ src/                # Головна директорія з вихідним кодом
+ ┃ ┣ constants/        # Глобальні константи проєкту
+ ┃ ┣ context/          # Глобальні стани React (Context API)
+ ┃ ┣ hooks/            # Кастомні React-хуки
+ ┃ ┣ lib/              # Конфігурації сторонніх бібліотек (напр., ініціалізація Supabase)
+ ┃ ┣ locales/          # Файли локалізації (українська та англійська мови)
+ ┃ ┣ services/         # Логіка роботи з базою даних
+ ┃ ┣ types/            # Інтерфейси та типи TypeScript
+ ┃ ┣ utils/            # Допоміжні утиліти
+ ┃ ┗ views/            # UI-компоненти та екрани застосунку з тулзами
+ ┣ App.tsx             # Точка входу в застосунок
+ ┣ app.config.js.bak   # Конфігурація Expo
+ ┣ eas.json            # Конфігурація для EAS Build (хмарна збірка Expo)
+ ┣ global.css          # Глобальні стилі (Tailwind / NativeWind)
+ ┣ tailwind.config.js  # Налаштування Tailwind CSS
+ ┗ package.json        # Залежності та скрипти збірки
+</pre>
+<h4 id="детальніше-про-ключові-модулі-src" class="tsd-anchor-link">Детальніше про ключові модулі src/:<a href="#детальніше-про-ключові-модулі-src" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<ul>
+<li><code>views</code>: Тут знаходиться весь візуальний інтерфейс. Усі екрани, дрібні компоненти лежать у цій директорії.</li>
+<li><code>services</code>: &quot;Серце&quot; взаємодії з БД. Відповідає за CRUD-операції з Базою даних.</li>
+<li><code>lib</code> та <code>context</code>: Відповідають за конфігурації бібліотек та глобальними змінами.</li>
+<li><code>locales</code>: Директорія локалізації застосунку. Поділений на EN та UK.</li>
+<li><code>hooks</code>: Бізнес-логіка застосунку. Кожен хук відповідає своєму Тулзу або Екрану.</li>
+</ul>
+<hr>
+<h3 id="скріншоти-screenshots" class="tsd-anchor-link">Скріншоти (Screenshots)<a href="#скріншоти-screenshots" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div align="center">
+  <img src="media/auth.jpg" alt="Екран авторизації" width="250" style="margin: 10px;"/>
+  <img src="media/main.jpg" alt="Головний екран / Вибір тесту" width="250" style="margin: 10px;"/>
+  <img src="media/select_mode.jpg" alt="Вибір режиму тестування" width="250" style="margin: 10px;"/>
+  <img src="media/teamslist.jpg" alt="Список команд" width="250" style="margin: 10px;"/>
+  <img src="media/import_teams.jpg" alt="Імпорт команд" width="250" style="margin: 10px;"/>
+  <img src="media/general_rating.jpg" alt="Загальний рейтинг" width="250" style="margin: 10px;"/>
+  <img src="media/team_rating.jpg" alt="Командний рейтинг" width="250" style="margin: 10px;"/>
+  <img src="media/settings.jpg" alt="Налаштування" width="250" style="margin: 10px;"/>
+</div></div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#tempo-metrics"><span>Tempo <wbr/>Metrics</span></a><ul><li><a href="#стек-технологій"><span>Стек технологій</span></a></li><li><a href="#основні-можливості-features"><span>Основні можливості (<wbr/>Features)</span></a></li><li><ul><li><a href="#взаємодія-з-обладнанням"><span>Взаємодія з обладнанням</span></a></li><li><a href="#режими-тестування"><span>Режими тестування</span></a></li><li><a href="#управління-даними-та-гравцями"><span>Управління даними та гравцями</span></a></li><li><a href="#аналітика-та-експорт"><span>Аналітика та експорт</span></a></li><li><a href="#інше"><span>Інше</span></a></li><li><a href="#система-оновлення-ota-over-the-air"><span>Система оновлення <wbr/>OTA (<wbr/>Over-<wbr/>The-<wbr/>Air)</span></a></li></ul></li><li><a href="#локальне-розгортання"><span>Локальне розгортання</span></a></li><li><ul><li><a href="#скрипти-збірки-builds"><span>Скрипти збірки (<wbr/>Builds)</span></a></li></ul></li><li><a href="#конфігурація-середовища-env"><span>Конфігурація середовища (.env)</span></a></li><li><ul><li><a href="#для-розробників-архітектура-та-структура-проєкту"><span>Для розробників (Архітектура та структура проєкту)</span></a></li><li><ul><li><a href="#детальніше-про-ключові-модулі-src"><span>Детальніше про ключові модулі src/:</span></a></li></ul></li><li><a href="#скріншоти-screenshots"><span>Скріншоти (<wbr/>Screenshots)</span></a></li></ul></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">Tempo Metrics API Documentation - v1.0.0</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer></footer><div class="overlay"></div></body></html>

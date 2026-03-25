@@ -1,5 +1,5 @@
 <div align="center">
- <img src="assets/tempometrics_white_nobackground.png" alt="Логотип Tempo Metrics" width="250"/>
+ <img src="assets/tempometrics_black.png" alt="Логотип Tempo Metrics" width="250"/>
 
 # Tempo Metrics
 
@@ -138,3 +138,32 @@ Tempo_Metrics
   <img src="assets/screenshots/team_rating.jpg" alt="Командний рейтинг" width="250" style="margin: 10px;"/>
   <img src="assets/screenshots/settings.jpg" alt="Налаштування" width="250" style="margin: 10px;"/>
 </div>
+
+---
+## Документація та Розробка (Documentation & Storybook)
+
+Для підтримки якості коду та зручності розробки в проєкті використовуються наступні інструменти:
+
+* **Storybook:** Ізольоване середовище для розробки та тестування UI-компонентів.
+    * Запуск генерації історій: `npm run storybook-generate`
+    * Для перегляду ввімкніть `EXPO_PUBLIC_STORYBOOK_ENABLED=true` у `App.tsx`.
+* **TypeDoc:** Автоматично згенерована технічна документація API.
+    * Переглянути документацію: [docs/index.html](./docs/index.html) (локальна версія).
+* **Комплаєнс:** Реалізовано систему згоди користувача згідно з **GDPR** (Cookie popup), що дозволяє керувати збором аналітичних та технічних даних.
+
+---
+## Ліцензія та Авторство (License & Authorship)
+
+© 2026 **Tsimbalyuck Ruslan** (Source Code, Architecture, and Algorithms).  
+© 2026 **Tempo Metrics** (Brand, UI Design, and Business Logic).  
+Усі права захищені.
+
+### Пропрієтарне ПЗ (Proprietary Software)
+Дане програмне забезпечення є інтелектуальною власністю розробника та бренду. Доступ надається виключно авторизованому персоналу та представникам **ДУ «Житомирська політехніка»** для академічного оцінювання.
+
+* **Повна ліцензія:** [LICENSE](./LICENSE)
+* **Політика конфіденційності:** [Privacy Policy](./index.html) (web-version)
+* **Аудит залежностей:** Усі сторонні бібліотеки перевірені на відповідність ліцензійним вимогам. Звіт згенеровано за допомогою `license-checker`.
+    * Звіт аудиту: [license-report.txt](./license-report.txt)
+
+---

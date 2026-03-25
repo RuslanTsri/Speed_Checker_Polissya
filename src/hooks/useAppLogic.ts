@@ -21,7 +21,9 @@ export const useAppLogic = () => {
 
     const [currentTab, setCurrentTab] = useState<AppTab>('HOME');
     const [sessionsInitialTab, setSessionsInitialTab] = useState<SessionTabType | undefined>(undefined);
-
+    const [isGDPRVisible, setGDPRVisible] = useState(false);
+    const handleOpenGDPR = () => setGDPRVisible(true);
+    const handleCloseGDPR = () => setGDPRVisible(false);
     const [isPinModalVisible, setPinModalVisible] = useState(false);
     const [oldPin, setOldPin] = useState('');
     const [newPin, setNewPin] = useState('');
@@ -223,6 +225,6 @@ export const useAppLogic = () => {
         isPinLoading, pinError, navParams,
         handleLogout, handleNavigate, handleOpenPinModal, handleSubmitPinChange,
         homeActiveTool, setHomeActiveTool,
-        sessionDetailsOpen, setSessionDetailsOpen
+        sessionDetailsOpen, setSessionDetailsOpen, handleOpenGDPR, handleCloseGDPR, isGDPRVisible
     };
 };

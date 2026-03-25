@@ -14,5 +14,17 @@
   "ota_updater": {
     "toast_title": "Our app has been updated =)",
     "toast_desc": "Tap here to go to settings and update. Or ignore, the app will update automatically on the next launch."
+  },
+  "gdpr_popup": {
+    "title": "GDPR Configuration",
+    "description": "We respect your privacy. Configure the types of data you allow us to process:",
+    "essential_title": "Essential Data",
+    "essential_desc": "Bluetooth connection and local storage for sensor operation.",
+    "analytics_title": "Analytics",
+    "analytics_desc": "Permission to generate statistical reports of race results.",
+    "privacy_policy_prefix": "By clicking the button, you agree to our ",
+    "privacy_policy_link": "Privacy Policy",
+    "submit_btn": "Save and continue",
+    "warning_note": "Note: If you don't select settings and click 'Save', this window will appear every time you start the app."
   }
 }

@@ -12,20 +12,29 @@
     "build:dev": "npm run clean:dev && cross-env APP_VARIANT=development npx expo run:android",
     "build:prev": "npm run clean:prev && cross-env APP_VARIANT=preview npx expo run:android --variant release",
     "build:both": "npm run build:dev && npm run build:prev",
-    "update:prev": "cross-env APP_VARIANT=preview eas update --branch preview --message",
-    "update:prod": "cross-env APP_VARIANT=production eas update --branch production --message"
+    "update:prev": "cross-env APP_VARIANT=preview npx eas update --branch preview --message",
+    "update:prod": "cross-env APP_VARIANT=production npx eas update --branch production --message",
+    "docs": "typedoc --entryPointStrategy expand ./src --exclude **/*.test.ts --out docs --skipErrorChecking",
+    "storybook-generate": "sb-rn-get-stories"
   },
   "overrides": {
     "lightningcss": "1.30.1"
   },
   "dependencies": {
+    "@babel/core": "^7.29.0",
     "@expo/config-plugins": "^55.0.7",
+    "@gorhom/bottom-sheet": "^5.2.8",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "^9.1.0",
     "@react-native-community/netinfo": "11.4.1",
+    "@react-native-community/slider": "^5.1.2",
     "@react-navigation/core": "^7.14.0",
     "@react-navigation/native": "^7.1.28",
     "@sfourdrinier/react-native-ble-plx": "^3.7.10",
+    "@storybook/react": "^10.3.3",
+    "@storybook/react-native": "^10.3.0",
     "@supabase/supabase-js": "^2.95.3",
+    "babel-loader": "^8.4.1",
     "babel-preset-expo": "~54.0.10",
     "buffer": "^6.0.3",
     "dotenv": "^17.3.1",
@@ -54,6 +63,7 @@
     "react-i18next": "^16.5.4",
     "react-native": "0.81.5",
     "react-native-css": "^3.0.1",
+    "react-native-gesture-handler": "^2.30.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
@@ -61,16 +71,22 @@
     "react-native-url-polyfill": "^3.0.0",
     "react-native-uuid": "^2.0.3",
     "react-native-web": "^0.21.0",
+    "storybook": "^10.3.3",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@storybook/addon-ondevice-actions": "^10.3.0",
+    "@storybook/addon-ondevice-backgrounds": "^10.3.0",
+    "@storybook/addon-ondevice-controls": "^10.3.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/react": "~19.1.0",
     "cross-env": "^10.1.0",
+    "eas-cli": "^18.4.0",
     "postcss": "^8.5.6",
     "react-native-svg-transformer": "^1.5.3",
     "tailwindcss": "^3.3.2",
+    "typedoc": "^0.28.18",
     "typescript": "~5.9.2"
   },
   "private": true

@@ -8,12 +8,12 @@ import { TextField } from '../components/ui/TextField';
 
 import LogoSvg from '../../../assets/tempometrics_white_nobackground.svg';
 
-export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any) => {
+export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange, onOpenGDPR }: any) => {
     const { t } = useTranslation();
     const { profile } = useUser();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(true);
-
+const [manualGDPRVisible, setManualGDPRVisible] = useState(false);
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener(state => {
             setIsOnline(!!state.isConnected && !!state.isInternetReachable);
@@ -55,7 +55,9 @@ export const Header = ({ onGoHome, onLogout, onChangePin, onOpenPinChange }: any
                 />
 
             </TouchableOpacity>
-
+            {/* <TouchableOpacity onPress={onOpenGDPR} className="p-2">
+                <Feather name="shield" size={24} color="#FF6D00" />
+            </TouchableOpacity> */}
             <View className="flex-row items-center gap-2 shrink-0">
                 <View className="items-end justify-center">
                     <View className="w-[100px] h-[32px] overflow-hidden rounded-xl">

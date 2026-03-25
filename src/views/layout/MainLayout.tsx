@@ -25,7 +25,7 @@ export const MainLayout = ({ children, currentTab, onSwitchTab, ...props }: any)
         <AppBackground className="flex-1">
             <View className="flex-1">
                 <SafeAreaView edges={['top']} className="z-10">
-                    <Header {...props} onGoHome={() => handleSwitch('HOME')} />
+                    <Header {...props} onGoHome={() => handleSwitch('HOME') } />
                 </SafeAreaView>
 
                 <View className="flex-1" style={{ paddingBottom: FOOTER_HEIGHT }}>

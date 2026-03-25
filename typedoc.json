@@ -1,0 +1,10 @@
+{
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "name": "Tempo Metrics API Documentation",
+  "includeVersion": true,
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "hideGenerator": true
+}
